@@ -75,6 +75,7 @@ export async function pdfHints(pdf: Uint8Array, maxPages = 4) {
         // Icon fonts give one stray glyph ("a", "]"); the rest of the line says what the link is for.
         // A run is often a whole line, so only the words whose middle sits inside the link count. Glyph widths
         // vary, so a word's place is estimated from the run's average character width.
+        // ponytail: on a long line the estimate can drift a word; per-glyph widths from the font would fix that.
         const words = under
           .flatMap((run) => {
             const glyph = run.width / run.str.length;
@@ -86,8 +87,8 @@ export async function pdfHints(pdf: Uint8Array, maxPages = 4) {
               .map((m) => m[0]);
           })
           .join(" ")
-          .replace(/^[(["']+|[)\]"',.;:]+$/g, "");
-        const text = words.length > 1 ? words : onLine.map((run) => run.str.trim()).join(" ");
+          .replace(/^["']+|["',.;:]+$/g, "");
+        const text = words.length > 1 ? unwrap(words) : onLine.map((run) => run.str.trim()).join(" ");
         links.push({ text: text.slice(0, 80), url });
       }
       page.cleanup();
@@ -99,6 +100,15 @@ export async function pdfHints(pdf: Uint8Array, maxPages = 4) {
   }
   return { links, bold: [...bold].slice(0, 80), pages };
 }
+
+// "(PR #2526" and "PR #1110)" lose the bracket the link only half covers; "(ESP-Website)" loses both, and
+// "Project (beta)" keeps its own.
+const unwrap = (words: string) => {
+  if (/^\(.*\)$/.test(words)) return words.slice(1, -1);
+  if (words.startsWith("(") && !words.includes(")")) return words.slice(1);
+  if (words.endsWith(")") && !words.includes("(")) return words.slice(0, -1);
+  return words;
+};
 
 // A header that names its links ("LinkedIn", "Github") instead of printing their addresses was made in the icon
 // and name style; the imported resume keeps it. Only the header's profile links count: projects name their links

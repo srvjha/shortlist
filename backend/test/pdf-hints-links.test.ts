@@ -35,4 +35,9 @@ describe("link words from the PDF", () => {
     const { links } = await pdfHints(await lineWithLink("Built the request workflow (PR #42).", "(PR #42)."));
     expect(links[0]?.text).toBe("PR #42");
   });
+
+  it("keeps brackets that belong to the words", async () => {
+    const { links } = await pdfHints(await lineWithLink("Shipped Project (beta), used by 40 teams", "Project (beta),"));
+    expect(links[0]?.text).toBe("Project (beta)");
+  });
 });
