@@ -442,8 +442,8 @@ export function placeLinks(content: ResumeContent, links: { text: string; url: s
     );
   for (const link of links) {
     if (!/^https?:/i.test(link.url)) continue;
-    // Icon fonts leave a stray glyph or two before the words.
-    const words = link.text.replace(/^\S{1,2}\s+/, "").trim();
+    // Icon fonts leave a stray glyph or two before the words, but a short word like "PR" is part of them.
+    const words = link.text.replace(/^(\S|[^\p{L}\p{N}\s]{2})\s+/u, "").trim();
     if (words.length < 3 || words.length > 80) continue;
     if (next.basics.links.some((l) => l.url === link.url)) continue;
     const fields = linkableFields(next);

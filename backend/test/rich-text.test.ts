@@ -119,6 +119,17 @@ describe("placeLinks", () => {
   });
 });
 
+describe("placeLinks with a short first word", () => {
+  it("keeps a word like PR, which isn't an icon glyph", () => {
+    const c = {
+      basics: { name: "A", links: [] },
+      sections: [{ id: "s", type: "summary", title: "S", hidden: false, text: "Shipped PR #4945 and more" }],
+    } as unknown as ResumeContent;
+    const out = placeLinks(c, [{ text: "PR #4945", url: "https://github.com/a/b/pull/4945" }]).sections[0];
+    expect(out?.type === "summary" && out.text).toBe("Shipped [PR #4945](https://github.com/a/b/pull/4945) and more");
+  });
+});
+
 describe("placeLinks on a sentence the model linked as a whole", () => {
   it("moves the link onto its words", () => {
     const c = {
