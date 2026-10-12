@@ -73,7 +73,20 @@ export async function pdfHints(pdf: Uint8Array, maxPages = 4) {
         const onLine = runs.filter((run) => run.y >= y1 - 2 && run.y <= y2).sort((a, b) => a.x - b.x);
         const under = onLine.filter((run) => run.x < x2 && run.x + run.width > x1);
         // Icon fonts give one stray glyph ("a", "]"); the rest of the line says what the link is for.
-        const words = under.map((run) => run.str.trim()).join(" ");
+        // A run is often a whole line, so only the words whose middle sits inside the link count. Glyph widths
+        // vary, so a word's place is estimated from the run's average character width.
+        const words = under
+          .flatMap((run) => {
+            const glyph = run.width / run.str.length;
+            return [...run.str.matchAll(/\S+/g)]
+              .filter((m) => {
+                const middle = run.x + (m.index + m[0].length / 2) * glyph;
+                return middle >= x1 && middle <= x2;
+              })
+              .map((m) => m[0]);
+          })
+          .join(" ")
+          .replace(/^[(["']+|[)\]"',.;:]+$/g, "");
         const text = words.length > 1 ? words : onLine.map((run) => run.str.trim()).join(" ");
         links.push({ text: text.slice(0, 80), url });
       }
