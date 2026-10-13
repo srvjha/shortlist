@@ -106,7 +106,7 @@ const failureColor = (rate: number) =>
   rate > 0.15
     ? 'var(--destructive)'
     : rate > 0.05
-      ? 'var(--highlight)'
+      ? 'color-mix(in oklab, var(--highlight), var(--foreground) 35%)'
       : 'var(--success)'
 
 function Overview({ data }: { data: AdminOverview }) {

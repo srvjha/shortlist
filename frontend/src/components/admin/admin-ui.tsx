@@ -169,7 +169,7 @@ export function Funnel({
               className="block h-full rounded-full transition-[width] duration-500"
               style={{
                 width: first ? `${(step.count / first) * 100}%` : 0,
-                backgroundColor: `color-mix(in oklab, var(--viz-1) ${100 - index * 12}%, var(--card))`,
+                backgroundColor: `color-mix(in oklab, var(--viz-1) ${Math.max(40, 100 - index * 12)}%, var(--card))`,
               }}
             />
           </span>
@@ -219,8 +219,8 @@ export function TrendChart({
   const id = useId()
   const [active, setActive] = useState<number | null>(null)
   const top = niceMax(Math.max(...data.map((d) => d.value)))
-  const last = Math.max(1, data.length - 1)
-  const x = (i: number) => (i / last) * 100
+  const last = data.length - 1
+  const x = (i: number) => (i / Math.max(1, last)) * 100
   const y = (v: number) => 100 - (v / top) * 100
   const line = `M${data.map((d, i) => `${x(i).toFixed(2)},${y(d.value).toFixed(2)}`).join(' L')}`
   const labelIndexes = [
@@ -354,6 +354,10 @@ export function TrendChart({
           ))}
         </div>
       </div>
+      <span aria-live="polite" className="sr-only">
+        {point &&
+          `${formatDay(point.day)}, ${format(point.value)} ${point.value === 1 ? unit[0] : unit[1]}`}
+      </span>
       <table className="sr-only">
         <caption>{unit[1]} per day</caption>
         <thead>
