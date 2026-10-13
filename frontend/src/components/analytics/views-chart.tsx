@@ -6,12 +6,12 @@ const dayFormat = new Intl.DateTimeFormat('en-IN', {
   timeZone: 'UTC',
 })
 
-function formatDay(day: string) {
+export function formatDay(day: string) {
   return dayFormat.format(new Date(`${day}T00:00:00Z`))
 }
 
 // Round the axis top up to 1, 2 or 5 times a power of ten so ticks are clean numbers.
-function niceMax(value: number) {
+export function niceMax(value: number) {
   if (value <= 4) return 4
   const power = 10 ** Math.floor(Math.log10(value))
   const step = [1, 2, 5, 10].find((m) => m * power >= value) ?? 10
