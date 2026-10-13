@@ -82,6 +82,7 @@ function ContentReport({ data }: { data: AdminContent }) {
       <div className="grid gap-10 md:grid-cols-3">
         <BreakdownList
           title="Templates in use"
+          color="var(--viz-3)"
           rows={data.byTemplate.map((row) => ({
             label: templateName(row.label),
             views: row.count,
@@ -90,6 +91,7 @@ function ContentReport({ data }: { data: AdminContent }) {
         />
         <BreakdownList
           title="Editor"
+          color="var(--viz-1)"
           rows={[
             { label: 'Form editor', views: resumes.structured },
             { label: 'LaTeX editor', views: resumes.code },
@@ -98,6 +100,7 @@ function ContentReport({ data }: { data: AdminContent }) {
         />
         <BreakdownList
           title={`Saved versions, last ${data.days} days`}
+          color="var(--viz-5)"
           rows={data.versionKinds.map((row) => ({
             label: versionLabels[row.label] ?? row.label,
             views: row.count,
@@ -109,6 +112,7 @@ function ContentReport({ data }: { data: AdminContent }) {
       <div className="grid gap-10 md:grid-cols-3">
         <BreakdownList
           title="Uploaded files"
+          color="var(--viz-4)"
           rows={[
             { label: 'PDF', views: uploads.pdf },
             { label: 'LaTeX', views: uploads.tex },
@@ -118,6 +122,7 @@ function ContentReport({ data }: { data: AdminContent }) {
         />
         <BreakdownList
           title="Share link settings"
+          color="var(--viz-2)"
           rows={[
             { label: 'Listed on profile', views: sharing.listed },
             { label: 'Password protected', views: sharing.protected },

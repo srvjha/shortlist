@@ -6,9 +6,10 @@ import {
   Section,
   Stat,
   StatGrid,
+  TrendChart,
+  seriesColor,
 } from '@/components/admin/admin-ui'
 import { BreakdownList } from '@/components/analytics/breakdown-list'
-import { ViewsChart } from '@/components/analytics/views-chart'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -112,11 +113,12 @@ function RevenueReport({ data }: { data: AdminRevenue }) {
           {totals.paise === 0 ? (
             <EmptyNote>No revenue in this period.</EmptyNote>
           ) : (
-            <ViewsChart
+            <TrendChart
               data={data.byDay.map((day) => ({
                 day: day.day,
-                views: day.paise,
+                value: day.paise,
               }))}
+              color={seriesColor.revenue}
               unit={['earned', 'earned']}
               format={formatInr}
             />
@@ -129,6 +131,7 @@ function RevenueReport({ data }: { data: AdminRevenue }) {
             views: row.count,
           }))}
           empty="No checkouts in this period"
+          color={seriesColor.revenue}
         />
       </div>
 
