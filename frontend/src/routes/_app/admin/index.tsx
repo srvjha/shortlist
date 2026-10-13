@@ -16,14 +16,18 @@ import { useState } from 'react'
 import {
   EmptyNote,
   Funnel,
+  Meter,
   PlanBadge,
   QueryView,
+  RingChart,
   Section,
-  providerLabel,
+  ShareBar,
+  Swatch,
+  TrendChart,
   displayName,
+  providerLabel,
+  seriesColor,
 } from '@/components/admin/admin-ui'
-import { BreakdownList } from '@/components/analytics/breakdown-list'
-import { ViewsChart } from '@/components/analytics/views-chart'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { adminOverviewQuery } from '@/lib/api/queries'
@@ -58,11 +62,52 @@ function OverviewPage() {
 }
 
 const metrics = [
-  { key: 'signups', label: 'Sign-ups', unit: ['sign-up', 'sign-ups'] },
-  { key: 'resumes', label: 'Resumes', unit: ['resume', 'resumes'] },
-  { key: 'aiRuns', label: 'AI runs', unit: ['AI run', 'AI runs'] },
-  { key: 'views', label: 'Share views', unit: ['view', 'views'] },
+  {
+    key: 'signups',
+    label: 'Sign-ups',
+    unit: ['sign-up', 'sign-ups'],
+    color: seriesColor.signups,
+  },
+  {
+    key: 'resumes',
+    label: 'Resumes',
+    unit: ['resume', 'resumes'],
+    color: seriesColor.resumes,
+  },
+  {
+    key: 'aiRuns',
+    label: 'AI runs',
+    unit: ['AI run', 'AI runs'],
+    color: seriesColor.ai,
+  },
+  {
+    key: 'views',
+    label: 'Share views',
+    unit: ['view', 'views'],
+    color: seriesColor.views,
+  },
 ] as const
+
+const planColors: Record<string, string> = {
+  free: 'var(--muted-foreground)',
+  season_pass: 'var(--viz-1)',
+  pro: 'var(--viz-2)',
+}
+
+const providerColors: Record<string, string> = {
+  google: 'var(--viz-1)',
+  github: 'var(--viz-2)',
+  chatgpt: 'var(--viz-3)',
+  anonymous: 'var(--muted-foreground)',
+}
+
+// Above these shares of failed AI runs, the meter turns amber, then red.
+const failureColor = (rate: number) =>
+  rate > 0.15
+    ? 'var(--destructive)'
+    : rate > 0.05
+      ? 'var(--highlight)'
+      : 'var(--success)'
 
 function Overview({ data }: { data: AdminOverview }) {
   const { totals } = data
@@ -72,19 +117,50 @@ function Overview({ data }: { data: AdminOverview }) {
   const series = (key: (typeof metrics)[number]['key']) =>
     data.byDay.map((day) => day[key])
   const selectedTotal = series(metric).reduce((sum, n) => sum + n, 0)
+  const failureRate = totals.aiRuns ? totals.aiFailed / totals.aiRuns : 0
 
   return (
     <div className="flex flex-col gap-8">
-      <dl className="grid grid-cols-2 gap-x-6 gap-y-3 rounded-xl border bg-card px-5 py-4 sm:grid-cols-4">
-        <Total label="People signed up" value={totals.users} />
-        <Total label="Guests" value={totals.guests} />
-        <Total label="On a paid plan" value={totals.paidUsers} />
-        <Total label="Suspended" value={totals.suspendedUsers} />
-      </dl>
+      <section
+        aria-labelledby="overview-people"
+        className={cn(
+          panel,
+          'grid gap-6 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] md:gap-10',
+        )}
+      >
+        <div className="flex flex-col gap-4">
+          <h2
+            id="overview-people"
+            className="font-sans text-sm text-muted-foreground"
+          >
+            People signed up
+          </h2>
+          <p className="font-serif text-5xl leading-none">
+            {formatNumber(totals.users)}
+          </p>
+          <dl className="mt-auto grid grid-cols-3 gap-3 text-sm">
+            <Total label="Paid" value={totals.paidUsers} />
+            <Total label="Guests" value={totals.guests} />
+            <Total label="Suspended" value={totals.suspendedUsers} />
+          </dl>
+        </div>
+        <div className="flex flex-col gap-4">
+          <h3 className="font-sans text-sm text-muted-foreground">By plan</h3>
+          <ShareBar
+            parts={data.plans.map((row) => ({
+              label:
+                (planLabels as Record<string, string>)[row.label] ?? row.label,
+              value: row.count,
+              color: planColors[row.label] ?? 'var(--viz-3)',
+            }))}
+          />
+        </div>
+      </section>
 
       <KpiGroup title="Growth" days={data.days}>
         <Kpi
           icon={UserPlusIcon}
+          color={seriesColor.signups}
           label="New sign-ups"
           value={formatNumber(totals.newUsers)}
           current={totals.newUsers}
@@ -93,6 +169,7 @@ function Overview({ data }: { data: AdminOverview }) {
         />
         <Kpi
           icon={UsersIcon}
+          color={seriesColor.signups}
           label="Active users"
           value={formatNumber(totals.activeUsers)}
           current={totals.activeUsers}
@@ -101,6 +178,7 @@ function Overview({ data }: { data: AdminOverview }) {
         />
         <Kpi
           icon={FileTextIcon}
+          color={seriesColor.resumes}
           label="Resumes created"
           value={formatNumber(totals.resumesCreated)}
           current={totals.resumesCreated}
@@ -109,6 +187,7 @@ function Overview({ data }: { data: AdminOverview }) {
         />
         <Kpi
           icon={EyeIcon}
+          color={seriesColor.views}
           label="Share views"
           value={formatNumber(totals.shareViews)}
           current={totals.shareViews}
@@ -120,6 +199,7 @@ function Overview({ data }: { data: AdminOverview }) {
       <KpiGroup title="AI and revenue" days={data.days}>
         <Kpi
           icon={SparklesIcon}
+          color={seriesColor.ai}
           label="AI runs"
           value={formatNumber(totals.aiRuns)}
           current={totals.aiRuns}
@@ -128,12 +208,22 @@ function Overview({ data }: { data: AdminOverview }) {
         />
         <Kpi
           icon={TriangleAlertIcon}
+          color={failureColor(failureRate)}
           label="AI failure rate"
           value={percent(totals.aiFailed, totals.aiRuns)}
-          hint={`${formatNumber(totals.aiFailed)} of ${formatNumber(totals.aiRuns)} runs failed`}
+          footer={
+            <span className="flex w-full flex-col gap-1.5">
+              <Meter value={failureRate} color={failureColor(failureRate)} />
+              <span className="text-xs text-muted-foreground">
+                {formatNumber(totals.aiFailed)} of {formatNumber(totals.aiRuns)}{' '}
+                runs failed
+              </span>
+            </span>
+          }
         />
         <Kpi
           icon={CircleDollarSignIcon}
+          color={seriesColor.ai}
           label="AI cost"
           value={formatUsd(totals.aiCostUsdMicros)}
           current={totals.aiCostUsdMicros}
@@ -143,6 +233,7 @@ function Overview({ data }: { data: AdminOverview }) {
         />
         <Kpi
           icon={IndianRupeeIcon}
+          color={seriesColor.revenue}
           label="Revenue"
           value={formatInr(totals.revenuePaise)}
           current={totals.revenuePaise}
@@ -168,15 +259,17 @@ function Overview({ data }: { data: AdminOverview }) {
             className="flex-wrap"
           >
             {metrics.map((m) => (
-              <ToggleGroupItem key={m.key} value={m.key}>
+              <ToggleGroupItem key={m.key} value={m.key} className="gap-1.5">
+                <Swatch color={m.color} />
                 {m.label}
               </ToggleGroupItem>
             ))}
           </ToggleGroup>
         }
       >
-        <ViewsChart
-          data={data.byDay.map((day) => ({ day: day.day, views: day[metric] }))}
+        <TrendChart
+          data={data.byDay.map((day) => ({ day: day.day, value: day[metric] }))}
+          color={selected.color}
           unit={[...selected.unit]}
         />
       </Section>
@@ -197,30 +290,20 @@ function Overview({ data }: { data: AdminOverview }) {
             ]}
           />
         </Section>
-        <div className="flex flex-col gap-4">
-          <div className={panel}>
-            <BreakdownList
-              title="Plans"
-              rows={data.plans.map((row) => ({
-                label:
-                  (planLabels as Record<string, string>)[row.label] ??
-                  row.label,
-                views: row.count,
-              }))}
-              empty="No users yet"
-            />
-          </div>
-          <div className={panel}>
-            <BreakdownList
-              title="Sign-in methods"
-              rows={data.providers.map((row) => ({
-                label: providerLabel(row.label),
-                views: row.count,
-              }))}
-              empty="No users yet"
-            />
-          </div>
-        </div>
+        <Section
+          title="Sign-in methods"
+          description="How everyone signs in, all time"
+          className={panel}
+        >
+          <RingChart
+            unit={['person', 'people']}
+            parts={data.providers.map((row) => ({
+              label: providerLabel(row.label),
+              value: row.count,
+              color: providerColors[row.label] ?? 'var(--viz-5)',
+            }))}
+          />
+        </Section>
       </div>
 
       <Section
@@ -284,9 +367,7 @@ function Total({ label, value }: { label: string; value: number }) {
   return (
     <div className="flex flex-col">
       <dt className="text-xs text-muted-foreground">{label}</dt>
-      <dd className="text-lg font-semibold tabular-nums">
-        {formatNumber(value)}
-      </dd>
+      <dd className="text-lg font-semibold">{formatNumber(value)}</dd>
     </div>
   )
 }
@@ -320,6 +401,7 @@ function KpiGroup({
 
 function Kpi({
   icon: Icon,
+  color,
   label,
   value,
   current,
@@ -327,8 +409,10 @@ function Kpi({
   lowerIsBetter,
   trend,
   hint,
+  footer,
 }: {
   icon: React.ComponentType<{ className?: string }>
+  color: string
   label: string
   value: string
   current?: number
@@ -336,12 +420,22 @@ function Kpi({
   lowerIsBetter?: boolean
   trend?: number[]
   hint?: string
+  footer?: React.ReactNode
 }) {
   return (
     <div className="flex min-w-0 flex-col gap-2 rounded-xl border bg-card p-4">
       <div className="flex min-h-6 items-center justify-between gap-2">
         <dt className="flex min-w-0 items-center gap-2 text-sm text-muted-foreground">
-          <Icon className="size-4 shrink-0" aria-hidden />
+          <span
+            aria-hidden
+            className="flex size-7 shrink-0 items-center justify-center rounded-md"
+            style={{
+              color,
+              backgroundColor: `color-mix(in oklab, ${color} 14%, transparent)`,
+            }}
+          >
+            <Icon className="size-4" />
+          </span>
           <span className="truncate">{label}</span>
         </dt>
         {current !== undefined && previous !== undefined && (
@@ -354,14 +448,17 @@ function Kpi({
           </dd>
         )}
       </div>
-      <dd className="truncate font-serif text-3xl tabular-nums">{value}</dd>
+      <dd className="truncate font-serif text-3xl">{value}</dd>
       {/* Same height with or without a trend, so cards in a row line up. */}
       <dd className="flex h-9 items-end">
-        {trend && hasTrend(trend) ? (
-          <Sparkline values={trend} />
-        ) : (
-          hint && <span className="text-xs text-muted-foreground">{hint}</span>
-        )}
+        {footer ??
+          (trend && hasTrend(trend) ? (
+            <Sparkline values={trend} color={color} />
+          ) : (
+            hint && (
+              <span className="text-xs text-muted-foreground">{hint}</span>
+            )
+          ))}
       </dd>
     </div>
   )
@@ -407,7 +504,7 @@ function Delta({
 // A trend needs a few days with activity; one bar on a flat line says nothing.
 const hasTrend = (values: number[]) => values.filter((v) => v > 0).length >= 2
 
-function Sparkline({ values }: { values: number[] }) {
+function Sparkline({ values, color }: { values: number[]; color: string }) {
   const max = Math.max(...values)
   const points = values.map(
     (v, i) =>
@@ -419,14 +516,19 @@ function Sparkline({ values }: { values: number[] }) {
       viewBox="0 0 100 36"
       preserveAspectRatio="none"
       aria-hidden
-      className="h-9 w-full text-primary"
+      className="h-9 w-full"
+      style={{ color }}
     >
-      <path d={`${line} L100,36 L0,36 Z`} className="fill-primary/10" />
+      <path
+        d={`${line} L100,36 L0,36 Z`}
+        fill="currentColor"
+        fillOpacity="0.12"
+      />
       <path
         d={line}
         fill="none"
         stroke="currentColor"
-        strokeWidth="1.5"
+        strokeWidth="2"
         strokeLinejoin="round"
         vectorEffect="non-scaling-stroke"
       />
