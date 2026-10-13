@@ -424,10 +424,10 @@ export function ShareBar({ parts }: { parts: Part[] }) {
   const total = shown.reduce((sum, part) => sum + part.value, 0)
   if (total === 0) return <EmptyNote>No users yet.</EmptyNote>
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex min-w-0 flex-1 flex-col gap-3 md:flex-row md:items-center md:gap-6">
       <div
         aria-hidden
-        className="flex h-3 gap-0.5 overflow-hidden rounded-full"
+        className="flex h-2.5 w-full min-w-0 gap-0.5 overflow-hidden rounded-full md:flex-1"
       >
         {shown.map((part) => (
           <span
@@ -437,7 +437,20 @@ export function ShareBar({ parts }: { parts: Part[] }) {
           />
         ))}
       </div>
-      <Legend parts={shown} total={total} />
+      <ul className="flex shrink-0 flex-wrap gap-x-5 gap-y-1 text-sm">
+        {shown.map((part) => (
+          <li key={part.label} className="flex items-center gap-2">
+            <Swatch color={part.color} />
+            {part.label}
+            <span className="font-medium tabular-nums">
+              {formatNumber(part.value)}
+            </span>
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {percent(part.value, total)}
+            </span>
+          </li>
+        ))}
+      </ul>
     </div>
   )
 }

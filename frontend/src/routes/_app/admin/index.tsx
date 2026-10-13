@@ -122,30 +122,35 @@ function Overview({ data }: { data: AdminOverview }) {
   return (
     <div className="flex flex-col gap-8">
       <section
-        aria-labelledby="overview-people"
-        className={cn(
-          panel,
-          'grid gap-6 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] md:gap-10',
-        )}
+        aria-label="People"
+        className="overflow-hidden rounded-xl border bg-card"
       >
-        <div className="flex flex-col gap-4">
-          <h2
-            id="overview-people"
-            className="font-sans text-sm text-muted-foreground"
-          >
-            People signed up
+        <dl className="grid grid-cols-2 gap-px bg-border lg:grid-cols-4">
+          <Total
+            label="People signed up"
+            value={totals.users}
+            hint={`${formatNumber(totals.newUsers)} new in the last ${data.days} days`}
+          />
+          <Total
+            label="On a paid plan"
+            value={totals.paidUsers}
+            hint={`${percent(totals.paidUsers, totals.users)} of people signed up`}
+          />
+          <Total
+            label="Guests"
+            value={totals.guests}
+            hint="Using it without an account"
+          />
+          <Total
+            label="Suspended"
+            value={totals.suspendedUsers}
+            hint="Blocked by an admin"
+          />
+        </dl>
+        <div className="flex flex-col gap-3 border-t px-5 py-4 sm:flex-row sm:items-center sm:gap-6">
+          <h2 className="shrink-0 font-sans text-sm text-muted-foreground">
+            By plan
           </h2>
-          <p className="font-serif text-5xl leading-none">
-            {formatNumber(totals.users)}
-          </p>
-          <dl className="mt-auto grid grid-cols-3 gap-3 text-sm">
-            <Total label="Paid" value={totals.paidUsers} />
-            <Total label="Guests" value={totals.guests} />
-            <Total label="Suspended" value={totals.suspendedUsers} />
-          </dl>
-        </div>
-        <div className="flex flex-col gap-4">
-          <h3 className="font-sans text-sm text-muted-foreground">By plan</h3>
           <ShareBar
             parts={data.plans.map((row) => ({
               label:
@@ -363,11 +368,22 @@ function Overview({ data }: { data: AdminOverview }) {
 
 const panel = 'rounded-xl border bg-card p-5'
 
-function Total({ label, value }: { label: string; value: number }) {
+function Total({
+  label,
+  value,
+  hint,
+}: {
+  label: string
+  value: number
+  hint: string
+}) {
   return (
-    <div className="flex flex-col">
-      <dt className="text-xs text-muted-foreground">{label}</dt>
-      <dd className="text-lg font-semibold">{formatNumber(value)}</dd>
+    <div className="flex min-w-0 flex-col gap-1 bg-card px-5 py-4">
+      <dt className="truncate text-sm text-muted-foreground">{label}</dt>
+      <dd className="font-serif text-4xl leading-tight">
+        {formatNumber(value)}
+      </dd>
+      <dd className="text-xs text-muted-foreground">{hint}</dd>
     </div>
   )
 }
