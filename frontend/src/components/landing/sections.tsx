@@ -26,7 +26,7 @@ const heading =
   'font-serif text-[2rem] leading-[1.05] font-semibold tracking-[-0.02em] sm:text-5xl'
 
 const examples = [
-  'Backend Engineer at Swiggy',
+  'Backend Engineer',
   'Financial Analyst',
   'Product Designer',
   'Final-year student',
@@ -67,7 +67,7 @@ export function TemplateFinder() {
   const [jobTitle, setJobTitle] = useState(examples[0])
   const [typing, setTyping] = useState(true)
 
-  // Types the examples into the field one after another until the visitor clicks into it.
+  // Types each example once, ending back on the first, unless the visitor clicks in first (WCAG 2.2.2).
   useEffect(() => {
     if (!typing || reduceMotion) return
     let example = 0
@@ -87,6 +87,7 @@ export function TemplateFinder() {
       }
       setJobTitle(examples[example].slice(0, length))
       const full = !deleting && length === examples[example].length
+      if (full && example === 0) return setTyping(false)
       if (full) deleting = true
       timer = setTimeout(
         step,
@@ -144,7 +145,7 @@ export function TemplateFinder() {
             </button>
           ))}
         </div>
-        <p className="mt-6 text-lg" aria-live="polite">
+        <p className="mt-6 text-lg" aria-live={typing ? 'off' : 'polite'}>
           We’d start you on{' '}
           <span className="font-semibold">
             {templateCatalog.find((t) => t.id === suggestion.templateId)?.name}
@@ -325,7 +326,7 @@ function StageFragment({ index }: { index: number }) {
     <div className="rounded-xl border bg-card p-4 text-left text-sm">
       <p className="flex min-w-0 items-center gap-2 rounded-lg bg-muted px-3 py-2.5 break-all">
         <LinkIcon className="size-4 shrink-0 text-muted-foreground" />
-        {site.displayDomain}/aarav/swiggy-backend
+        {site.displayDomain}/aarav/backend-engineer
       </p>
       <dl className="mt-4 grid grid-cols-2 gap-3">
         <div>

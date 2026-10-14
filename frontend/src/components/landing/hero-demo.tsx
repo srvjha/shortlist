@@ -265,21 +265,33 @@ export function Hero() {
     }
     setTicks(0)
     const timer = setInterval(
-      () => setTicks((t) => Math.min(t + 1, total)),
+      () =>
+        setTicks((t) => {
+          if (t + 1 >= total) clearInterval(timer)
+          return Math.min(t + 1, total)
+        }),
       tickMs,
     )
     return () => clearInterval(timer)
   }, [reduceMotion, run, index, total])
 
-  // Until the visitor takes over, the headline moves on to the next job.
+  // Resets progress in the same render as the switch, so the next job never flashes as finished.
+  const show = (next: number) => {
+    setIndex(next)
+    setTicks(reduceMotion ? Infinity : 0)
+    setSkipped([])
+  }
+
+  // Plays through the jobs once, back to the first, then waits for the visitor (WCAG 2.2.2).
   useEffect(() => {
     if (!done || picked || reduceMotion) return
-    const timer = setTimeout(
-      () => setIndex((i) => (i + 1) % demos.length),
-      holdMs,
-    )
+    const timer = setTimeout(() => {
+      const next = (index + 1) % demos.length
+      show(next)
+      if (next === 0) setPicked(true)
+    }, holdMs)
     return () => clearTimeout(timer)
-  }, [done, picked, reduceMotion])
+  }, [done, picked, reduceMotion, index])
 
   const stage = useRef<HTMLDivElement>(null)
   const { scrollYProgress } = useScroll({
@@ -294,7 +306,9 @@ export function Hero() {
   const kept = demo.bullets.length - skipped.length
   const toggle = (i: number, skip: boolean) => {
     setPicked(true)
-    setSkipped((list) => (skip ? [...list, i] : list.filter((s) => s !== i)))
+    setSkipped((list) =>
+      skip ? [...new Set([...list, i])] : list.filter((s) => s !== i),
+    )
   }
 
   return (
@@ -351,7 +365,7 @@ export function Hero() {
                 pressed={i === index}
                 onClick={() => {
                   setPicked(true)
-                  setIndex(i)
+                  show(i)
                 }}
               >
                 {d.field}
@@ -452,7 +466,7 @@ export function Hero() {
 
         <div className="rounded-2xl bg-card p-4 text-left text-sm">
           <div className="flex min-h-9 items-center justify-between gap-3">
-            <p className="font-medium" aria-live="polite">
+            <p className="font-medium" aria-live={picked ? 'polite' : 'off'}>
               {done
                 ? `${kept} of ${demo.bullets.length} changes kept`
                 : 'Rewriting for this job'}
@@ -462,6 +476,7 @@ export function Hero() {
                 pressed={false}
                 onClick={() => {
                   setPicked(true)
+                  show(index)
                   setRun((n) => n + 1)
                 }}
               >
