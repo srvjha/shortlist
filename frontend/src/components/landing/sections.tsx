@@ -31,7 +31,7 @@ function SectionHeading({
   children?: React.ReactNode
 }) {
   return (
-    <div className="max-w-2xl">
+    <div className="reveal max-w-2xl">
       <p className="flex items-center gap-3 font-mono text-xs tracking-[0.14em] text-muted-foreground uppercase">
         <span className="text-primary">{index}</span>
         <span aria-hidden="true" className="h-px w-8 bg-foreground/25" />
@@ -85,7 +85,7 @@ export function HowItWorks() {
         {steps.map((step, index) => (
           <li
             key={step.title}
-            className="flex flex-col gap-3 border-t border-foreground/15 pt-5"
+            className="reveal flex flex-col gap-3 border-t border-foreground/15 pt-5"
           >
             <span className="font-serif text-4xl text-primary tabular-nums">
               {index + 1}
@@ -128,7 +128,7 @@ export function EditModes() {
             ))}
           </ul>
         </div>
-        <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
+        <div className="reveal overflow-hidden rounded-lg border bg-card shadow-sm">
           <div className="flex items-center gap-2 border-b px-4 py-2.5 text-sm text-muted-foreground">
             <span className="font-medium text-foreground">main.tex</span>
             <Badge variant="outline" className="ml-auto">
@@ -163,7 +163,7 @@ export function HonestAi() {
       aria-labelledby="honest-ai"
       className="mx-auto grid max-w-6xl items-center gap-12 px-5 py-24 lg:grid-cols-2"
     >
-      <div className="order-2 flex flex-col gap-3 lg:order-1">
+      <div className="reveal order-2 flex flex-col gap-3 lg:order-1">
         <div className="rounded-lg border bg-card p-4">
           <div className="flex items-center justify-between gap-3">
             <p className="text-sm font-medium">Rewrite bullet</p>
@@ -308,7 +308,7 @@ export function ShareSection() {
           it was opened.
         </SectionHeading>
       </div>
-      <div className="flex flex-col gap-3 rounded-lg border bg-card p-5">
+      <div className="reveal flex flex-col gap-3 rounded-lg border bg-card p-5">
         <div className="flex min-w-0 items-center gap-2 rounded-md bg-muted px-3 py-2.5 font-mono text-sm break-all">
           <LinkIcon className="size-4 text-muted-foreground" />
           {site.displayDomain}/aarav/swiggy-backend
@@ -381,7 +381,7 @@ export function Faq() {
 export function FinalCta() {
   return (
     <section className="mx-auto max-w-6xl px-5">
-      <div className="flex flex-col items-start gap-6 rounded-xl bg-primary px-8 py-14 text-primary-foreground sm:px-12">
+      <div className="reveal flex flex-col items-start gap-6 rounded-xl bg-primary px-8 py-14 text-primary-foreground sm:px-12">
         <h2 className="max-w-2xl text-3xl font-semibold tracking-tight sm:text-4xl">
           Your next application deserves its own resume
         </h2>
