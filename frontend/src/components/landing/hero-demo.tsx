@@ -217,7 +217,7 @@ function Redline({ word }: { word: string }) {
         className="relative inline-block whitespace-nowrap"
         initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: '0.25em' }}
         animate={{ opacity: 1, y: 0, transition: { duration: 0.5, ease } }}
-        exit={{ opacity: 0, transition: { delay: 0.45, duration: 0.25 } }}
+        exit={{ opacity: 0, transition: { delay: 0.22, duration: 0.15 } }}
       >
         <motion.span
           aria-hidden="true"
@@ -225,7 +225,7 @@ function Redline({ word }: { word: string }) {
           initial={{ scaleX: 0 }}
           animate={{
             scaleX: 1,
-            transition: { delay: 0.35, duration: 0.6, ease },
+            transition: { delay: 0.2, duration: 0.45, ease },
           }}
           exit={{ scaleX: 1 }}
         />
@@ -237,7 +237,7 @@ function Redline({ word }: { word: string }) {
           animate={{ scaleX: 0 }}
           exit={{
             scaleX: reduceMotion ? 0 : 1,
-            transition: { duration: 0.4, ease },
+            transition: { duration: 0.2, ease },
           }}
         />
       </motion.span>
