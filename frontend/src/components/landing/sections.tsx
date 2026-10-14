@@ -5,12 +5,16 @@ import {
   EyeIcon,
   LinkIcon,
   LockIcon,
+  PauseIcon,
+  PlayIcon,
   XIcon,
 } from 'lucide-react'
+import { useState } from 'react'
 import { FaqList } from '@/components/site/faq-list'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { site } from '@/lib/site'
+import { cn } from '@/lib/utils'
 import { templateCatalog } from '@/lib/templates'
 
 function SectionHeading({
@@ -212,6 +216,7 @@ export function HonestAi() {
 }
 
 export function TemplatesShowcase() {
+  const [paused, setPaused] = useState(false)
   return (
     <section aria-labelledby="templates" className="bg-muted/50 py-24">
       <div className="mx-auto max-w-6xl px-5">
@@ -225,31 +230,61 @@ export function TemplatesShowcase() {
             Single column, clean type, and text an applicant tracking system can
             read.
           </SectionHeading>
-          <Button variant="outline" asChild>
-            <Link to="/templates">View all templates</Link>
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={
+                paused ? 'Play template carousel' : 'Pause template carousel'
+              }
+              onClick={() => setPaused((p) => !p)}
+              className="motion-reduce:hidden"
+            >
+              {paused ? <PlayIcon /> : <PauseIcon />}
+            </Button>
+            <Button variant="outline" asChild>
+              <Link to="/templates">View all templates</Link>
+            </Button>
+          </div>
         </div>
-        <ul className="mt-10 grid grid-cols-2 gap-5 lg:grid-cols-4">
-          {templateCatalog.slice(0, 4).map((template) => (
-            <li key={template.id}>
-              <Link
-                to="/templates"
-                hash={template.id}
-                className="group flex flex-col gap-3 rounded-md"
-              >
-                <img
-                  src={`/templates/${template.id}.png`}
-                  alt={`${template.name} template preview`}
-                  width={1020}
-                  height={1320}
-                  loading="lazy"
-                  className="aspect-17/22 w-full rounded-sm bg-sheet object-cover object-top shadow-sm ring-1 ring-black/5 transition-transform duration-300 group-hover:-translate-y-1"
-                />
-                <span className="font-medium">{template.name}</span>
-              </Link>
-            </li>
+      </div>
+      {/* Two identical rows slide left by half their width, so the loop has no seam. */}
+      <div className="group mt-10 overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_5%,black_95%,transparent)] motion-reduce:overflow-x-auto">
+        <div
+          className={cn(
+            'flex w-max animate-marquee group-focus-within:[animation-play-state:paused] group-hover:[animation-play-state:paused] motion-reduce:animate-none',
+            paused && '[animation-play-state:paused]',
+          )}
+        >
+          {[false, true].map((copy) => (
+            <ul
+              key={String(copy)}
+              aria-hidden={copy || undefined}
+              className={cn('flex gap-5 pr-5', copy && 'motion-reduce:hidden')}
+            >
+              {templateCatalog.map((template) => (
+                <li key={template.id} className="w-40 sm:w-52">
+                  <Link
+                    to="/templates"
+                    hash={template.id}
+                    tabIndex={copy ? -1 : undefined}
+                    className="group/card flex flex-col gap-3 rounded-md"
+                  >
+                    <img
+                      src={`/templates/${template.id}.png`}
+                      alt={copy ? '' : `${template.name} template preview`}
+                      width={1020}
+                      height={1320}
+                      loading="lazy"
+                      className="aspect-17/22 w-full rounded-sm bg-sheet object-cover object-top shadow-sm ring-1 ring-black/5 transition-transform duration-300 group-hover/card:-translate-y-1"
+                    />
+                    <span className="font-medium">{template.name}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
           ))}
-        </ul>
+        </div>
       </div>
     </section>
   )
