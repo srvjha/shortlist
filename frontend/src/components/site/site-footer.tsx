@@ -1,6 +1,5 @@
 import { Link } from '@tanstack/react-router'
 import { Logo } from '@/components/brand/logo'
-import { Separator } from '@/components/ui/separator'
 import { site } from '@/lib/site'
 
 const columns = [
@@ -27,7 +26,6 @@ const columns = [
 export function SiteFooter() {
   return (
     <footer className="mt-24 bg-muted/40">
-      <Separator />
       <div className="mx-auto grid max-w-6xl gap-10 px-5 py-14 sm:grid-cols-[1.5fr_1fr_1fr]">
         <div className="flex flex-col gap-3">
           <Logo />
@@ -57,7 +55,7 @@ export function SiteFooter() {
           </div>
         ))}
       </div>
-      <div className="mx-auto max-w-6xl px-5 pb-10 text-xs text-muted-foreground">
+      <div className="mx-auto max-w-6xl px-5 pb-10 text-sm text-muted-foreground">
         <span suppressHydrationWarning>© {new Date().getFullYear()}</span>{' '}
         {site.name}. Made in India.
       </div>

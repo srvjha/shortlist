@@ -26,10 +26,10 @@ export function SiteHeader() {
   const [open, setOpen] = useState(false)
 
   return (
-    <header className="sticky top-0 z-40 border-b border-transparent bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/70">
+    <header className="sticky top-0 z-40 bg-background">
       <div className="mx-auto flex h-16 max-w-6xl items-center gap-6 px-5">
         <Logo />
-        <nav aria-label="Main" className="hidden items-center gap-1 md:flex">
+        <nav aria-label="Main" className="hidden items-center gap-1 lg:flex">
           {nav.map((item) => (
             <Button key={item.to} variant="ghost" asChild>
               <Link
@@ -65,7 +65,7 @@ export function SiteHeader() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="md:hidden"
+                className="lg:hidden"
                 aria-label="Open menu"
               >
                 <MenuIcon />
