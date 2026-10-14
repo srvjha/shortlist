@@ -371,7 +371,7 @@ export function Faq() {
         id="faq"
         index="06"
         label="FAQ"
-        title="Questions students ask us"
+        title="Questions people ask us"
       />
       <FaqList faqs={faqs} />
     </section>
