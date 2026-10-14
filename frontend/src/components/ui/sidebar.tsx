@@ -186,6 +186,11 @@ function Sidebar({
           data-slot="sidebar"
           data-mobile="true"
           className="w-(--sidebar-width) bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
+          // Tapping any link closes the drawer, including links in its menus: React clicks bubble out of portals.
+          onClick={(event) => {
+            if ((event.target as HTMLElement).closest('a[href]'))
+              setOpenMobile(false)
+          }}
           style={
             {
               '--sidebar-width': SIDEBAR_WIDTH_MOBILE,

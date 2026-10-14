@@ -71,7 +71,15 @@ export function SiteHeader() {
                 <MenuIcon />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-72">
+            {/* Tapping any link, the logo included, closes the menu. */}
+            <SheetContent
+              side="right"
+              className="w-72"
+              onClick={(event) => {
+                if ((event.target as HTMLElement).closest('a[href]'))
+                  setOpen(false)
+              }}
+            >
               <SheetHeader>
                 <SheetTitle className="sr-only">Menu</SheetTitle>
                 <Logo />
@@ -83,12 +91,11 @@ export function SiteHeader() {
                     variant="ghost"
                     className="justify-start"
                     asChild
-                    onClick={() => setOpen(false)}
                   >
                     <Link to={item.to}>{item.label}</Link>
                   </Button>
                 ))}
-                <Button className="mt-4" asChild onClick={() => setOpen(false)}>
+                <Button className="mt-4" asChild>
                   <Link to={session ? '/workspace' : '/login'}>
                     {session ? 'Open workspace' : 'Sign in'}
                   </Link>
