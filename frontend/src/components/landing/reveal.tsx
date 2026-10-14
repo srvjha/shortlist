@@ -1,4 +1,4 @@
-import { animate, inView, stagger } from 'motion'
+import { animate, inView } from 'motion'
 import { useReducedMotion } from 'motion/react'
 import { useEffect, useRef } from 'react'
 
@@ -31,17 +31,22 @@ export function Reveal({
       part.style.opacity = '0'
       part.style.transform = 'translateY(24px)'
     }
-    return inView(
-      root,
-      () => {
-        animate(
-          parts,
-          { opacity: 1, transform: 'translateY(0px)' },
-          { duration: 0.7, ease, delay: stagger(0.08) },
-        )
-      },
-      { amount: 0.15 },
+    // Each part is watched on its own, so a section taller than the screen still shows every part.
+    // Neighbours that arrive together are staggered by their order.
+    const stops = parts.map((part, index) =>
+      inView(
+        part,
+        () => {
+          animate(
+            part,
+            { opacity: 1, transform: 'translateY(0px)' },
+            { duration: 0.7, ease, delay: (index % 4) * 0.08 },
+          )
+        },
+        { amount: 0.1 },
+      ),
     )
+    return () => stops.forEach((stop) => stop())
   }, [reduceMotion])
 
   return (
