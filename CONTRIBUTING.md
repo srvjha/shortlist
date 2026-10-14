@@ -60,7 +60,8 @@ The full rules are in [CLAUDE.md](CLAUDE.md) and [AGENTS.md](AGENTS.md). The one
 
 Each template is one file in `backend/src/templates/` and is registered in `index.ts`. A new template needs:
 
-- a preview image in `frontend/public/templates/`,
+- a preview image in `frontend/public/templates/`, plus a small copy for the landing page grid in
+  `templates/thumbs/` (`cwebp -q 82 -resize 560 0 <id>.png -o thumbs/<id>.webp`),
 - an entry in `frontend/src/lib/templates.ts` and copy in `frontend/src/lib/template-pages.ts`,
 - passing tests in `backend/test/templates.test.ts`, which compile every template with full, empty and edge-case
   content.

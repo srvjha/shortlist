@@ -170,7 +170,7 @@ export function TemplateFinder() {
             >
               <div className="overflow-hidden bg-sheet">
                 <img
-                  src={`/templates/${template.id}.png`}
+                  src={`/templates/thumbs/${template.id}.webp`}
                   alt={`${template.name} template preview`}
                   width={1020}
                   height={1320}
