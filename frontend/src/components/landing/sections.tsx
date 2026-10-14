@@ -15,20 +15,32 @@ import { templateCatalog } from '@/lib/templates'
 
 function SectionHeading({
   id,
+  index,
+  label,
   title,
   children,
 }: {
-  id?: string
+  id: string
+  index: string
+  label: string
   title: string
   children?: React.ReactNode
 }) {
   return (
     <div className="max-w-2xl">
-      <h2 id={id} className="text-3xl font-semibold tracking-tight sm:text-4xl">
+      <p className="flex items-center gap-3 font-mono text-xs tracking-[0.14em] text-muted-foreground uppercase">
+        <span className="text-primary">{index}</span>
+        <span aria-hidden="true" className="h-px w-8 bg-foreground/25" />
+        {label}
+      </p>
+      <h2
+        id={id}
+        className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl"
+      >
         {title}
       </h2>
       {children && (
-        <p className="mt-3 text-lg text-muted-foreground">{children}</p>
+        <p className="mt-4 text-lg text-muted-foreground">{children}</p>
       )}
     </div>
   )
@@ -61,6 +73,8 @@ export function HowItWorks() {
     >
       <SectionHeading
         id="how-it-works"
+        index="01"
+        label="How it works"
         title="From job post to tailored resume in about a minute"
       />
       <ol className="mt-12 grid gap-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
@@ -86,18 +100,17 @@ export function EditModes() {
     <section aria-labelledby="edit-modes" className="bg-muted/50 py-24">
       <div className="mx-auto grid max-w-6xl items-center gap-12 px-5 lg:grid-cols-2">
         <div>
-          <h2
+          <SectionHeading
             id="edit-modes"
-            className="text-3xl font-semibold tracking-tight sm:text-4xl"
+            index="02"
+            label="Two ways to edit"
+            title="Fill in a form, or write the LaTeX yourself"
           >
-            Fill in a form, or write the LaTeX yourself
-          </h2>
-          <p className="mt-4 text-lg text-muted-foreground">
             Most people use the form: type your experience, pick a template, and
             the layout takes care of itself. If you already have a resume on
             Overleaf, paste the .tex file and keep editing it here, with a live
             preview next to your code.
-          </p>
+          </SectionHeading>
           <ul className="mt-6 flex flex-col gap-3">
             {[
               'Your Overleaf file compiles as it is, no changes needed',
@@ -182,18 +195,17 @@ export function HonestAi() {
         </div>
       </div>
       <div className="order-1 lg:order-2">
-        <h2
+        <SectionHeading
           id="honest-ai"
-          className="text-3xl font-semibold tracking-tight sm:text-4xl"
+          index="03"
+          label="Honest AI"
+          title="The AI rewrites. It doesn't make things up."
         >
-          The AI rewrites. It doesn't make things up.
-        </h2>
-        <p className="mt-4 text-lg text-muted-foreground">
           Every suggestion is checked against what you have told us. If a
           rewrite mentions a tool, number or company that isn't in your profile,
           it's flagged and never applied unless you confirm it's true. You stay
           the author of your resume.
-        </p>
+        </SectionHeading>
       </div>
     </section>
   )
@@ -204,18 +216,15 @@ export function TemplatesShowcase() {
     <section aria-labelledby="templates" className="bg-muted/50 py-24">
       <div className="mx-auto max-w-6xl px-5">
         <div className="flex flex-wrap items-end justify-between gap-4">
-          <div className="max-w-2xl">
-            <h2
-              id="templates"
-              className="text-3xl font-semibold tracking-tight sm:text-4xl"
-            >
-              Templates recruiters in your field already expect
-            </h2>
-            <p className="mt-3 text-lg text-muted-foreground">
-              Single column, clean type, and text an applicant tracking system
-              can read.
-            </p>
-          </div>
+          <SectionHeading
+            id="templates"
+            index="04"
+            label="Templates"
+            title="Templates recruiters in your field already expect"
+          >
+            Single column, clean type, and text an applicant tracking system can
+            read.
+          </SectionHeading>
           <Button variant="outline" asChild>
             <Link to="/templates">View all templates</Link>
           </Button>
@@ -253,17 +262,16 @@ export function ShareSection() {
       className="mx-auto grid max-w-6xl items-center gap-12 px-5 py-24 lg:grid-cols-2"
     >
       <div>
-        <h2
+        <SectionHeading
           id="share"
-          className="text-3xl font-semibold tracking-tight sm:text-4xl"
+          index="05"
+          label="Sharing"
+          title="Share a link, not an attachment"
         >
-          Share a link, not an attachment
-        </h2>
-        <p className="mt-4 text-lg text-muted-foreground">
           Every version gets its own link. Update your resume and the link
           updates too, or pin it to the exact version you sent. You can see when
           it was opened.
-        </p>
+        </SectionHeading>
       </div>
       <div className="flex flex-col gap-3 rounded-lg border bg-card p-5">
         <div className="flex min-w-0 items-center gap-2 rounded-md bg-muted px-3 py-2.5 font-mono text-sm break-all">
@@ -324,12 +332,12 @@ export function Faq() {
       aria-labelledby="faq"
       className="mx-auto grid max-w-6xl gap-10 px-5 py-24 lg:grid-cols-[1fr_1.4fr]"
     >
-      <h2
+      <SectionHeading
         id="faq"
-        className="text-3xl font-semibold tracking-tight sm:text-4xl"
-      >
-        Questions students ask us
-      </h2>
+        index="06"
+        label="FAQ"
+        title="Questions students ask us"
+      />
       <FaqList faqs={faqs} />
     </section>
   )
