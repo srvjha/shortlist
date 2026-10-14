@@ -8,10 +8,10 @@ import {
   Section,
   Stat,
   StatGrid,
+  TrendChart,
 } from '@/components/admin/admin-ui'
 import { BreakdownList } from '@/components/analytics/breakdown-list'
 import { referrerLabel } from '@/components/analytics/labels'
-import { ViewsChart } from '@/components/analytics/views-chart'
 import {
   Alert,
   AlertAction,
@@ -203,8 +203,9 @@ function TrafficReport({ data }: { data: TrafficData }) {
           </ToggleGroup>
         }
       >
-        <ViewsChart
-          data={data.byDay.map((day) => ({ day: day.day, views: day[series] }))}
+        <TrendChart
+          data={data.byDay.map((day) => ({ day: day.day, value: day[series] }))}
+          color={series === 'visitors' ? 'var(--viz-1)' : 'var(--viz-2)'}
           unit={
             series === 'visitors' ? ['visitor', 'visitors'] : ['view', 'views']
           }
@@ -214,6 +215,7 @@ function TrafficReport({ data }: { data: TrafficData }) {
       <div className="grid gap-10 md:grid-cols-2">
         <BreakdownList
           title="Top pages"
+          color="var(--viz-1)"
           rows={data.pages.map((row) => ({
             label: row.label,
             views: row.count,
@@ -222,6 +224,7 @@ function TrafficReport({ data }: { data: TrafficData }) {
         />
         <BreakdownList
           title="Where visitors came from"
+          color="var(--viz-2)"
           rows={data.referrers.map((row) => ({
             label: referrerLabel(
               row.label === '$direct' ? 'direct' : row.label,
@@ -281,6 +284,7 @@ function TrafficReport({ data }: { data: TrafficData }) {
       <div className="grid gap-10 md:grid-cols-3">
         <BreakdownList
           title="Countries"
+          color="var(--viz-3)"
           rows={data.countries.map((row) => ({
             label: row.label,
             views: row.count,
@@ -289,6 +293,7 @@ function TrafficReport({ data }: { data: TrafficData }) {
         />
         <BreakdownList
           title="Devices"
+          color="var(--viz-5)"
           rows={data.devices.map((row) => ({
             label: row.label,
             views: row.count,
@@ -297,6 +302,7 @@ function TrafficReport({ data }: { data: TrafficData }) {
         />
         <BreakdownList
           title="Browsers"
+          color="var(--viz-4)"
           rows={data.browsers.map((row) => ({
             label: row.label,
             views: row.count,

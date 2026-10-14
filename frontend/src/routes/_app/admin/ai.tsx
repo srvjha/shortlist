@@ -9,8 +9,9 @@ import {
   StatGrid,
   stepLabel,
   displayName,
+  TrendChart,
+  seriesColor,
 } from '@/components/admin/admin-ui'
-import { ViewsChart } from '@/components/analytics/views-chart'
 import {
   Table,
   TableBody,
@@ -101,11 +102,12 @@ function AiReport({ data }: { data: AdminAi }) {
           </ToggleGroup>
         }
       >
-        <ViewsChart
+        <TrendChart
           data={data.byDay.map((day) => ({
             day: day.day,
-            views: series === 'runs' ? day.runs : day.costUsdMicros,
+            value: series === 'runs' ? day.runs : day.costUsdMicros,
           }))}
+          color={seriesColor.ai}
           unit={series === 'runs' ? ['run', 'runs'] : ['spent', 'spent']}
           format={series === 'runs' ? formatNumber : formatUsd}
         />

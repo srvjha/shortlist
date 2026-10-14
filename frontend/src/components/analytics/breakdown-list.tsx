@@ -3,11 +3,13 @@ export function BreakdownList({
   rows,
   label = (value) => value,
   empty = 'No views yet',
+  color = 'var(--primary)',
 }: {
   title: string
   rows: { label: string; views: number }[]
   label?: (value: string) => string
   empty?: string
+  color?: string
 }) {
   const total = rows.reduce((sum, row) => sum + row.views, 0)
   const max = Math.max(1, ...rows.map((row) => row.views))
@@ -32,8 +34,11 @@ export function BreakdownList({
               </div>
               <span className="h-1.5 overflow-hidden rounded-full bg-muted">
                 <span
-                  className="block h-full rounded-full bg-primary"
-                  style={{ width: `${(row.views / max) * 100}%` }}
+                  className="block h-full rounded-full"
+                  style={{
+                    width: `${(row.views / max) * 100}%`,
+                    backgroundColor: color,
+                  }}
                 />
               </span>
             </li>

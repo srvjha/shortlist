@@ -1,9 +1,10 @@
 import type { UseQueryResult } from '@tanstack/react-query'
 import { CheckIcon, CopyIcon } from 'lucide-react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { toast } from 'sonner'
 import { Change } from '@/components/analytics/change'
+import { formatDay, niceMax } from '@/components/analytics/views-chart'
 import {
   Alert,
   AlertAction,
@@ -138,7 +139,7 @@ export function Section({
   )
 }
 
-// Each step as a share of the first, so drop-off between steps is visible.
+// Each step as a share of the first, so drop-off between steps is visible. Later steps fade, as the stages are ordered.
 export function Funnel({
   steps,
 }: {
@@ -146,11 +147,11 @@ export function Funnel({
 }) {
   const first = steps[0]?.count ?? 0
   return (
-    <ol className="flex flex-col gap-3">
+    <ol className="flex flex-col gap-4">
       {steps.map((step, index) => (
         <li key={step.label} className="flex flex-col gap-1.5">
           <div className="flex items-baseline justify-between gap-3 text-sm">
-            <span>
+            <span className="min-w-0 truncate">
               <span className="mr-2 text-muted-foreground tabular-nums">
                 {index + 1}.
               </span>
@@ -163,15 +164,385 @@ export function Funnel({
               </span>
             </span>
           </div>
-          <span className="h-2 overflow-hidden rounded-full bg-muted">
+          <span className="h-2.5 overflow-hidden rounded-full bg-muted">
             <span
-              className="block h-full rounded-full bg-primary"
-              style={{ width: first ? `${(step.count / first) * 100}%` : 0 }}
+              className="block h-full rounded-full transition-[width] duration-500"
+              style={{
+                width: first ? `${(step.count / first) * 100}%` : 0,
+                backgroundColor: `color-mix(in oklab, var(--viz-1) ${Math.max(40, 100 - index * 12)}%, var(--card))`,
+              }}
             />
           </span>
+          {index > 0 && (
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {percent(step.count, steps[index - 1].count)} of the step before
+            </span>
+          )}
         </li>
       ))}
     </ol>
+  )
+}
+
+// Fixed colours per series, so a metric keeps its colour on every chart and page.
+export const seriesColor = {
+  signups: 'var(--viz-1)',
+  views: 'var(--viz-2)',
+  resumes: 'var(--viz-3)',
+  revenue: 'var(--viz-4)',
+  ai: 'var(--viz-5)',
+} as const
+
+export function Swatch({ color }: { color: string }) {
+  return (
+    <span
+      aria-hidden
+      className="size-2.5 shrink-0 rounded-full"
+      style={{ backgroundColor: color }}
+    />
+  )
+}
+
+// A daily series as a line over a soft fill, with a crosshair on hover or arrow keys.
+export function TrendChart({
+  data,
+  color,
+  unit,
+  format = formatNumber,
+}: {
+  data: { day: string; value: number }[]
+  color: string
+  // Singular and plural name of what is counted.
+  unit: [string, string]
+  format?: (value: number) => string
+}) {
+  const id = useId()
+  const [active, setActive] = useState<number | null>(null)
+  const top = niceMax(Math.max(...data.map((d) => d.value)))
+  const last = data.length - 1
+  const x = (i: number) => (i / Math.max(1, last)) * 100
+  const y = (v: number) => 100 - (v / top) * 100
+  const line = `M${data.map((d, i) => `${x(i).toFixed(2)},${y(d.value).toFixed(2)}`).join(' L')}`
+  const labelIndexes = [
+    ...new Set([0, 1, 2, 3].map((i) => Math.round((i * last) / 3))),
+  ]
+  const point = active === null ? null : data[active]
+  const total = data.reduce((sum, d) => sum + d.value, 0)
+
+  return (
+    <figure className="flex flex-col gap-2" style={{ color }}>
+      <div className="flex gap-3">
+        <div
+          aria-hidden
+          className="flex h-52 flex-col justify-between text-right text-xs text-muted-foreground tabular-nums"
+        >
+          {[top, top / 2, 0].map((tick) => (
+            <span key={tick} className="-my-2 leading-4">
+              {format(tick)}
+            </span>
+          ))}
+        </div>
+        <div
+          role="img"
+          tabIndex={0}
+          aria-label={`${unit[1]} per day, ${data.length} days, ${format(total)} in total. Use the arrow keys to read each day.`}
+          className="relative h-52 flex-1 touch-pan-y rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 focus-visible:ring-offset-card"
+          onPointerMove={(event) => {
+            const rect = event.currentTarget.getBoundingClientRect()
+            const i = Math.round(
+              ((event.clientX - rect.left) / rect.width) * last,
+            )
+            setActive(Math.min(last, Math.max(0, i)))
+          }}
+          onPointerLeave={() => setActive(null)}
+          onFocus={() => setActive((i) => i ?? last)}
+          onBlur={() => setActive(null)}
+          onKeyDown={(event) => {
+            const step = { ArrowLeft: -1, ArrowRight: 1 }[event.key]
+            if (event.key === 'Home') setActive(0)
+            else if (event.key === 'End') setActive(last)
+            else if (step)
+              setActive((i) => Math.min(last, Math.max(0, (i ?? last) + step)))
+            else return
+            event.preventDefault()
+          }}
+        >
+          <div
+            aria-hidden
+            className="absolute inset-0 flex flex-col justify-between"
+          >
+            {[0, 1, 2].map((tick) => (
+              <span key={tick} className="h-px bg-border" />
+            ))}
+          </div>
+          <svg
+            viewBox="0 0 100 100"
+            preserveAspectRatio="none"
+            aria-hidden
+            className="absolute inset-0 size-full overflow-visible"
+          >
+            <defs>
+              <linearGradient id={id} x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0" stopColor="currentColor" stopOpacity="0.22" />
+                <stop offset="1" stopColor="currentColor" stopOpacity="0.02" />
+              </linearGradient>
+            </defs>
+            <path d={`${line} L100,100 L0,100 Z`} fill={`url(#${id})`} />
+            <path
+              d={line}
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinejoin="round"
+              strokeLinecap="round"
+              vectorEffect="non-scaling-stroke"
+            />
+          </svg>
+          {point && active !== null && (
+            <div aria-hidden className="pointer-events-none absolute inset-0">
+              <span
+                className="absolute inset-y-0 w-px bg-foreground/25"
+                style={{ left: `${x(active)}%` }}
+              />
+              <span
+                className="absolute size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-current ring-2 ring-card"
+                style={{ left: `${x(active)}%`, top: `${y(point.value)}%` }}
+              />
+              <span
+                className={cn(
+                  'absolute -top-2 z-10 rounded-md border bg-popover px-2 py-1 text-xs whitespace-nowrap text-popover-foreground shadow-md',
+                  active < last * 0.2
+                    ? ''
+                    : active > last * 0.8
+                      ? '-translate-x-full'
+                      : '-translate-x-1/2',
+                )}
+                style={{ left: `${x(active)}%` }}
+              >
+                <span className="font-medium">{formatDay(point.day)}</span>
+                <span className="text-muted-foreground">
+                  , {format(point.value)}{' '}
+                  {point.value === 1 ? unit[0] : unit[1]}
+                </span>
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+      <div aria-hidden className="flex gap-3 text-xs text-muted-foreground">
+        <span className="invisible tabular-nums">{format(top)}</span>
+        <div className="relative h-4 flex-1">
+          {labelIndexes.map((index) => (
+            <span
+              key={index}
+              className={cn(
+                'absolute whitespace-nowrap',
+                index === 0
+                  ? 'left-0'
+                  : index === last
+                    ? 'right-0'
+                    : '-translate-x-1/2',
+              )}
+              style={
+                index === 0 || index === last
+                  ? undefined
+                  : { left: `${x(index)}%` }
+              }
+            >
+              {formatDay(data[index].day)}
+            </span>
+          ))}
+        </div>
+      </div>
+      <span aria-live="polite" className="sr-only">
+        {point &&
+          `${formatDay(point.day)}, ${format(point.value)} ${point.value === 1 ? unit[0] : unit[1]}`}
+      </span>
+      <table className="sr-only">
+        <caption>{unit[1]} per day</caption>
+        <thead>
+          <tr>
+            <th scope="col">Day</th>
+            <th scope="col">{unit[1]}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.map((d) => (
+            <tr key={d.day}>
+              <td>{formatDay(d.day)}</td>
+              <td>{format(d.value)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </figure>
+  )
+}
+
+type Part = { label: string; value: number; color: string }
+
+function Legend({
+  parts,
+  total,
+  active,
+  onActive,
+}: {
+  parts: Part[]
+  total: number
+  active?: string | null
+  onActive?: (label: string | null) => void
+}) {
+  return (
+    <ul className="flex flex-col gap-2 text-sm">
+      {parts.map((part) => (
+        <li
+          key={part.label}
+          className={cn(
+            'flex items-center gap-2 transition-opacity',
+            active && active !== part.label && 'opacity-50',
+          )}
+          onPointerEnter={() => onActive?.(part.label)}
+          onPointerLeave={() => onActive?.(null)}
+        >
+          <Swatch color={part.color} />
+          <span className="min-w-0 flex-1 truncate">{part.label}</span>
+          <span className="shrink-0 tabular-nums">
+            {formatNumber(part.value)}
+            <span className="ml-1.5 inline-block w-9 text-right text-xs text-muted-foreground">
+              {percent(part.value, total)}
+            </span>
+          </span>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+// Part-to-whole as one bar split by a 2px gap.
+export function ShareBar({ parts }: { parts: Part[] }) {
+  const shown = parts.filter((part) => part.value > 0)
+  const total = shown.reduce((sum, part) => sum + part.value, 0)
+  if (total === 0) return <EmptyNote>No users yet.</EmptyNote>
+  return (
+    <div className="flex min-w-0 flex-1 flex-col gap-3 md:flex-row md:items-center md:gap-6">
+      <div
+        aria-hidden
+        className="flex h-2.5 w-full min-w-0 gap-0.5 overflow-hidden rounded-full md:flex-1"
+      >
+        {shown.map((part) => (
+          <span
+            key={part.label}
+            className="h-full min-w-1"
+            style={{ flexGrow: part.value, backgroundColor: part.color }}
+          />
+        ))}
+      </div>
+      <ul className="flex shrink-0 flex-wrap gap-x-5 gap-y-1 text-sm">
+        {shown.map((part) => (
+          <li key={part.label} className="flex items-center gap-2">
+            <Swatch color={part.color} />
+            {part.label}
+            <span className="font-medium tabular-nums">
+              {formatNumber(part.value)}
+            </span>
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {percent(part.value, total)}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+// Part-to-whole as a ring, for a few parts; the centre names the hovered part.
+export function RingChart({
+  parts,
+  unit,
+}: {
+  parts: Part[]
+  unit: [string, string]
+}) {
+  const [active, setActive] = useState<string | null>(null)
+  const shown = parts.filter((part) => part.value > 0)
+  const total = shown.reduce((sum, part) => sum + part.value, 0)
+  if (total === 0) return <EmptyNote>No users yet.</EmptyNote>
+  // The ring's circumference is 100, so dash lengths are percentages.
+  const gap = shown.length > 1 ? 1.5 : 0
+  let start = 0
+  const focus = shown.find((part) => part.label === active)
+  const centre = focus?.value ?? total
+  return (
+    <div className="my-auto flex flex-col items-center gap-6 min-[420px]:flex-row">
+      <div className="relative size-40 shrink-0">
+        <svg viewBox="0 0 42 42" aria-hidden className="size-full -rotate-90">
+          <circle
+            cx="21"
+            cy="21"
+            r="15.915"
+            fill="none"
+            strokeWidth="5"
+            className="stroke-muted"
+          />
+          {shown.map((part) => {
+            const size = (part.value / total) * 100
+            const offset = -start
+            start += size
+            return (
+              <circle
+                key={part.label}
+                cx="21"
+                cy="21"
+                r="15.915"
+                fill="none"
+                strokeWidth={active === part.label ? 6 : 5}
+                stroke={part.color}
+                strokeDasharray={`${Math.max(0.5, size - gap)} ${100 - size + gap}`}
+                strokeDashoffset={offset}
+                className={cn(
+                  'transition-[opacity,stroke-width] duration-200',
+                  active && active !== part.label && 'opacity-35',
+                )}
+                onPointerEnter={() => setActive(part.label)}
+                onPointerLeave={() => setActive(null)}
+              />
+            )
+          })}
+        </svg>
+        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
+          <span className="font-serif text-2xl">{formatNumber(centre)}</span>
+          <span className="max-w-24 truncate text-xs text-muted-foreground">
+            {focus ? focus.label : centre === 1 ? unit[0] : unit[1]}
+          </span>
+        </div>
+      </div>
+      <div className="w-full min-w-0 flex-1">
+        <Legend
+          parts={shown}
+          total={total}
+          active={active}
+          onActive={setActive}
+        />
+      </div>
+    </div>
+  )
+}
+
+// A ratio against its limit; the caller picks a fill that says how good or bad it is.
+export function Meter({ value, color }: { value: number; color: string }) {
+  return (
+    <span
+      aria-hidden
+      className="block h-1.5 w-full overflow-hidden rounded-full bg-muted"
+    >
+      <span
+        className="block h-full rounded-full"
+        style={{
+          width: `${Math.min(100, Math.max(0, value * 100))}%`,
+          backgroundColor: color,
+        }}
+      />
+    </span>
   )
 }
 
