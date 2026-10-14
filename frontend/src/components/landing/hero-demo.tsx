@@ -120,9 +120,9 @@ const sectionRule =
 
 // One tick streams one word; a hidden bullet takes a few ticks so its strike lands like a beat.
 const hidePause = 3
-const tickMs = 75
+const tickMs = 60
 // How long a finished resume stays before the headline moves to the next job.
-const holdMs = 1800
+const holdMs = 1200
 
 // Splits a rewrite into words, bolding what sits between *stars*.
 const wordsOf = (text: string) =>
@@ -216,8 +216,8 @@ function Redline({ word }: { word: string }) {
         key={word}
         className="relative inline-block whitespace-nowrap"
         initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: '0.25em' }}
-        animate={{ opacity: 1, y: 0, transition: { duration: 0.5, ease } }}
-        exit={{ opacity: 0, transition: { delay: 0.22, duration: 0.15 } }}
+        animate={{ opacity: 1, y: 0, transition: { duration: 0.25, ease } }}
+        exit={{ opacity: 0, transition: { delay: 0.12, duration: 0.1 } }}
       >
         <motion.span
           aria-hidden="true"
@@ -225,7 +225,7 @@ function Redline({ word }: { word: string }) {
           initial={{ scaleX: 0 }}
           animate={{
             scaleX: 1,
-            transition: { delay: 0.2, duration: 0.45, ease },
+            transition: { delay: 0.05, duration: 0.3, ease },
           }}
           exit={{ scaleX: 1 }}
         />
@@ -237,7 +237,7 @@ function Redline({ word }: { word: string }) {
           animate={{ scaleX: 0 }}
           exit={{
             scaleX: reduceMotion ? 0 : 1,
-            transition: { duration: 0.2, ease },
+            transition: { duration: 0.12, ease },
           }}
         />
       </motion.span>
