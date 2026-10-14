@@ -7,6 +7,12 @@
       "skillPath": "skills/better-ui/SKILL.md",
       "computedHash": "6f69968c0d1ed034753d64aa22f2bf4332f1471164f110db720d05faf76c3551"
     },
+    "design-taste-frontend": {
+      "source": "leonxlnx/taste-skill",
+      "sourceType": "github",
+      "skillPath": "skills/taste-skill/SKILL.md",
+      "computedHash": "18f81679d2b0247ce9da298b03ed8e47ecd3c206f2951d70eefb1b65d3219345"
+    },
     "find-skills": {
       "source": "vercel-labs/skills",
       "sourceType": "github",
