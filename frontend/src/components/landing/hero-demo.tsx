@@ -7,13 +7,14 @@ import {
   useScroll,
   useTransform,
 } from 'motion/react'
-import { Fragment, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ease } from '@/components/landing/reveal'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
-// The hero's live moment: the headline names a company, and the resume below is rewritten for that job,
-// typed out the way the AI streams it, with each change the visitor's to keep or skip.
+// The hero's live moment: the headline names a job, and the resume below is rewritten for it,
+// streamed word by word the way the AI answers, with each change the visitor's to keep or skip.
+// Jobs are described, never tied to a named employer.
 
 // In `after`, *stars* mark the words the job asked for.
 const demos = [
@@ -26,7 +27,7 @@ const demos = [
     role: 'Software Engineering Intern',
     job: {
       title: 'Backend Engineer',
-      company: 'Swiggy',
+      where: 'Food delivery app, Bengaluru',
       asks: ['Go', 'PostgreSQL', 'APIs', 'Kafka'],
       missing: ['Kafka'],
     },
@@ -58,7 +59,7 @@ const demos = [
     role: 'Audit Associate',
     job: {
       title: 'Financial Analyst',
-      company: 'HDFC Bank',
+      where: 'Private bank, Mumbai',
       asks: ['Excel', 'Financial modelling', 'Valuation', 'Due diligence'],
       missing: ['Due diligence'],
     },
@@ -87,8 +88,8 @@ const demos = [
     dates: 'Jun 2023 – Present',
     role: 'Marketing Associate',
     job: {
-      title: 'Growth Marketing Manager',
-      company: 'Nykaa',
+      title: 'Growth Marketer',
+      where: 'Beauty e-commerce, Mumbai',
       asks: ['SEO', 'Performance marketing', 'GA4', 'Revenue growth'],
       missing: ['Revenue growth'],
     },
@@ -117,34 +118,52 @@ type Demo = (typeof demos)[number]
 const sectionRule =
   'border-b border-neutral-800 pb-0.5 font-serif text-sm font-semibold [font-variant-caps:small-caps]' // taste-skill-ignore: the resume's own section rule, as typeset
 
-// A hidden bullet takes this many ticks, so its strike lands like a beat in the typing.
-const hidePause = 14
-const tickMs = 14
-// How long a finished resume stays before the headline moves to the next company.
-const holdMs = 1600
+// One tick streams one word; a hidden bullet takes a few ticks so its strike lands like a beat.
+const hidePause = 3
+const tickMs = 75
+// How long a finished resume stays before the headline moves to the next job.
+const holdMs = 1800
+
+// Splits a rewrite into words, bolding what sits between *stars*.
+const wordsOf = (text: string) =>
+  text.split('*').flatMap((part, index) =>
+    part
+      .split(/(?<=\s)/)
+      .filter(Boolean)
+      .map((word) => ({ word, bold: index % 2 === 1 })),
+  )
 
 const spans = (demo: Demo) => {
   let start = 0
   return demo.bullets.map((bullet) => {
-    const length = bullet.after?.length ?? hidePause
+    const length = bullet.after ? wordsOf(bullet.after).length : hidePause
     const span = { start, length }
     start += length
     return span
   })
 }
 
-// The typed part of a rewrite, with what sits between *stars* in bold.
-function Typed({ text, upTo }: { text: string; upTo: number }) {
-  return text
+// The streamed part of a rewrite: each word arrives out of a soft blur.
+function Streamed({ text, upTo }: { text: string; upTo: number }) {
+  const reduceMotion = useReducedMotion()
+  return wordsOf(text)
     .slice(0, upTo)
-    .split('*')
-    .map((part, index) =>
-      index % 2 ? (
-        <b key={index}>{part}</b>
-      ) : (
-        <Fragment key={index}>{part}</Fragment>
-      ),
-    )
+    .map(({ word, bold }, index) => {
+      const Tag = bold ? motion.b : motion.span
+      return (
+        <Tag
+          key={index}
+          className="whitespace-pre-wrap"
+          initial={
+            reduceMotion ? false : { opacity: 0, filter: 'blur(6px)', y: 3 }
+          }
+          animate={{ opacity: 1, filter: 'blur(0px)', y: 0 }}
+          transition={{ duration: 0.35, ease }}
+        >
+          {word}
+        </Tag>
+      )
+    })
 }
 
 function Choice({
@@ -187,28 +206,42 @@ function TypingDots() {
   )
 }
 
-// Each letter rises out of the line in turn; the old word leaves upwards the same way.
-function RisingWord({ word }: { word: string }) {
+// The headline edits itself the way the product edits a resume: a red line strikes the old job out,
+// then the new one slides in and the highlighter marks it.
+function Redline({ word }: { word: string }) {
   const reduceMotion = useReducedMotion()
   return (
-    <span className="inline-block overflow-hidden pb-[0.12em] align-bottom">
-      <AnimatePresence mode="wait" initial={false}>
-        <motion.span key={word} className="inline-block whitespace-nowrap">
-          {[...word].map((letter, index) => (
-            <motion.span
-              key={index}
-              className="inline-block whitespace-pre"
-              initial={reduceMotion ? { opacity: 0 } : { y: '110%' }}
-              animate={reduceMotion ? { opacity: 1 } : { y: 0 }}
-              exit={reduceMotion ? { opacity: 0 } : { y: '-110%' }}
-              transition={{ duration: 0.5, ease, delay: index * 0.035 }}
-            >
-              {letter}
-            </motion.span>
-          ))}
-        </motion.span>
-      </AnimatePresence>
-    </span>
+    <AnimatePresence mode="wait" initial={false}>
+      <motion.span
+        key={word}
+        className="relative inline-block whitespace-nowrap"
+        initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: '0.25em' }}
+        animate={{ opacity: 1, y: 0, transition: { duration: 0.5, ease } }}
+        exit={{ opacity: 0, transition: { delay: 0.45, duration: 0.25 } }}
+      >
+        <motion.span
+          aria-hidden="true"
+          className="absolute inset-x-0 bottom-[0.1em] -z-10 h-[0.28em] origin-left bg-highlight/80 dark:bg-primary/40"
+          initial={{ scaleX: 0 }}
+          animate={{
+            scaleX: 1,
+            transition: { delay: 0.35, duration: 0.6, ease },
+          }}
+          exit={{ scaleX: 1 }}
+        />
+        {word}
+        <motion.span
+          aria-hidden="true"
+          className="absolute inset-x-[-0.05em] top-[55%] h-[0.07em] origin-left rounded-full bg-destructive dark:bg-muted-foreground"
+          initial={{ scaleX: 0 }}
+          animate={{ scaleX: 0 }}
+          exit={{
+            scaleX: reduceMotion ? 0 : 1,
+            transition: { duration: 0.4, ease },
+          }}
+        />
+      </motion.span>
+    </AnimatePresence>
   )
 }
 
@@ -238,7 +271,7 @@ export function Hero() {
     return () => clearInterval(timer)
   }, [reduceMotion, run, index, total])
 
-  // Until the visitor takes over, the headline moves on to the next company.
+  // Until the visitor takes over, the headline moves on to the next job.
   useEffect(() => {
     if (!done || picked || reduceMotion) return
     const timer = setTimeout(
@@ -266,16 +299,14 @@ export function Hero() {
 
   return (
     <section className="px-5 pt-16 pb-12 text-center sm:pt-24">
-      {/* The label keeps one steady name for the page while the company in the line keeps changing. */}
+      {/* The label keeps one steady name for the page while the job in the line keeps changing. */}
       <h1
         aria-label="Your resume, rewritten for every job"
-        className="mx-auto font-serif text-[2.6rem] leading-[1.02] font-semibold tracking-[-0.035em] sm:text-7xl lg:text-[8rem] xl:text-[9.5rem]"
+        className="isolate mx-auto font-serif text-[2.4rem] leading-[1.04] font-semibold tracking-[-0.035em] sm:text-6xl lg:text-[5.5rem] xl:text-[6.5rem]"
       >
-        Your resume for
+        Your resume, rewritten for
         <br />
-        <span className="text-primary">
-          <RisingWord word={demo.job.company} />
-        </span>
+        <Redline word={demo.job.title} />
       </h1>
       <p className="mx-auto mt-8 max-w-2xl text-lg sm:text-xl">
         Paste a job description and get your resume rewritten for it in under a
@@ -330,7 +361,7 @@ export function Hero() {
             <p className="mt-1 font-serif text-2xl leading-tight font-semibold">
               {demo.job.title}
             </p>
-            <p className="text-base">{demo.job.company}</p>
+            <p className="text-base">{demo.job.where}</p>
           </div>
           <div>
             <p className="text-sm text-muted-foreground">
@@ -364,7 +395,7 @@ export function Hero() {
         </aside>
 
         <motion.figure
-          aria-label={`${demo.name}'s resume, tailored for ${demo.job.title} at ${demo.job.company}`}
+          aria-label={`${demo.name}'s resume, tailored for a ${demo.job.title} role`}
           style={{ scale: reduceMotion ? 1 : scale }}
           className="origin-top bg-sheet px-6 pt-10 pb-8 text-left text-sheet-foreground ring-1 ring-black/5 sm:px-12"
         >
@@ -400,14 +431,8 @@ export function Hero() {
                     )}
                   >
                     {rewriting && bullet.after ? (
-                      <span className="box-decoration-clone rounded-[2px] bg-highlight/80 px-0.5">
-                        <Typed text={bullet.after} upTo={typed(i)} />
-                        {!finished(i) && (
-                          <span
-                            aria-hidden="true"
-                            className="ml-px inline-block h-[1em] w-[2px] translate-y-[2px] bg-sheet-foreground"
-                          />
-                        )}
+                      <span className="box-decoration-clone rounded-[2px] bg-highlight/80 px-0.5 dark:bg-highlight/50">
+                        <Streamed text={bullet.after} upTo={typed(i)} />
                       </span>
                     ) : (
                       bullet.before
@@ -496,7 +521,7 @@ export function Hero() {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.35, ease }}
-                  className="rounded-xl bg-destructive/10 px-3 py-2.5 text-destructive"
+                  className="rounded-xl bg-destructive/10 px-3 py-2.5 text-destructive dark:bg-secondary dark:text-muted-foreground"
                 >
                   Not applied: “{demo.refused.text}”. It mentions{' '}
                   {demo.refused.missing}, which aren’t in your profile.

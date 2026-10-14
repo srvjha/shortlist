@@ -304,16 +304,18 @@ function StageFragment({ index }: { index: number }) {
           </p>
           <p className="mt-1 text-base">
             Built the merchant payouts service in{' '}
-            <span className="rounded-[2px] bg-highlight/70 px-0.5">Go</span>,
-            handling 2M requests a day
+            <span className="rounded-[2px] bg-highlight/70 px-0.5 dark:bg-primary/30">
+              Go
+            </span>
+            , handling 2M requests a day
           </p>
           <p className="mt-2 font-medium text-success">Accepted</p>
         </div>
-        <div className="rounded-xl border border-destructive/40 bg-card p-4">
+        <div className="rounded-xl border border-destructive/40 bg-card p-4 dark:border-border">
           <p className="text-base">
             Scaled Kafka pipelines to 10M events a day
           </p>
-          <p className="mt-2 text-destructive">
+          <p className="mt-2 text-destructive dark:text-muted-foreground">
             Not applied. Not found in your profile: Kafka, 10M.
           </p>
         </div>
