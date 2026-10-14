@@ -519,7 +519,7 @@ export function Faq() {
             key={faq.q}
             name={name}
             data-reveal
-            className="group rounded-2xl bg-card transition-colors open:bg-primary open:text-primary-foreground"
+            className="group details-smooth rounded-2xl bg-card transition-colors duration-300 open:bg-primary open:text-primary-foreground"
           >
             <summary className="flex min-h-18 cursor-pointer list-none items-center justify-between gap-4 px-6 py-4 text-lg font-medium focus-visible:outline-2 focus-visible:outline-offset-2 [&::-webkit-details-marker]:hidden">
               {faq.q}

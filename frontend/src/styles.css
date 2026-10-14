@@ -144,13 +144,6 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-
-  --animate-marquee: marquee 70s linear infinite;
-  @keyframes marquee {
-    to {
-      transform: translateX(-50%);
-    }
-  }
 }
 
 @layer base {
@@ -274,19 +267,22 @@
   }
 }
 
-/* Fades content up as it scrolls into view. Browsers without scroll timelines show it as is. */
-@utility reveal {
-  @media (prefers-reduced-motion: no-preference) {
-    @supports (animation-timeline: view()) {
-      animation: reveal linear both;
-      animation-timeline: view();
-      animation-range: entry 0% entry 60%;
-    }
+/* Opens and closes a <details> smoothly where the browser can animate to auto height; others snap. */
+@utility details-smooth {
+  interpolate-size: allow-keywords;
+  &::details-content {
+    block-size: 0;
+    overflow: clip;
+    transition:
+      block-size 300ms cubic-bezier(0.22, 1, 0.36, 1),
+      content-visibility 300ms allow-discrete;
   }
-}
-@keyframes reveal {
-  from {
-    opacity: 0;
-    translate: 0 1.5rem;
+  &[open]::details-content {
+    block-size: auto;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    &::details-content {
+      transition: none;
+    }
   }
 }
