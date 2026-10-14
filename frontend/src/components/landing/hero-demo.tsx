@@ -19,8 +19,9 @@ import { ease } from '@/components/landing/reveal'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
-// The hero's live moment: the headline names a job, and the resume below is rewritten for it,
-// streamed word by word the way the AI answers, with each change the visitor's to keep or skip.
+// The hero's live moment: the headline cycles through jobs in many fields, and below it a resume is
+// rewritten for an example job, streamed word by word the way the AI answers, with each change the
+// visitor's to keep or skip.
 // Jobs are described, never tied to a named employer.
 
 // In `after`, *stars* mark the words the job asked for.
@@ -130,6 +131,20 @@ const hidePause = 3
 const tickMs = 60
 // How long a finished resume stays before the headline moves to the next job.
 const holdMs = 1200
+
+// The headline keeps its own quicker rhythm, independent of the demo, across many fields.
+const titles = [
+  'Backend Engineer',
+  'Financial Analyst',
+  'Product Designer',
+  'Data Analyst',
+  'Growth Marketer',
+  'Consultant',
+  'Product Manager',
+  'Investment Banker',
+]
+const firstSwapMs = 700
+const titleMs = 1700
 
 // Splits a rewrite into words, bolding what sits between *stars*.
 const wordsOf = (text: string) =>
@@ -293,6 +308,20 @@ export function Hero() {
   // or a change, stops it (WCAG 2.2.2).
   const hero = useRef<HTMLElement>(null)
   const onScreen = useInView(hero, { amount: 0.2 })
+
+  const [title, setTitle] = useState(0)
+  const swapped = useRef(false)
+  useEffect(() => {
+    if (picked || reduceMotion || !onScreen) return
+    const timer = setTimeout(
+      () => {
+        swapped.current = true
+        setTitle((t) => (t + 1) % titles.length)
+      },
+      swapped.current ? titleMs : firstSwapMs,
+    )
+    return () => clearTimeout(timer)
+  }, [title, picked, reduceMotion, onScreen])
   useEffect(() => {
     if (!done || picked || reduceMotion || !onScreen) return
     const timer = setTimeout(() => show((index + 1) % demos.length), holdMs)
@@ -328,7 +357,7 @@ export function Hero() {
         <span className="max-sm:hidden">Your resume, rewritten for</span>
         <span className="sm:hidden">Rewritten for</span>
         <br />
-        <Redline word={demo.job.title} />
+        <Redline word={titles[title]} />
       </h1>
       <p className="mx-auto mt-8 max-w-2xl text-lg sm:text-xl">
         Paste a job description and get your resume rewritten for it in under a
