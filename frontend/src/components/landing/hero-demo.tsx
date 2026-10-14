@@ -1,8 +1,15 @@
 import { Link } from '@tanstack/react-router'
-import { CheckIcon, RotateCcwIcon, XIcon } from 'lucide-react'
+import {
+  CheckIcon,
+  PauseIcon,
+  PlayIcon,
+  RotateCcwIcon,
+  XIcon,
+} from 'lucide-react'
 import {
   AnimatePresence,
   motion,
+  useInView,
   useReducedMotion,
   useScroll,
   useTransform,
@@ -282,16 +289,15 @@ export function Hero() {
     setSkipped([])
   }
 
-  // Plays through the jobs once, back to the first, then waits for the visitor (WCAG 2.2.2).
+  // Keeps cycling through the jobs while the hero is on screen. The pause button, or choosing a job
+  // or a change, stops it (WCAG 2.2.2).
+  const hero = useRef<HTMLElement>(null)
+  const onScreen = useInView(hero, { amount: 0.2 })
   useEffect(() => {
-    if (!done || picked || reduceMotion) return
-    const timer = setTimeout(() => {
-      const next = (index + 1) % demos.length
-      show(next)
-      if (next === 0) setPicked(true)
-    }, holdMs)
+    if (!done || picked || reduceMotion || !onScreen) return
+    const timer = setTimeout(() => show((index + 1) % demos.length), holdMs)
     return () => clearTimeout(timer)
-  }, [done, picked, reduceMotion, index])
+  }, [done, picked, reduceMotion, onScreen, index])
 
   const stage = useRef<HTMLDivElement>(null)
   const { scrollYProgress } = useScroll({
@@ -312,7 +318,7 @@ export function Hero() {
   }
 
   return (
-    <section className="px-5 pt-16 pb-12 text-center sm:pt-24">
+    <section ref={hero} className="px-5 pt-16 pb-12 text-center sm:pt-24">
       {/* The label keeps one steady name for the page while the job in the line keeps changing. */}
       <h1
         aria-label="Your resume, rewritten for every job"
@@ -372,7 +378,22 @@ export function Hero() {
               </Choice>
             ))}
           </div>
-          <div>
+          <div className="relative">
+            {!reduceMotion && (
+              <div className="absolute top-0 right-0">
+                <Choice
+                  pressed={picked}
+                  onClick={() => setPicked((p) => !p)}
+                  label="Pause demo"
+                >
+                  {picked ? (
+                    <PlayIcon className="size-3.5" />
+                  ) : (
+                    <PauseIcon className="size-3.5" />
+                  )}
+                </Choice>
+              </div>
+            )}
             <p className="text-sm text-muted-foreground">Tailoring for</p>
             <p className="mt-1 font-serif text-2xl leading-tight font-semibold">
               {demo.job.title}
