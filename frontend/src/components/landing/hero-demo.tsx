@@ -304,7 +304,9 @@ export function Hero() {
         aria-label="Your resume, rewritten for every job"
         className="isolate mx-auto font-serif text-[2.4rem] leading-[1.04] font-semibold tracking-[-0.035em] sm:text-6xl lg:text-[5.5rem] xl:text-[6.5rem]"
       >
-        Your resume, rewritten for
+        {/* Phones drop "Your resume," so the line and the job each fit on one line. */}
+        <span className="max-sm:hidden">Your resume, rewritten for</span>
+        <span className="sm:hidden">Rewritten for</span>
         <br />
         <Redline word={demo.job.title} />
       </h1>
