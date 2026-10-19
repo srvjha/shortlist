@@ -28,8 +28,10 @@ export async function compileOrThrow(tex: string, signal?: AbortSignal) {
 }
 
 // A part already inside another is dropped, so the name and a title like "Aarav_Sharma_Resume" give
-// aarav-sharma-resume.pdf, not aarav-sharma_aarav-sharma-resume.pdf.
-export function pdfFileName(...parts: (string | undefined)[]) {
+// aarav-sharma-resume.pdf, not aarav-sharma_aarav-sharma-resume.pdf. A title that says "resume" or "CV" is
+// a file name the person chose, so it's used as it is; one like "Backend roles" still gets the name.
+export function pdfFileName(person: string | undefined, title: string | undefined) {
+  const parts = /\b(resume|cv)\b/i.test(title?.replace(/[_-]/g, " ") ?? "") ? [title] : [person, title];
   const slugs = [...new Set(parts.map((part) => slugify(part ?? "", 40)).filter(Boolean))];
   const name = slugs.filter((slug) => !slugs.some((other) => other !== slug && other.includes(slug))).join("_");
   return `${name || "resume"}.pdf`;

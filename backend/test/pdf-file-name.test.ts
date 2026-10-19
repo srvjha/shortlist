@@ -11,4 +11,9 @@ describe("pdfFileName", () => {
     expect(pdfFileName("Aarav Sharma", "Backend roles")).toBe("aarav-sharma_backend-roles.pdf");
     expect(pdfFileName(undefined, "")).toBe("resume.pdf");
   });
+
+  it("uses a title that names the file as it is", () => {
+    expect(pdfFileName("Saurav Jha", "srvjha-latest-resume")).toBe("srvjha-latest-resume.pdf");
+    expect(pdfFileName("Saurav Jha", "CV 2026")).toBe("cv-2026.pdf");
+  });
 });
