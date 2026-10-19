@@ -274,7 +274,7 @@ export function ListField({
         id={id}
         defaultValue={value.join(', ')}
         placeholder={placeholder}
-        onBlur={(event) =>
+        onChange={(event) =>
           onChange(
             event.target.value
               .split(',')
