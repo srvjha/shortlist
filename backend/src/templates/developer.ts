@@ -74,12 +74,12 @@ function header(basics: ResumeContent["basics"], layout?: ResumeLayout) {
   return contactParts(basics, layout?.links).join(" ~\n  ");
 }
 
-// `lead` lines go first without a bullet, like a project's tech list.
+// `lead` lines are LaTeX that goes first without a bullet, like a project's tech list.
 function bullets(items: { text: string }[], lead: string[] = []) {
   if (items.length === 0 && lead.length === 0) return "";
   return [
     "\\resumeItemListStart",
-    ...lead.map((line) => `  \\item[] \\small{\\emph{${tex(line)}}}`),
+    ...lead.map((line) => `  \\item[] \\small{\\emph{${line}}}`),
     ...items.map((item) => `  \\resumeItem{${texRich(item.text)}}`),
     "\\resumeItemListEnd",
   ].join("\n");
@@ -149,12 +149,12 @@ function renderSection(s: ResumeSection): string {
         const title = e.url ? `\\href{${texUrl(e.url)}}{\\textbf{${tex(e.name)}}}` : `\\textbf{${tex(e.name)}}`;
         const techs = e.technologies.join(", ");
         const inline = fitsOneLine([e.name, techs, ...e.links.map((l) => l.label)], Boolean(e.start || e.end));
-        const tech =
-          techs && inline ? ` $|$ \\emph{${e.technologies.map((t) => `\\textbf{${tex(t)}}`).join(", ")}}` : "";
+        const bold = e.technologies.map((t) => `\\textbf{${tex(t)}}`).join(", ");
+        const tech = techs && inline ? ` $|$ \\emph{${bold}}` : "";
         const links = e.links.map((l) => ` $|$ ${link(l.url, l.label)}`).join("");
         return [
           `\\resumeProjectHeading\n  {${title}${tech}${links}}{${dateRange(e.start, e.end)}}\n\\vspace{-10pt}`,
-          bullets(e.bullets, techs && !inline ? [techs] : []) + gap(e),
+          bullets(e.bullets, techs && !inline ? [bold] : []) + gap(e),
         ].join("\n");
       });
       return section(
