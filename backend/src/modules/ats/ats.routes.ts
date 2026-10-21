@@ -58,7 +58,8 @@ atsRouter.post(
   requireAuth,
   compileLimiter,
   ...validated({ params: resumeParams, body: createResumeAtsReportBody }, async (req, res) => {
-    const userId = currentUser(req).id;
+    const user = currentUser(req);
+    const userId = user.id;
     const resume = await getResume(userId, req.params.resumeId);
     const { head } = resume;
     if (!head) throw new NotFoundError("Version");
@@ -75,16 +76,18 @@ atsRouter.post(
         ),
       ),
     });
-    const report = job
-      ? await withAiMatch(scored, {
-          userId,
-          resumeText: resumeText({ content: head.content, text }),
-          jobText: job.rawText,
-          content: head.content,
-          resumeId: resume.id,
-          jobId: job.id,
-        })
-      : scored;
+    // Guest accounts are free to make, so like the public checker they don't get the AI check on our key.
+    const report =
+      job && !("isAnonymous" in user && user.isAnonymous === true)
+        ? await withAiMatch(scored, {
+            userId,
+            resumeText: resumeText({ content: head.content, text }),
+            jobText: job.rawText,
+            content: head.content,
+            resumeId: resume.id,
+            jobId: job.id,
+          })
+        : scored;
     track(userId, "ats_report_created", { source: "resume", score: report.score, withJob: Boolean(job) });
     sendData(res, atsReport, report);
   }),
