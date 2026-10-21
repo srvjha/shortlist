@@ -548,7 +548,7 @@ const paths: ZodOpenApiPathsObject = {
   },
   "/v1/refunds": {
     post: op({
-      summary: "Refund a payment made in the last 24 hours, less Razorpay's fee, and end its plan",
+      summary: "Refund a payment made in the last 6 hours, less Razorpay's fee, and end its plan",
       tag: "Billing",
       body: createRefundBody,
       response: refundResponse,

@@ -21336,10 +21336,17 @@
                               "type": "null"
                             }
                           ]
+                        },
+                        "reason": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
                         }
                       },
                       "required": [
-                        "quote"
+                        "quote",
+                        "reason"
                       ],
                       "additionalProperties": false
                     }
@@ -21367,7 +21374,7 @@
     },
     "/v1/refunds": {
       "post": {
-        "summary": "Refund a payment made in the last 24 hours, less Razorpay's fee, and end its plan",
+        "summary": "Refund a payment made in the last 6 hours, less Razorpay's fee, and end its plan",
         "tags": [
           "Billing"
         ],

@@ -19,6 +19,8 @@ const state = vi.hoisted(() => ({
   claimConditions: [] as unknown[],
   updates: 0,
   subscription: null as Record<string, unknown> | null,
+  earlierRefund: false,
+  used: { tailor: 0, draft: 0 } as Record<string, number>,
 }));
 
 vi.mock("../src/db/index.js", () => {
@@ -28,25 +30,45 @@ vi.mock("../src/db/index.js", () => {
       state.updates += 1;
       return query(state.claims.shift() ?? [], (c) => state.claimConditions.push(c));
     },
-    select: () => query(state.subscription ? [state.subscription] : []),
+    // Payments are only read to look for an earlier refund; the other select is the subscription.
+    select: () => {
+      const q = query([]);
+      q.from = (table: unknown) =>
+        table === payments
+          ? query(state.earlierRefund ? [{ id: "older" }] : [])
+          : query(state.subscription ? [state.subscription] : []);
+      return q;
+    },
     transaction: async (run: (tx: unknown) => Promise<unknown>) => run(db),
   };
   return { db };
 });
+vi.mock("../src/modules/usage/quotas.js", async (original) => ({
+  ...(await original<typeof import("../src/modules/usage/quotas.js")>()),
+  runsSince: async (_userId: string, kind: string) => state.used[kind] ?? 0,
+}));
 vi.mock("../src/lib/analytics.js", () => ({ track: vi.fn() }));
 const razorpay = vi.hoisted(() => vi.fn());
 vi.mock("../src/lib/razorpay.js", () => ({ razorpay }));
 
+import { payments } from "../src/db/schema/index.js";
 import { REFUND_WINDOW_MS, refundablePaise, requestRefund } from "../src/modules/billing/billing.service.js";
 
 const paid = { amount: 49_900, status: "captured", fee: 1_178, tax: 180, amount_refunded: 0 };
-const claimed = { id: "11111111-1111-4111-8111-111111111111", razorpayPaymentId: "pay_1", subscriptionId: null };
+const claimed = {
+  id: "11111111-1111-4111-8111-111111111111",
+  razorpayPaymentId: "pay_1",
+  subscriptionId: null,
+  capturedAt: new Date(),
+};
 
 beforeEach(() => {
   state.claims = [];
   state.claimConditions = [];
   state.updates = 0;
   state.subscription = null;
+  state.earlierRefund = false;
+  state.used = { tailor: 0, draft: 0 };
   razorpay.mockReset();
 });
 
@@ -137,6 +159,21 @@ describe("requesting a refund", () => {
     });
     await expect(requestRefund("user_1", claimed.id)).rejects.toThrow("Razorpay down");
     expect(razorpay.mock.calls.some(([, path]) => String(path).endsWith("/refund"))).toBe(false);
+  });
+
+  it("refuses once more than 3 tailored or AI-written resumes were made since paying, and frees the claim", async () => {
+    state.claims = [[{ ...claimed, capturedAt: new Date() }]];
+    state.used = { tailor: 4, draft: 0 };
+    await expect(requestRefund("user_1", claimed.id)).rejects.toMatchObject({ status: 409 });
+    expect(state.updates).toBe(2);
+    expect(razorpay).not.toHaveBeenCalled();
+  });
+
+  it("gives each account one refund", async () => {
+    state.claims = [[{ ...claimed, capturedAt: new Date() }]];
+    state.earlierRefund = true;
+    await expect(requestRefund("user_1", claimed.id)).rejects.toThrow("one refund");
+    expect(razorpay).not.toHaveBeenCalled();
   });
 
   it("cancels a refunded Pro subscription in Razorpay straight away", async () => {

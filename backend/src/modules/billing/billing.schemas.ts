@@ -27,7 +27,7 @@ export const subscriptionResponse = z.object({
 });
 
 export const refundQuoteResponse = z.object({
-  // Null when no payment is still inside its 24 hour refund window.
+  // Null when no payment is still inside its 6 hour refund window, or when `reason` says why it can't be refunded.
   quote: z
     .object({
       paymentId: z.uuid(),
@@ -38,6 +38,7 @@ export const refundQuoteResponse = z.object({
       refundableUntil: z.date(),
     })
     .nullable(),
+  reason: z.string().nullable(),
 });
 
 export const createRefundBody = z.object({ paymentId: z.uuid() });

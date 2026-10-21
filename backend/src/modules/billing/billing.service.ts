@@ -5,6 +5,7 @@ import { payments, subscriptions, users } from "../../db/schema/index.js";
 import { AppError, ConflictError, ForbiddenError, NotFoundError } from "../../lib/errors.js";
 import { razorpay } from "../../lib/razorpay.js";
 import { track } from "../../lib/analytics.js";
+import { runsSince } from "../usage/quotas.js";
 
 export const prices = { season_pass: 49_900, pro: 12_900 } as const;
 
@@ -151,7 +152,25 @@ export async function cancelSubscription(userId: string) {
   return getSubscription(userId);
 }
 
-export const REFUND_WINDOW_MS = 24 * 60 * 60 * 1000;
+export const REFUND_WINDOW_MS = 6 * 60 * 60 * 1000;
+// A refund is for trying the plan and not liking it, not for using it fully and getting the money back.
+export const REFUND_USE_LIMIT = 3;
+
+async function whyNotRefundable(userId: string, since: Date) {
+  const [earlier] = await db
+    .select({ id: payments.id })
+    .from(payments)
+    .where(and(eq(payments.userId, userId), eq(payments.status, "refunded")))
+    .limit(1);
+  if (earlier) return "Each account can get one refund, and yours has already had one.";
+  const [tailored, written] = await Promise.all([
+    runsSince(userId, "tailor", since),
+    runsSince(userId, "draft", since),
+  ]);
+  return tailored > REFUND_USE_LIMIT || written > REFUND_USE_LIMIT
+    ? `Refunds are for trying the plan: you've made ${tailored} tailored and ${written} AI-written resumes since paying, and the limit is ${REFUND_USE_LIMIT} of each.`
+    : null;
+}
 
 type RemotePayment = { amount: number; status: string; fee?: number | null; amount_refunded?: number };
 
@@ -194,10 +213,12 @@ export async function getRefundQuote(userId: string, now = new Date()) {
     .where(refundable(userId, now))
     .orderBy(desc(payments.capturedAt))
     .limit(1);
-  if (!row) return { quote: null };
+  if (!row) return { quote: null, reason: null };
+  const reason = await whyNotRefundable(userId, row.capturedAt!);
+  if (reason) return { quote: null, reason };
   const remote = await razorpay<RemotePayment>("GET", `/payments/${row.razorpayPaymentId}`);
   // Part of it may already have been refunded by hand, as a goodwill credit; then there's no self-serve refund.
-  if (remote.amount_refunded) return { quote: null };
+  if (remote.amount_refunded) return { quote: null, reason: null };
   const refundPaise = refundablePaise(remote);
   return {
     quote: {
@@ -208,6 +229,7 @@ export async function getRefundQuote(userId: string, now = new Date()) {
       refundPaise,
       refundableUntil: new Date(row.capturedAt!.getTime() + REFUND_WINDOW_MS),
     },
+    reason: null,
   };
 }
 
@@ -221,14 +243,20 @@ export async function requestRefund(userId: string, paymentId: string, now = new
     .set({ refundedAt: now, updatedAt: keepUpdatedAt })
     .where(and(eq(payments.id, paymentId), refundable(userId, now)))
     .returning();
-  if (!row) throw new ConflictError("Refunds are available once per payment, within 24 hours of paying");
+  if (!row) throw new ConflictError("Refunds are available once per payment, within 6 hours of paying");
+  const reason = await whyNotRefundable(userId, row.capturedAt!);
   const release = () =>
     db.update(payments).set({ refundedAt: null, updatedAt: keepUpdatedAt }).where(eq(payments.id, row.id));
+
+  if (reason) {
+    await release();
+    throw new ConflictError(reason);
+  }
 
   const [subscription] = row.subscriptionId
     ? await db.select().from(subscriptions).where(eq(subscriptions.id, row.subscriptionId))
     : [];
-  const reason = `Self-serve refund ${row.id}`;
+  const note = `Self-serve refund ${row.id}`;
   let sent = false;
   let refund: { id: string; amount: number };
   try {
@@ -246,7 +274,7 @@ export async function requestRefund(userId: string, paymentId: string, now = new
     refund = await razorpay("POST", `/payments/${row.razorpayPaymentId}/refund`, {
       amount,
       speed: "normal",
-      notes: { userId, reason },
+      notes: { userId, reason: note },
     });
   } catch (error) {
     // A refund call that timed out may still have gone through, so Razorpay is asked for this refund (by its note)
@@ -261,7 +289,7 @@ export async function requestRefund(userId: string, paymentId: string, now = new
           )
           .catch(() => undefined)
       : undefined;
-    const ours = done?.items?.find((item) => item.notes?.reason === reason);
+    const ours = done?.items?.find((item) => item.notes?.reason === note);
     if (!ours) {
       await release();
       throw error;

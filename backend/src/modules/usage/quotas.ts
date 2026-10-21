@@ -52,6 +52,11 @@ async function usedThisPeriod(userId: string, kind: QuotaKind, allTime = false, 
   const [user] = await executor.select({ resetAt: users.usageResetAt }).from(users).where(eq(users.id, userId));
   const start = allTime ? new Date(0) : periodStart();
   const since = user?.resetAt && user.resetAt > start ? user.resetAt : start;
+  return runsSince(userId, kind, since, executor);
+}
+
+// Charged runs of one kind since a moment, counted the way quotas count them.
+export async function runsSince(userId: string, kind: QuotaKind, since: Date, executor: Executor = db) {
   const [row] = await executor
     .select({ value: count() })
     .from(aiRuns)
