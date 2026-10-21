@@ -1,10 +1,14 @@
 import { Link } from '@tanstack/react-router'
 import {
+  BanIcon,
   EyeIcon,
   FileTextIcon,
   FileUpIcon,
   LinkIcon,
+  LockIcon,
   PenLineIcon,
+  ScanTextIcon,
+  ShieldCheckIcon,
 } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
 import { useId, useMemo, useState } from 'react'
@@ -327,6 +331,67 @@ export function Stages() {
   )
 }
 
+const promises = [
+  {
+    icon: ShieldCheckIcon,
+    title: 'We never invent experience',
+    body: 'The AI only rewrites what you gave it. If a change mentions something you have not done, it is flagged and left out.',
+  },
+  {
+    icon: BanIcon,
+    title: 'We never sell your data',
+    body: 'Your resume is not sold or shown to anyone you have not shared it with, and it is not used to train AI models.',
+  },
+  {
+    icon: LockIcon,
+    title: 'Share links stay private',
+    body: 'Links hide your phone and email unless you turn them on. Add a password or an expiry date if you like.',
+  },
+  {
+    icon: ScanTextIcon,
+    title: 'Easy for hiring software to read',
+    body: 'One column, real text you can select, and standard headings, which is what ATS software reads best. Typeset with LaTeX for clean spacing.',
+  },
+]
+
+export function Promises() {
+  return (
+    <Reveal
+      as="section"
+      aria-labelledby="promises"
+      className="mx-auto max-w-6xl px-5 pt-28"
+    >
+      <h2 id="promises" data-reveal className={cn(heading, 'text-center')}>
+        Honest and private
+      </h2>
+      <p data-reveal className="mx-auto mt-4 max-w-2xl text-center text-lg">
+        You can download or delete everything we hold about you from Settings,
+        any time.
+      </p>
+      <ul className="mt-12 grid gap-4 sm:grid-cols-2">
+        {promises.map(({ icon: Icon, title, body }) => (
+          <li
+            key={title}
+            data-reveal
+            className="flex gap-4 rounded-2xl bg-card p-6"
+          >
+            <Icon
+              aria-hidden="true"
+              className="mt-1 size-6 shrink-0 text-primary"
+            />
+            <div>
+              <h3 className="font-serif text-2xl font-semibold tracking-[-0.01em]">
+                {title}
+              </h3>
+              <p className="mt-2 text-lg">{body}</p>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </Reveal>
+  )
+}
+
 export function PlanPicker() {
   const [selected, setSelected] = useState<string>('season_pass')
   const plan = plans.find((p) => p.id === selected) ?? plans[1]
@@ -422,32 +487,32 @@ export function PlanPicker() {
 
 const faqs = [
   {
-    q: 'Do I need to know LaTeX?',
-    a: 'No. Fill in the form and your resume is typeset for you. LaTeX is there if you want it, not required.',
+    q: 'Who is Shortlist for?',
+    a: 'Students, freshers and early professionals in any field: marketing, finance, HR, sales, operations, consulting, design, data and tech. Tailoring works on any job description.',
   },
   {
-    q: 'Can I bring my resume from Overleaf?',
-    a: 'Yes. Paste or upload your .tex file. It compiles here as it is, and you can keep editing the code or convert it to the form editor.',
+    q: 'Is it free?',
+    a: 'Yes. The Free plan includes 1 resume tailored to a job description and 50 AI edits each month, and you can make and edit as many resumes as you like by hand. The Season Pass is ₹499 for six months if you are applying a lot.',
+  },
+  {
+    q: 'Does the AI add things I haven’t done?',
+    a: 'No. It only rephrases, reorders and trims what you have given it. Anything that looks new is flagged and left out unless you confirm it.',
   },
   {
     q: 'Will it pass applicant tracking systems?',
     a: 'Our templates are single column with real, selectable text, which is what these systems read best. The free ATS checker reads your resume the way they do and shows which job requirements it covers.',
   },
   {
-    q: 'Does the AI add things I haven’t done?',
-    a: 'It only rephrases, reorders and trims what you have given it. Anything that looks new is flagged and left out unless you confirm it.',
-  },
-  {
-    q: 'Is it only for software jobs?',
-    a: 'No. There are templates for banking, finance, consulting, marketing, design, product, data and students, and tailoring works on any job description.',
-  },
-  {
     q: 'Who can see my resume?',
     a: 'Only people you send a link to. Links hide your phone and email by default, can have a password or an expiry date, and you can export or delete all your data at any time.',
   },
   {
-    q: 'Is it free?',
-    a: 'Building and editing resumes is free and unlimited. The free plan includes one resume tailored to a job description each month; the Season Pass is ₹499 for six months if you are applying a lot.',
+    q: 'Do I need to know LaTeX?',
+    a: 'No. Fill in the form and your resume is typeset for you. LaTeX is there if you want it, not required.',
+  },
+  {
+    q: 'Can I bring my resume from Overleaf?',
+    a: 'Yes. Paste or upload your .tex file. It compiles here as it is, and you can keep editing the code or convert it to the form editor.',
   },
 ]
 
