@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router'
 import { site } from '@/lib/site'
 import { cn } from '@/lib/utils'
 
+// A bookmark with a tick: the resume that made the shortlist. No tile, so the silhouette is the mark.
 export function LogoMark({ className }: { className?: string }) {
   return (
     <svg
@@ -9,33 +10,17 @@ export function LogoMark({ className }: { className?: string }) {
       aria-hidden="true"
       className={cn('size-7 shrink-0', className)}
     >
-      <rect width="32" height="32" rx="7" className="fill-primary" />
       <path
-        d="M10 7h9l5 5v13a1 1 0 0 1-1 1H10a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z"
-        className="fill-primary-foreground"
-      />
-      <path
-        d="M19 7v5h5"
-        fill="none"
-        className="stroke-primary"
-        strokeWidth="1.4"
-      />
-      <rect
-        x="12"
-        y="15"
-        width="9"
-        height="2"
-        rx="1"
-        className="fill-highlight"
-      />
-      <rect
-        x="12"
-        y="19"
-        width="7"
-        height="1.6"
-        rx=".8"
+        d="M7.5 2h17A2.5 2.5 0 0 1 27 4.5V30l-11-7-11 7V4.5A2.5 2.5 0 0 1 7.5 2z"
         className="fill-primary"
-        opacity=".55"
+      />
+      <path
+        d="m10.5 12.5 4.5 4.5 7.5-8.5"
+        fill="none"
+        strokeWidth="3.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="stroke-primary-foreground"
       />
     </svg>
   )
