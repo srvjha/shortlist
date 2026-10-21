@@ -37,10 +37,11 @@ export const Route = createFileRoute('/_site/privacy')({
       </ul>
       <h2>How AI features use your data</h2>
       <p>
-        When you tailor, edit or import a resume, the relevant resume text and
-        job description are sent to our AI provider (such as OpenAI or
-        Anthropic) to generate suggestions. They are used only to answer that
-        request and are not used by us to train models.
+        When you tailor, edit or import a resume, or check it against a job
+        description while signed in, the relevant resume text and job details
+        are sent to our AI provider (such as OpenAI or Anthropic), with your
+        email and phone number masked. They are used only to answer that request
+        and are not used by us to train models.
       </p>
       <h2>Who can see your resume</h2>
       <p>

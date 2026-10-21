@@ -343,7 +343,7 @@ const promises = [
   {
     icon: BanIcon,
     title: 'Your resume stays yours',
-    body: 'Only people you share a link with can see it. It goes to our AI provider only to make the changes you ask for, and is never used to train AI models.',
+    body: 'Only people you share a link with can see it. It goes to our AI provider only to do what you ask, like tailoring it or checking it against a job, and is never used to train AI models.',
   },
   {
     icon: LockIcon,
