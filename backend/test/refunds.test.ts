@@ -104,9 +104,39 @@ describe("requesting a refund", () => {
     state.claims = [[claimed]];
     razorpay.mockImplementation(async (method: string, path: string) => {
       if (path.endsWith("/refund")) throw new Error("timeout");
-      return path.endsWith("/refunds") ? { items: [{ id: "rfnd_3", amount: 48_722 }] } : paid;
+      return path.endsWith("/refunds")
+        ? {
+            items: [
+              { id: "rfnd_goodwill", amount: 5_000, notes: { reason: "Goodwill" } },
+              { id: "rfnd_3", amount: 48_722, notes: { reason: `Self-serve refund ${claimed.id}` } },
+            ],
+          }
+        : paid;
     });
     await expect(requestRefund("user_1", claimed.id)).resolves.toMatchObject({ razorpayRefundId: "rfnd_3" });
+  });
+
+  it("doesn't take an earlier goodwill refund for this one, and lets the user try again", async () => {
+    state.claims = [[claimed]];
+    razorpay.mockImplementation(async (method: string, path: string) => {
+      if (path.endsWith("/refund")) throw new Error("timeout");
+      return path.endsWith("/refunds")
+        ? { items: [{ id: "rfnd_goodwill", amount: 5_000, notes: { reason: "Goodwill" } }] }
+        : paid;
+    });
+    await expect(requestRefund("user_1", claimed.id)).rejects.toThrow("timeout");
+    expect(state.updates).toBe(2);
+  });
+
+  it("refunds nothing when the Pro subscription can't be cancelled", async () => {
+    state.claims = [[{ ...claimed, subscriptionId: "sub_row" }]];
+    state.subscription = { id: "sub_row", plan: "pro", razorpaySubscriptionId: "sub_1", cancelledAt: null };
+    razorpay.mockImplementation(async (method: string, path: string) => {
+      if (path.endsWith("/cancel")) throw new Error("Razorpay down");
+      return method === "GET" ? { ...paid, amount: 12_900, fee: 305 } : { id: "rfnd_x", amount: 12_595 };
+    });
+    await expect(requestRefund("user_1", claimed.id)).rejects.toThrow("Razorpay down");
+    expect(razorpay.mock.calls.some(([, path]) => String(path).endsWith("/refund"))).toBe(false);
   });
 
   it("cancels a refunded Pro subscription in Razorpay straight away", async () => {

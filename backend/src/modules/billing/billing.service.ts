@@ -3,7 +3,6 @@ import { env } from "../../config/env.js";
 import { db } from "../../db/index.js";
 import { payments, subscriptions, users } from "../../db/schema/index.js";
 import { AppError, ConflictError, ForbiddenError, NotFoundError } from "../../lib/errors.js";
-import { logger } from "../../lib/logger.js";
 import { razorpay } from "../../lib/razorpay.js";
 import { track } from "../../lib/analytics.js";
 
@@ -197,6 +196,8 @@ export async function getRefundQuote(userId: string, now = new Date()) {
     .limit(1);
   if (!row) return { quote: null };
   const remote = await razorpay<RemotePayment>("GET", `/payments/${row.razorpayPaymentId}`);
+  // Part of it may already have been refunded by hand, as a goodwill credit; then there's no self-serve refund.
+  if (remote.amount_refunded) return { quote: null };
   const refundPaise = refundablePaise(remote);
   return {
     quote: {
@@ -221,42 +222,51 @@ export async function requestRefund(userId: string, paymentId: string, now = new
     .where(and(eq(payments.id, paymentId), refundable(userId, now)))
     .returning();
   if (!row) throw new ConflictError("Refunds are available once per payment, within 24 hours of paying");
-
-  let refund: { id: string; amount: number };
-  try {
-    const remote = await razorpay<RemotePayment>("GET", `/payments/${row.razorpayPaymentId}`);
-    refund = await razorpay("POST", `/payments/${row.razorpayPaymentId}/refund`, {
-      amount: refundablePaise(remote),
-      speed: "normal",
-      notes: { userId, reason: "Self-serve refund within 24 hours" },
-    });
-  } catch (error) {
-    // A call that timed out may still have refunded, so the claim is only released when Razorpay shows none;
-    // otherwise the plan would keep running on money already returned.
-    const done = await Promise.resolve()
-      .then(() =>
-        razorpay<{ items?: { id: string; amount: number }[] }>("GET", `/payments/${row.razorpayPaymentId}/refunds`),
-      )
-      .catch(() => undefined);
-    if (!done?.items?.[0]) {
-      await db.update(payments).set({ refundedAt: null, updatedAt: keepUpdatedAt }).where(eq(payments.id, row.id));
-      throw error;
-    }
-    refund = done.items[0];
-  }
+  const release = () =>
+    db.update(payments).set({ refundedAt: null, updatedAt: keepUpdatedAt }).where(eq(payments.id, row.id));
 
   const [subscription] = row.subscriptionId
     ? await db.select().from(subscriptions).where(eq(subscriptions.id, row.subscriptionId))
     : [];
-  if (subscription?.plan === "pro" && subscription.razorpaySubscriptionId) {
-    await razorpay("POST", `/subscriptions/${subscription.razorpaySubscriptionId}/cancel`, {
-      cancel_at_cycle_end: 0,
-    }).catch((err: unknown) =>
-      logger.error(
-        { err, subscriptionId: subscription.razorpaySubscriptionId },
-        "Refunded Pro subscription was not cancelled in Razorpay; cancel it in the dashboard",
-      ),
-    );
+  const reason = `Self-serve refund ${row.id}`;
+  let sent = false;
+  let refund: { id: string; amount: number };
+  try {
+    const remote = await razorpay<RemotePayment>("GET", `/payments/${row.razorpayPaymentId}`);
+    const amount = refundablePaise(remote);
+    // Pro is cancelled first: refunding and then failing to cancel would leave Razorpay charging every month.
+    if (subscription?.plan === "pro" && subscription.razorpaySubscriptionId && !subscription.cancelledAt) {
+      await razorpay("POST", `/subscriptions/${subscription.razorpaySubscriptionId}/cancel`, {
+        cancel_at_cycle_end: 0,
+      });
+      subscription.cancelledAt = now;
+      await db.update(subscriptions).set({ cancelledAt: now }).where(eq(subscriptions.id, subscription.id));
+    }
+    sent = true;
+    refund = await razorpay("POST", `/payments/${row.razorpayPaymentId}/refund`, {
+      amount,
+      speed: "normal",
+      notes: { userId, reason },
+    });
+  } catch (error) {
+    // A refund call that timed out may still have gone through, so Razorpay is asked for this refund (by its note)
+    // before the claim is released; otherwise the plan would keep running on money already returned.
+    const done = sent
+      ? await Promise.resolve()
+          .then(() =>
+            razorpay<{ items?: { id: string; amount: number; notes?: { reason?: string } }[] }>(
+              "GET",
+              `/payments/${row.razorpayPaymentId}/refunds`,
+            ),
+          )
+          .catch(() => undefined)
+      : undefined;
+    const ours = done?.items?.find((item) => item.notes?.reason === reason);
+    if (!ours) {
+      await release();
+      throw error;
+    }
+    refund = ours;
   }
 
   await db.transaction(async (tx) => {
