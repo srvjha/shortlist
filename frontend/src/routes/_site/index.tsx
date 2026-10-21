@@ -1,9 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { ExampleResume } from '@/components/landing/example-resume'
 import { Hero } from '@/components/landing/hero-demo'
 import {
   Faq,
   FinalCta,
   PlanPicker,
+  Promises,
   Stages,
   TemplateFinder,
 } from '@/components/landing/sections'
@@ -11,7 +13,7 @@ import { site } from '@/lib/site'
 
 const title = `AI Resume Builder, Tailored to Every Job | ${site.name}`
 const description =
-  'Free AI resume builder: tailor your resume to each job description in one click, with LaTeX-quality templates and a free ATS checker. Built in India.'
+  'Free AI resume builder for students and freshers in every field: tailor your resume to each job description, keep only the changes you like, and download an ATS-friendly PDF. Built in India.'
 
 const structuredData = {
   '@context': 'https://schema.org',
@@ -61,8 +63,10 @@ function LandingPage() {
   return (
     <>
       <Hero />
-      <TemplateFinder />
       <Stages />
+      <ExampleResume />
+      <TemplateFinder />
+      <Promises />
       <PlanPicker />
       <Faq />
       <FinalCta />

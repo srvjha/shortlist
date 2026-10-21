@@ -1,22 +1,18 @@
 import { Link } from '@tanstack/react-router'
 import {
+  BanIcon,
   EyeIcon,
   FileTextIcon,
   FileUpIcon,
   LinkIcon,
   LockIcon,
   PenLineIcon,
+  ScanTextIcon,
+  ShieldCheckIcon,
 } from 'lucide-react'
-import {
-  AnimatePresence,
-  motion,
-  useInView,
-  useReducedMotion,
-  useScroll,
-  useTransform,
-} from 'motion/react'
-import { useEffect, useId, useMemo, useRef, useState } from 'react'
-import { Reveal, ease } from '@/components/landing/reveal'
+import { AnimatePresence, motion } from 'motion/react'
+import { useId, useMemo, useState } from 'react'
+import { Reveal } from '@/components/landing/reveal'
 import { Button } from '@/components/ui/button'
 import type { ResumeContent } from '@/lib/api/types'
 import { plans } from '@/lib/plans'
@@ -25,19 +21,19 @@ import { site } from '@/lib/site'
 import { categoryName, templateCatalog } from '@/lib/templates'
 import { cn } from '@/lib/utils'
 
-// The editor's own tab bar, drawn as it looks in the product.
-const tabBar =
-  'flex items-center justify-between gap-2 border-b px-4 py-2.5 text-sm' // taste-skill-ignore
-
 const heading =
   'font-serif text-[2rem] leading-[1.05] font-semibold tracking-[-0.02em] sm:text-5xl'
 
 const examples = [
-  'Backend Engineer',
+  'Marketing Executive',
   'Financial Analyst',
-  'Product Designer',
+  'Sales Executive',
   'Final-year student',
+  'Software Engineer',
 ]
+
+// After the suggestion, the front page shows layouts from fields beyond tech.
+const showcase = ['marketing', 'finance', 'campus', 'consulting']
 
 // The same rules the editor uses to suggest a template, run on one typed job.
 function suggestFor(jobTitle: string) {
@@ -69,49 +65,15 @@ function suggestFor(jobTitle: string) {
 }
 
 export function TemplateFinder() {
-  const reduceMotion = useReducedMotion()
   const inputId = useId()
   const [jobTitle, setJobTitle] = useState(examples[0])
-  const [typing, setTyping] = useState(true)
-  const box = useRef<HTMLDivElement>(null)
-  const seen = useInView(box, { once: true, amount: 0.6 })
-
-  // Types each example once, ending back on the first, unless the visitor clicks in first (WCAG 2.2.2).
-  // It waits until the box is on screen, so the motion carries on below the hero instead of finishing unseen.
-  useEffect(() => {
-    if (!typing || reduceMotion || !seen) return
-    let example = 0
-    let length = examples[0].length
-    let deleting = true
-    let timer: ReturnType<typeof setTimeout>
-    const step = () => {
-      const text = examples[example]
-      if (deleting) {
-        length -= 1
-        if (length === 0) {
-          deleting = false
-          example = (example + 1) % examples.length
-        }
-      } else {
-        length += 1
-      }
-      setJobTitle(examples[example].slice(0, length))
-      const full = !deleting && length === examples[example].length
-      if (full && example === 0) return setTyping(false)
-      if (full) deleting = true
-      timer = setTimeout(
-        step,
-        full ? 3000 : deleting && text === examples[example] ? 35 : 90,
-      )
-    }
-    timer = setTimeout(step, 1200)
-    return () => clearTimeout(timer)
-  }, [typing, reduceMotion, seen])
   const suggestion = useMemo(() => suggestFor(jobTitle), [jobTitle])
   const ordered = [
-    ...templateCatalog.filter((t) => t.id === suggestion.templateId),
-    ...templateCatalog.filter((t) => t.id !== suggestion.templateId),
-  ].slice(0, 8)
+    suggestion.templateId,
+    ...showcase.filter((id) => id !== suggestion.templateId),
+  ]
+    .slice(0, 3)
+    .map((id) => templateCatalog.find((t) => t.id === id)!)
 
   return (
     <Reveal
@@ -120,24 +82,24 @@ export function TemplateFinder() {
       className="mx-auto max-w-6xl px-5 pt-28 text-center"
     >
       <h2 id="templates" data-reveal className={heading}>
-        Templates for the job you want
+        A resume that fits your field
       </h2>
+      <p data-reveal className="mx-auto mt-4 max-w-2xl text-lg">
+        Marketing, finance, HR, sales, operations, consulting, design, data or
+        tech. Tell us the job and we suggest a layout that suits it.
+      </p>
       <div data-reveal className="mx-auto mt-10 max-w-4xl">
         <label htmlFor={inputId} className="text-lg">
           Type the job you’re applying for
         </label>
-        <div ref={box} data-ui className="mt-3 rounded-2xl bg-card px-5 py-4">
+        <div data-ui className="mt-3 rounded-2xl bg-card px-5 py-4">
           <input
             id={inputId}
             value={jobTitle}
-            onChange={(event) => {
-              setTyping(false)
-              setJobTitle(event.target.value)
-            }}
-            onFocus={() => setTyping(false)}
+            onChange={(event) => setJobTitle(event.target.value)}
             spellCheck={false}
             autoComplete="off"
-            className="w-full bg-transparent text-center font-serif text-[2rem] font-semibold tracking-[-0.02em] caret-primary outline-none sm:text-6xl"
+            className="w-full bg-transparent text-center font-serif text-[2rem] font-semibold tracking-[-0.02em] caret-primary outline-none sm:text-4xl"
           />
         </div>
         <div className="mt-4 flex flex-wrap justify-center gap-2">
@@ -145,17 +107,15 @@ export function TemplateFinder() {
             <button
               key={example}
               type="button"
-              onClick={() => {
-                setTyping(false)
-                setJobTitle(example)
-              }}
-              className="min-h-11 rounded-full bg-secondary px-4 text-base transition-transform hover:bg-accent active:scale-95"
+              aria-pressed={example === jobTitle}
+              onClick={() => setJobTitle(example)}
+              className="min-h-11 rounded-full bg-secondary px-4 text-base hover:bg-accent focus-visible:outline-2 aria-pressed:bg-foreground aria-pressed:text-background"
             >
               {example}
             </button>
           ))}
         </div>
-        <p className="mt-6 text-lg" aria-live={typing ? 'off' : 'polite'}>
+        <p className="mt-6 text-lg" aria-live="polite">
           We’d start you on{' '}
           <span className="font-semibold">
             {templateCatalog.find((t) => t.id === suggestion.templateId)?.name}
@@ -164,15 +124,9 @@ export function TemplateFinder() {
         </p>
       </div>
 
-      <ul className="mt-14 grid grid-cols-2 gap-x-3 gap-y-7 text-left md:grid-cols-4">
+      <ul className="mx-auto mt-14 grid max-w-4xl grid-cols-2 gap-x-3 gap-y-7 text-left md:grid-cols-3">
         {ordered.map((template, index) => (
-          <motion.li
-            key={template.id}
-            layout={!reduceMotion}
-            transition={{ duration: 0.5, ease }}
-            data-reveal
-            className="max-md:nth-[n+5]:hidden"
-          >
+          <li key={template.id} data-reveal className="max-md:nth-3:hidden">
             <Link
               to="/templates"
               hash={template.id}
@@ -185,7 +139,7 @@ export function TemplateFinder() {
                   width={1020}
                   height={1320}
                   loading="lazy"
-                  className="aspect-4/5 w-full object-cover object-top transition-transform duration-500 group-hover:scale-[1.03]"
+                  className="aspect-4/5 w-full object-cover object-top"
                 />
               </div>
               <div
@@ -212,16 +166,16 @@ export function TemplateFinder() {
                 </p>
               </div>
             </Link>
-          </motion.li>
+          </li>
         ))}
       </ul>
       <Button
         size="lg"
         variant="secondary"
         asChild
-        className="mt-10 rounded-full"
+        className="mt-10 h-12 rounded-full px-6 text-base"
       >
-        <Link to="/templates">See all {templateCatalog.length} templates</Link>
+        <Link to="/templates">View all {templateCatalog.length} templates</Link>
       </Button>
     </Reveal>
   )
@@ -229,66 +183,59 @@ export function TemplateFinder() {
 
 const stages = [
   {
-    title: 'First, bring the resume you have',
-    body: 'Upload a PDF, paste your Overleaf .tex file, or start from a blank form.',
+    title: '1. Bring your resume',
+    body: 'Upload the PDF you already have, or fill in a simple form. No resume yet? Start blank.',
   },
   {
-    title: 'Then paste the job description',
-    body: 'We pick out the skills the role asks for and check which ones your resume already shows.',
+    title: '2. Add the job',
+    body: 'Paste the job description. We pick out what the role asks for and check what your resume already shows.',
   },
   {
-    title: 'Keep only the changes you like',
-    body: 'Rewrites come back highlighted. Anything not in your profile is flagged and never applied.',
+    title: '3. Approve the changes',
+    body: 'The AI rewrites your points for this job. Each change is highlighted, and you keep only the ones you like.',
   },
   {
-    title: 'Send one link, not an attachment',
-    body: 'The link always shows your latest version, and you can see when it was opened.',
+    title: '4. Download or share',
+    body: 'Get a clean PDF to upload anywhere, or send one link that always shows your latest version.',
   },
 ]
 
 function StageFragment({ index }: { index: number }) {
   if (index === 0)
     return (
-      <div className="overflow-hidden rounded-xl border bg-card text-left">
-        <div className={tabBar}>
-          <span className="font-medium">main.tex</span>
-          <span className="text-muted-foreground">Compiled in 1.2s</span>
-        </div>
-        <pre className="overflow-x-auto p-4 font-mono text-[13px] leading-6">
-          <code>
-            <span className="text-muted-foreground">{'\\section'}</span>
-            {'{Experience}\n'}
-            <span className="text-muted-foreground">
-              {'\\resumeSubheading'}
-            </span>
-            {'\n  {Razorpay}{May 2025 -- Jul 2025}\n'}
-            <span className="text-muted-foreground">{'\\resumeItem'}</span>
-            {'{Built the payouts service in '}
-            <span className="text-primary">{'\\textbf'}</span>
-            {'{Go}}'}
-          </code>
-        </pre>
+      <div className="rounded-xl border bg-card p-4 text-left text-base">
+        <p className="flex items-center gap-3 rounded-lg bg-muted px-3 py-2.5">
+          <FileUpIcon className="size-5 shrink-0 text-primary" />
+          <span className="min-w-0 flex-1 truncate font-medium">
+            Ananya_Rao_Resume.pdf
+          </span>
+        </p>
+        <p className="mt-3">
+          Read into the editor: 2 jobs, 7 points, 9 skills.
+        </p>
+        <p className="mt-1 text-muted-foreground">
+          Every line stays yours to edit.
+        </p>
       </div>
     )
   if (index === 1)
     return (
-      <div className="rounded-xl border bg-card p-4 text-left text-sm">
+      <div className="rounded-xl border bg-card p-4 text-left text-base">
         <p className="font-medium">Job description</p>
         <div className="mt-2 rounded-lg bg-muted p-3 text-muted-foreground">
           <p className="line-clamp-3">
-            We’re hiring a Backend Engineer to build payment services in Go and
-            PostgreSQL. You’ll own APIs end to end, work with Kafka and Docker,
-            and keep latency low at scale.
+            We are hiring a Marketing Executive to plan social media, run
+            campaigns with creators, and report results from Google Analytics.
+            You will also help manage monthly budgets.
           </p>
         </div>
-        <p className="mt-4 font-medium">Skills this role asks for</p>
-        <ul className="mt-2 flex flex-wrap gap-1.5">
+        <p className="mt-4 font-medium">What this role asks for</p>
+        <ul className="mt-2 flex flex-wrap gap-1.5 text-sm">
           {[
-            ['Go', true],
-            ['PostgreSQL', true],
-            ['APIs', true],
-            ['Docker', true],
-            ['Kafka', false],
+            ['Social media', true],
+            ['Campaigns', true],
+            ['Google Analytics', true],
+            ['Budgets', false],
           ].map(([skill, found]) => (
             <li
               key={String(skill)}
@@ -308,51 +255,42 @@ function StageFragment({ index }: { index: number }) {
     )
   if (index === 2)
     return (
-      <div className="flex flex-col gap-2 text-left text-sm">
+      <div className="flex flex-col gap-2 text-left text-base">
         <div className="rounded-xl border bg-card p-4">
           <p className="text-muted-foreground line-through">
-            Worked on payouts service in Go
+            Helped in Diwali sale campaign, followed up with 30 influencers
           </p>
-          <p className="mt-1 text-base">
-            Built the merchant payouts service in{' '}
+          <p className="mt-1">
+            Coordinated 30 influencers for the Diwali sale{' '}
             <span className="rounded-[2px] bg-highlight/70 px-0.5 dark:bg-primary/30">
-              Go
+              campaign
             </span>
-            , handling 2M requests a day
           </p>
           <p className="mt-2 font-medium text-success">Accepted</p>
         </div>
         <div className="rounded-xl border border-destructive/40 bg-card p-4 dark:border-border">
-          <p className="text-base">
-            Scaled Kafka pipelines to 10M events a day
-          </p>
+          <p>Managed a ₹20L monthly ad budget</p>
           <p className="mt-2 text-destructive dark:text-muted-foreground">
-            Not applied. Not found in your profile: Kafka, 10M.
+            Not applied. Your resume never mentions a budget.
           </p>
         </div>
       </div>
     )
   return (
-    <div className="rounded-xl border bg-card p-4 text-left text-sm">
-      <p className="flex min-w-0 items-center gap-2 rounded-lg bg-muted px-3 py-2.5 break-all">
-        <LinkIcon className="size-4 shrink-0 text-muted-foreground" />
-        {site.displayDomain}/aarav/backend-engineer
+    <div className="rounded-xl border bg-card p-4 text-left text-base">
+      <p className="flex items-center gap-3 rounded-lg bg-muted px-3 py-2.5">
+        <FileTextIcon className="size-5 shrink-0 text-primary" />
+        <span className="min-w-0 flex-1 truncate font-medium">
+          Ananya_Rao_Marketing_Executive.pdf
+        </span>
       </p>
-      <dl className="mt-4 grid grid-cols-2 gap-3">
-        <div>
-          <dt className="text-muted-foreground">Opened</dt>
-          <dd className="mt-1 flex items-center gap-2 text-lg font-medium">
-            <EyeIcon className="size-4 text-primary" />3 times
-          </dd>
-        </div>
-        <div>
-          <dt className="text-muted-foreground">Last viewed from</dt>
-          <dd className="mt-1 text-lg font-medium">LinkedIn</dd>
-        </div>
-      </dl>
+      <p className="mt-2 flex min-w-0 items-center gap-3 rounded-lg bg-muted px-3 py-2.5 break-all">
+        <LinkIcon className="size-5 shrink-0 text-primary" />
+        {site.displayDomain}/ananya/marketing
+      </p>
       <p className="mt-4 flex items-center gap-2 text-muted-foreground">
-        <LockIcon className="size-4" />
-        Phone and email stay hidden unless you show them.
+        <EyeIcon className="size-4 shrink-0" />
+        See how many times your link was opened.
       </p>
     </div>
   )
@@ -371,7 +309,7 @@ export function Stages() {
           data-reveal
           className={cn(heading, 'text-center')}
         >
-          From job post to tailored resume
+          How it works
         </h2>
         <ol className="mt-12 grid gap-4 md:grid-cols-2">
           {stages.map((stage, index) => (
@@ -393,6 +331,67 @@ export function Stages() {
           ))}
         </ol>
       </div>
+    </Reveal>
+  )
+}
+
+const promises = [
+  {
+    icon: ShieldCheckIcon,
+    title: 'We never invent experience',
+    body: 'The AI only rewrites what you gave it. If a change mentions something you have not done, it is flagged and left out.',
+  },
+  {
+    icon: BanIcon,
+    title: 'We never sell your data',
+    body: 'Your resume is not sold or shown to anyone you have not shared it with, and it is not used to train AI models.',
+  },
+  {
+    icon: LockIcon,
+    title: 'Share links stay private',
+    body: 'Links hide your phone and email unless you turn them on. Add a password or an expiry date if you like.',
+  },
+  {
+    icon: ScanTextIcon,
+    title: 'Easy for hiring software to read',
+    body: 'One column, real text you can select, and standard headings, which is what ATS software reads best. Typeset with LaTeX for clean spacing.',
+  },
+]
+
+export function Promises() {
+  return (
+    <Reveal
+      as="section"
+      aria-labelledby="promises"
+      className="mx-auto max-w-6xl px-5 pt-28"
+    >
+      <h2 id="promises" data-reveal className={cn(heading, 'text-center')}>
+        Honest and private
+      </h2>
+      <p data-reveal className="mx-auto mt-4 max-w-2xl text-center text-lg">
+        You can download or delete everything we hold about you from Settings,
+        any time.
+      </p>
+      <ul className="mt-12 grid gap-4 sm:grid-cols-2">
+        {promises.map(({ icon: Icon, title, body }) => (
+          <li
+            key={title}
+            data-reveal
+            className="flex gap-4 rounded-2xl bg-card p-6"
+          >
+            <Icon
+              aria-hidden="true"
+              className="mt-1 size-6 shrink-0 text-primary"
+            />
+            <div>
+              <h3 className="font-serif text-2xl font-semibold tracking-[-0.01em]">
+                {title}
+              </h3>
+              <p className="mt-2 text-lg">{body}</p>
+            </div>
+          </li>
+        ))}
+      </ul>
     </Reveal>
   )
 }
@@ -492,32 +491,32 @@ export function PlanPicker() {
 
 const faqs = [
   {
-    q: 'Do I need to know LaTeX?',
-    a: 'No. Fill in the form and your resume is typeset for you. LaTeX is there if you want it, not required.',
+    q: 'Who is Shortlist for?',
+    a: 'Students, freshers and early professionals in any field: marketing, finance, HR, sales, operations, consulting, design, data and tech. Tailoring works on any job description.',
   },
   {
-    q: 'Can I bring my resume from Overleaf?',
-    a: 'Yes. Paste or upload your .tex file. It compiles here as it is, and you can keep editing the code or convert it to the form editor.',
+    q: 'Is it free?',
+    a: 'Yes. The Free plan includes 1 resume tailored to a job description and 50 AI edits each month, and you can make and edit as many resumes as you like by hand. The Season Pass is ₹499 for six months if you are applying a lot.',
+  },
+  {
+    q: 'Does the AI add things I haven’t done?',
+    a: 'No. It only rephrases, reorders and trims what you have given it. Anything that looks new is flagged and left out unless you confirm it.',
   },
   {
     q: 'Will it pass applicant tracking systems?',
     a: 'Our templates are single column with real, selectable text, which is what these systems read best. The free ATS checker reads your resume the way they do and shows which job requirements it covers.',
   },
   {
-    q: 'Does the AI add things I haven’t done?',
-    a: 'It only rephrases, reorders and trims what you have given it. Anything that looks new is flagged and left out unless you confirm it.',
-  },
-  {
-    q: 'Is it only for software jobs?',
-    a: 'No. There are templates for banking, finance, consulting, marketing, design, product, data and students, and tailoring works on any job description.',
-  },
-  {
     q: 'Who can see my resume?',
     a: 'Only people you send a link to. Links hide your phone and email by default, can have a password or an expiry date, and you can export or delete all your data at any time.',
   },
   {
-    q: 'Is it free?',
-    a: 'Building and editing resumes is free and unlimited. The free plan includes one resume tailored to a job description each month; the Season Pass is ₹499 for six months if you are applying a lot.',
+    q: 'Do I need to know LaTeX?',
+    a: 'No. Fill in the form and your resume is typeset for you. LaTeX is there if you want it, not required.',
+  },
+  {
+    q: 'Can I bring my resume from Overleaf?',
+    a: 'Yes. Paste or upload your .tex file. It compiles here as it is, and you can keep editing the code or convert it to the form editor.',
   },
 ]
 
@@ -566,138 +565,30 @@ const starts = [
     source: 'upload',
   },
   {
-    icon: FileTextIcon,
-    label: 'Paste a .tex file',
-    hint: 'Your Overleaf resume compiles here as it is.',
-    action: 'Sign up and paste my .tex',
-    source: 'tex',
-  },
-  {
     icon: PenLineIcon,
     label: 'Start from a blank form',
     hint: 'Fill in your details, then pick a template.',
     action: 'Sign up and start blank',
     source: 'blank',
   },
-] as const
-
-// Real renders of four templates, laid on the field like printed resumes on a desk. They sit in the
-// side margins only, so nothing ever covers the heading or the dialog.
-const prints = [
   {
-    id: 'developer',
-    side: 'left',
-    top: '18%',
-    inset: '4%',
-    rotate: -9,
-    sway: 2,
-    float: 6,
-  },
-  {
-    id: 'finance',
-    side: 'left',
-    top: '50%',
-    inset: '11%',
-    rotate: 5,
-    sway: -1.5,
-    float: 7.5,
-  },
-  {
-    id: 'consulting',
-    side: 'right',
-    top: '14%',
-    inset: '10%',
-    rotate: 7,
-    sway: -2,
-    float: 6.8,
-  },
-  {
-    id: 'designer',
-    side: 'right',
-    top: '48%',
-    inset: '3%',
-    rotate: -6,
-    sway: 1.5,
-    float: 8,
+    icon: FileTextIcon,
+    label: 'Paste a LaTeX (.tex) file',
+    hint: 'Made your resume on Overleaf? It works here as it is.',
+    action: 'Sign up and paste my .tex',
+    source: 'tex',
   },
 ] as const
-
-function Print({
-  print,
-  progress,
-}: {
-  print: (typeof prints)[number]
-  progress: ReturnType<typeof useScroll>['scrollYProgress']
-}) {
-  const reduceMotion = useReducedMotion()
-  const from = print.side === 'left' ? -80 : 80
-  // Drifts in from its own side and settles as the section scrolls into place.
-  const x = useTransform(progress, [0, 1], [reduceMotion ? 0 : from, 0])
-  const rotate = useTransform(
-    progress,
-    [0, 1],
-    [reduceMotion ? print.rotate : print.rotate * 1.8, print.rotate],
-  )
-  return (
-    <motion.div
-      aria-hidden="true"
-      style={{ x, rotate, top: print.top, [print.side]: print.inset }}
-      whileHover={reduceMotion ? undefined : { rotate: 0, scale: 1.04 }}
-      transition={{ duration: 0.25, ease }}
-      className="absolute hidden w-52 hover:z-10 min-[1400px]:block 2xl:w-60"
-    >
-      {/* Keeps floating once settled, each print on its own slow rhythm, like paper in a light draught. */}
-      <motion.div
-        className="bg-sheet p-2"
-        animate={
-          reduceMotion
-            ? undefined
-            : { y: [0, -14, 0], rotate: [0, print.sway, 0] }
-        }
-        transition={{
-          duration: print.float,
-          repeat: Infinity,
-          ease: 'easeInOut',
-        }}
-      >
-        <img
-          src={`/templates/thumbs/${print.id}.webp`}
-          alt=""
-          width={560}
-          height={724}
-          loading="lazy"
-          className="aspect-[560/724] w-full"
-        />
-      </motion.div>
-    </motion.div>
-  )
-}
 
 export function FinalCta() {
-  const field = useRef<HTMLElement>(null)
-  const { scrollYProgress } = useScroll({
-    target: field,
-    offset: ['start end', 'start 0.25'],
-  })
   const [source, setSource] =
     useState<(typeof starts)[number]['source']>('upload')
   const chosen = starts.find((s) => s.source === source) ?? starts[0]
 
   return (
-    <section
-      ref={field}
-      aria-labelledby="start"
-      className="relative mt-28 overflow-hidden bg-primary"
-    >
-      {prints.map((print) => (
-        <Print key={print.id} print={print} progress={scrollYProgress} />
-      ))}
-      <Reveal className="relative px-5 py-20 text-center text-primary-foreground sm:py-28">
-        <h2
-          id="start"
-          data-reveal
-          className="mx-auto max-w-4xl font-serif text-5xl leading-[0.95] font-semibold tracking-[-0.035em] sm:text-7xl lg:text-8xl"
-        >
+    <section aria-labelledby="start" className="mt-28 bg-primary">
+      <Reveal className="px-5 py-20 text-center text-primary-foreground sm:py-28">
+        <h2 id="start" data-reveal className={cn(heading, 'mx-auto max-w-4xl')}>
           Start with what you have
         </h2>
         <p
