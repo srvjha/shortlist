@@ -18,6 +18,7 @@ export const queryKeys = {
   jobs: ['jobs'] as const,
   job: (id: string) => ['job', id] as const,
   subscription: ['subscription'] as const,
+  refundQuote: ['subscription', 'refund-quote'] as const,
   analytics: (days: number) => ['analytics', days] as const,
   admin: ['admin'] as const,
   adminReport: (report: string, days?: number) =>
@@ -160,6 +161,12 @@ export const suggestionsQuery = (resumeId: string) =>
 export const subscriptionQuery = queryOptions({
   queryKey: queryKeys.subscription,
   queryFn: () => unwrap(api.GET('/v1/subscription')),
+})
+
+export const refundQuoteQuery = queryOptions({
+  queryKey: queryKeys.refundQuote,
+  queryFn: () => unwrap(api.GET('/v1/refunds/quote')),
+  retry: false,
 })
 
 export const analyticsQuery = (days: 7 | 30 | 90) =>

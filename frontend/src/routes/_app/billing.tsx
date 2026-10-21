@@ -21,9 +21,14 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Spinner } from '@/components/ui/spinner'
 import { useCheckout } from '@/hooks/use-checkout'
 import { api, errorMessage, unwrap } from '@/lib/api/client'
-import { meQuery, subscriptionQuery, usageQuery } from '@/lib/api/queries'
+import {
+  meQuery,
+  refundQuoteQuery,
+  subscriptionQuery,
+  usageQuery,
+} from '@/lib/api/queries'
 import type { Me } from '@/lib/api/types'
-import { formatDate, planLabels } from '@/lib/format'
+import { formatDate, formatDateTime, formatInr, planLabels } from '@/lib/format'
 import { site } from '@/lib/site'
 import { cn } from '@/lib/utils'
 
@@ -117,6 +122,22 @@ function Billing({
   const { data: subscription } = useQuery(subscriptionQuery)
   const { checkout, waiting, refresh } = useCheckout()
   const [confirmCancel, setConfirmCancel] = useState(false)
+  const { data: refundQuote, error: refundQuoteError } =
+    useQuery(refundQuoteQuery)
+  const quote = refundQuote?.quote
+  const [confirmRefund, setConfirmRefund] = useState(false)
+
+  const refund = useMutation({
+    mutationFn: (paymentId: string) =>
+      unwrap(api.POST('/v1/refunds', { body: { paymentId } })),
+    onSuccess: (result) => {
+      refresh()
+      toast.success(
+        `Refund of ${formatInr(result.refundPaise)} started. It reaches your account in 5 to 7 working days.`,
+      )
+    },
+    onError: (error) => toast.error(errorMessage(error)),
+  })
 
   const cancel = useMutation({
     mutationFn: () => unwrap(api.DELETE('/v1/subscription')),
@@ -185,16 +206,43 @@ function Billing({
             <Skeleton className="h-32" />
           )}
         </CardContent>
-        {activeSub?.plan === 'pro' && activeSub.status === 'active' && (
-          <CardFooter>
-            <Button
-              variant="outline"
-              onClick={() => setConfirmCancel(true)}
-              disabled={cancel.isPending}
-            >
-              {cancel.isPending && <Spinner data-icon="inline-start" />}
-              Cancel Pro
-            </Button>
+        {((activeSub?.plan === 'pro' && activeSub.status === 'active') ||
+          quote ||
+          refundQuoteError) && (
+          <CardFooter className="flex flex-col items-start gap-3">
+            <div className="flex flex-wrap gap-2">
+              {activeSub?.plan === 'pro' && activeSub.status === 'active' && (
+                <Button
+                  variant="outline"
+                  onClick={() => setConfirmCancel(true)}
+                  disabled={cancel.isPending}
+                >
+                  {cancel.isPending && <Spinner data-icon="inline-start" />}
+                  Cancel Pro
+                </Button>
+              )}
+              {quote && (
+                <Button
+                  variant="outline"
+                  onClick={() => setConfirmRefund(true)}
+                  disabled={refund.isPending}
+                >
+                  {refund.isPending && <Spinner data-icon="inline-start" />}
+                  Request a refund
+                </Button>
+              )}
+            </div>
+            {quote && (
+              <p className="text-sm text-muted-foreground">
+                You can get {formatInr(quote.refundPaise)} back until{' '}
+                {formatDateTime(quote.refundableUntil)}.
+              </p>
+            )}
+            {refundQuoteError && (
+              <p className="text-sm text-muted-foreground">
+                {errorMessage(refundQuoteError)}
+              </p>
+            )}
           </CardFooter>
         )}
         <ConfirmDialog
@@ -207,6 +255,18 @@ function Billing({
           destructive
           onConfirm={() => cancel.mutate()}
         />
+        {quote && (
+          <ConfirmDialog
+            open={confirmRefund}
+            onOpenChange={setConfirmRefund}
+            title={`Refund ${formatInr(quote.refundPaise)}?`}
+            description={`You paid ${formatInr(quote.amountPaidPaise)}. Razorpay keeps ${formatInr(quote.feePaise)} as its payment fee (including GST), so ${formatInr(quote.refundPaise)} goes back to your original payment method in 5 to 7 working days. Your ${quote.plan ? planLabels[quote.plan] : 'plan'} ends now. Your resumes are not deleted.`}
+            confirmLabel={`Refund ${formatInr(quote.refundPaise)}`}
+            cancelLabel="Keep my plan"
+            destructive
+            onConfirm={() => refund.mutate(quote.paymentId)}
+          />
+        )}
       </Card>
 
       {me.plan === 'free' && (
