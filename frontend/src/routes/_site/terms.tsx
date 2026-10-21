@@ -48,14 +48,15 @@ export const Route = createFileRoute('/_site/terms')({
       </p>
       <h2>Refunds</h2>
       <p>
-        You can ask for a refund within 24 hours of a payment, from Plans and
-        billing. It is automatic, once per payment. You get back what you paid
-        minus the fee Razorpay charged us for that payment, including GST, and
-        we show the exact amount before you confirm. We make no profit on
-        refunds. A refunded Season Pass ends straight away; a refunded Pro
-        subscription is cancelled and ends straight away. After 24 hours,
-        payments can't be refunded. Refunds reach your original payment method
-        in 5 to 7 working days.
+        You can ask for a refund within 6 hours of a payment, from Plans and
+        billing, as long as you have made no more than 3 tailored and 3
+        AI-written resumes since paying. Each account can get one refund. It is
+        automatic: you get back what you paid minus the fee Razorpay charged us
+        for that payment, including GST, and we show the exact amount before you
+        confirm. We make no profit on refunds. A refunded Season Pass ends
+        straight away; a refunded Pro subscription is cancelled and ends
+        straight away. After 6 hours, payments can't be refunded. Refunds reach
+        your original payment method in 5 to 7 working days.
       </p>
       <h2>Changes and ending your account</h2>
       <p>

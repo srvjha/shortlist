@@ -130,7 +130,7 @@ export function PricingCards({
       </ul>
       <p className="mt-6 text-center text-sm text-muted-foreground">
         Pay with UPI, cards or net banking through Razorpay. Changed your mind?
-        Ask for a refund within 24 hours.
+        Ask for a refund within 6 hours.
       </p>
     </div>
   )

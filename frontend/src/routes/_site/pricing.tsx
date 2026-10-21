@@ -101,7 +101,7 @@ const faqs = [
   },
   {
     q: 'Can I get a refund?',
-    a: "Yes, within 24 hours of paying. Click Request a refund in Plans and billing and it happens automatically. You get back what you paid minus Razorpay's fee for that payment (including GST), and you see the exact amount before you confirm. Your plan ends straight away. After 24 hours, payments can't be refunded.",
+    a: "Yes, within 6 hours of paying, if you've made no more than 3 tailored and 3 AI-written resumes since, and once per account. Click Request a refund in Plans and billing and it happens automatically. You get back what you paid minus Razorpay's fee for that payment (including GST), and you see the exact amount before you confirm. Your plan ends straight away. After 6 hours, payments can't be refunded.",
   },
   {
     q: 'Can I use my own AI key?',
