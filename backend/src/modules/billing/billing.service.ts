@@ -231,10 +231,18 @@ export async function requestRefund(userId: string, paymentId: string, now = new
       notes: { userId, reason: "Self-serve refund within 24 hours" },
     });
   } catch (error) {
-    // ponytail: a refund call that times out after Razorpay processed it is released here too; the retry then
-    // sees amount_refunded and refuses, leaving the plan running. Reconcile from refund.processed if that shows up.
-    await db.update(payments).set({ refundedAt: null, updatedAt: keepUpdatedAt }).where(eq(payments.id, row.id));
-    throw error;
+    // A call that timed out may still have refunded, so the claim is only released when Razorpay shows none;
+    // otherwise the plan would keep running on money already returned.
+    const done = await Promise.resolve()
+      .then(() =>
+        razorpay<{ items?: { id: string; amount: number }[] }>("GET", `/payments/${row.razorpayPaymentId}/refunds`),
+      )
+      .catch(() => undefined);
+    if (!done?.items?.[0]) {
+      await db.update(payments).set({ refundedAt: null, updatedAt: keepUpdatedAt }).where(eq(payments.id, row.id));
+      throw error;
+    }
+    refund = done.items[0];
   }
 
   const [subscription] = row.subscriptionId

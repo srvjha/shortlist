@@ -100,6 +100,15 @@ describe("requesting a refund", () => {
     expect(state.updates).toBe(2);
   });
 
+  it("finishes the refund when the call timed out but Razorpay refunded anyway", async () => {
+    state.claims = [[claimed]];
+    razorpay.mockImplementation(async (method: string, path: string) => {
+      if (path.endsWith("/refund")) throw new Error("timeout");
+      return path.endsWith("/refunds") ? { items: [{ id: "rfnd_3", amount: 48_722 }] } : paid;
+    });
+    await expect(requestRefund("user_1", claimed.id)).resolves.toMatchObject({ razorpayRefundId: "rfnd_3" });
+  });
+
   it("cancels a refunded Pro subscription in Razorpay straight away", async () => {
     state.claims = [[{ ...claimed, subscriptionId: "sub_row" }]];
     state.subscription = { id: "sub_row", plan: "pro", razorpaySubscriptionId: "sub_1", cancelledAt: null };
