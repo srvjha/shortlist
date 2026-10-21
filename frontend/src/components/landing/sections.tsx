@@ -29,9 +29,11 @@ const examples = [
   'Financial Analyst',
   'Sales Executive',
   'Final-year student',
-  'Management Consultant',
   'Software Engineer',
 ]
+
+// After the suggestion, the front page shows layouts from fields beyond tech.
+const showcase = ['marketing', 'finance', 'campus', 'consulting']
 
 // The same rules the editor uses to suggest a template, run on one typed job.
 function suggestFor(jobTitle: string) {
@@ -67,9 +69,11 @@ export function TemplateFinder() {
   const [jobTitle, setJobTitle] = useState(examples[0])
   const suggestion = useMemo(() => suggestFor(jobTitle), [jobTitle])
   const ordered = [
-    ...templateCatalog.filter((t) => t.id === suggestion.templateId),
-    ...templateCatalog.filter((t) => t.id !== suggestion.templateId),
-  ].slice(0, 3)
+    suggestion.templateId,
+    ...showcase.filter((id) => id !== suggestion.templateId),
+  ]
+    .slice(0, 3)
+    .map((id) => templateCatalog.find((t) => t.id === id)!)
 
   return (
     <Reveal
@@ -95,7 +99,7 @@ export function TemplateFinder() {
             onChange={(event) => setJobTitle(event.target.value)}
             spellCheck={false}
             autoComplete="off"
-            className="w-full bg-transparent text-center font-serif text-[2rem] font-semibold tracking-[-0.02em] caret-primary outline-none sm:text-6xl"
+            className="w-full bg-transparent text-center font-serif text-[2rem] font-semibold tracking-[-0.02em] caret-primary outline-none sm:text-4xl"
           />
         </div>
         <div className="mt-4 flex flex-wrap justify-center gap-2">
@@ -169,7 +173,7 @@ export function TemplateFinder() {
         size="lg"
         variant="secondary"
         asChild
-        className="mt-10 rounded-full"
+        className="mt-10 h-12 rounded-full px-6 text-base"
       >
         <Link to="/templates">View all {templateCatalog.length} templates</Link>
       </Button>
