@@ -10,12 +10,11 @@ import {
   ScanTextIcon,
   ShieldCheckIcon,
 } from 'lucide-react'
-import { AnimatePresence, motion } from 'motion/react'
 import { useId, useMemo, useState } from 'react'
 import { Reveal } from '@/components/landing/reveal'
+import { PricingCards } from '@/components/site/pricing-cards'
 import { Button } from '@/components/ui/button'
 import type { ResumeContent } from '@/lib/api/types'
-import { plans } from '@/lib/plans'
 import { recommendTemplate } from '@/lib/recommend-template'
 import { site } from '@/lib/site'
 import { categoryName, templateCatalog } from '@/lib/templates'
@@ -343,8 +342,8 @@ const promises = [
   },
   {
     icon: BanIcon,
-    title: 'We never sell your data',
-    body: 'Your resume is not sold or shown to anyone you have not shared it with, and it is not used to train AI models.',
+    title: 'Your resume stays yours',
+    body: 'Only people you share a link with can see it. It goes to our AI provider only to make the changes you ask for, and is never used to train AI models.',
   },
   {
     icon: LockIcon,
@@ -397,9 +396,6 @@ export function Promises() {
 }
 
 export function PlanPicker() {
-  const [selected, setSelected] = useState<string>('season_pass')
-  const plan = plans.find((p) => p.id === selected) ?? plans[1]
-
   return (
     <Reveal
       as="section"
@@ -410,81 +406,11 @@ export function PlanPicker() {
         Pricing
       </h2>
       <p data-reveal className="mt-3 text-lg text-muted-foreground">
-        Pick a plan to see what it includes.
+        Start free. Pay only when you want more AI help.
       </p>
-      <div
-        data-reveal
-        role="group"
-        aria-label="Plans"
-        className="mt-8 flex flex-wrap justify-center gap-x-6 gap-y-2"
-      >
-        {plans.map((p) => (
-          <button
-            key={p.id}
-            type="button"
-            aria-pressed={p.id === selected}
-            onClick={() => setSelected(p.id)}
-            onFocus={() => setSelected(p.id)}
-            className="flex min-h-11 items-center gap-2.5 font-serif text-2xl font-semibold tracking-[-0.02em] text-muted-foreground transition-colors hover:text-foreground aria-pressed:text-foreground sm:text-4xl"
-          >
-            <span
-              aria-hidden="true"
-              className={cn(
-                'size-[0.3em] rounded-full bg-primary transition-opacity',
-                p.id === selected ? 'opacity-100' : 'opacity-0',
-              )}
-            />
-            {p.name}
-          </button>
-        ))}
+      <div data-reveal className="mt-10 text-left">
+        <PricingCards />
       </div>
-
-      <AnimatePresence mode="wait" initial={false}>
-        <motion.div
-          key={plan.id}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
-          className="mt-12"
-          data-reveal
-        >
-          <p className="font-serif text-7xl font-semibold tracking-[-0.03em] tabular-nums sm:text-9xl">
-            {plan.price}
-            {plan.period && (
-              <span className="ml-2 font-sans text-lg font-normal tracking-normal text-muted-foreground">
-                {plan.period}
-              </span>
-            )}
-          </p>
-          <p className="mx-auto mt-6 max-w-xl text-lg">
-            {plan.forWhom} {plan.note}
-          </p>
-          <ul className="mx-auto mt-8 flex max-w-4xl flex-wrap justify-center gap-2">
-            {plan.features.map((feature) => (
-              <li
-                key={feature}
-                className="rounded-full bg-secondary px-4 py-2 text-base"
-              >
-                {feature}
-              </li>
-            ))}
-          </ul>
-          <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Button size="lg" asChild className="rounded-full">
-              <Link
-                to={plan.id === 'free' ? '/login' : '/pricing'}
-                search={plan.id === 'free' ? { mode: 'signup' } : undefined}
-              >
-                {plan.cta}
-              </Link>
-            </Button>
-            <Button size="lg" variant="ghost" asChild className="rounded-full">
-              <Link to="/pricing">Compare plans</Link>
-            </Button>
-          </div>
-        </motion.div>
-      </AnimatePresence>
     </Reveal>
   )
 }
