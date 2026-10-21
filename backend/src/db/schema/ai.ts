@@ -26,6 +26,7 @@ export const aiStep = pgEnum("ai_step", [
   "chat_edit",
   "fix_compile",
   "draft",
+  "ats_match",
 ]);
 
 // pending: reserved against the quota while the model is still working.
