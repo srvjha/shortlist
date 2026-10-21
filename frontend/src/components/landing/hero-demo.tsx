@@ -134,17 +134,18 @@ const holdMs = 4000
 
 // The headline keeps its own quicker rhythm, independent of the demo, across many fields.
 const titles = [
-  'Backend Engineer',
-  'Financial Analyst',
-  'Product Designer',
-  'Data Analyst',
-  'Growth Marketer',
-  'Consultant',
-  'Product Manager',
-  'Investment Banker',
+  'Marketing',
+  'Finance',
+  'HR',
+  'Sales',
+  'Operations',
+  'Consulting',
+  'Design',
+  'Data',
+  'Software',
 ]
-const firstSwapMs = 1200
-const titleMs = 2600
+const firstSwapMs = 2500
+const titleMs = 3500
 
 // Splits a rewrite into words, bolding what sits between *stars*.
 const wordsOf = (text: string) =>
@@ -228,40 +229,24 @@ function TypingDots() {
   )
 }
 
-// The headline edits itself the way the product edits a resume: a red line strikes the old job out,
-// then the new one slides in and the highlighter marks it.
-function Redline({ word }: { word: string }) {
-  const reduceMotion = useReducedMotion()
+// The job in the headline fades to the next one, and the highlighter marks it, as it marks rewrites below.
+function JobTitle({ word }: { word: string }) {
   return (
     <AnimatePresence mode="wait" initial={false}>
       <motion.span
         key={word}
         className="relative inline-block whitespace-nowrap"
-        initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: '0.25em' }}
-        animate={{ opacity: 1, y: 0, transition: { duration: 0.25, ease } }}
-        exit={{ opacity: 0, transition: { delay: 0.12, duration: 0.1 } }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1, transition: { duration: 0.4, ease } }}
+        exit={{ opacity: 0, transition: { duration: 0.25 } }}
       >
         <motion.span
           aria-hidden="true"
           className="absolute inset-x-0 bottom-[0.1em] -z-10 h-[0.28em] origin-left bg-highlight/80 dark:bg-primary/40"
           initial={{ scaleX: 0 }}
-          animate={{
-            scaleX: 1,
-            transition: { delay: 0.05, duration: 0.3, ease },
-          }}
-          exit={{ scaleX: 1 }}
+          animate={{ scaleX: 1, transition: { delay: 0.2, duration: 0.5, ease } }}
         />
         {word}
-        <motion.span
-          aria-hidden="true"
-          className="absolute inset-x-[-0.05em] top-[55%] h-[0.07em] origin-left rounded-full bg-destructive dark:bg-muted-foreground"
-          initial={{ scaleX: 0 }}
-          animate={{ scaleX: 0 }}
-          exit={{
-            scaleX: reduceMotion ? 0 : 1,
-            transition: { duration: 0.12, ease },
-          }}
-        />
       </motion.span>
     </AnimatePresence>
   )
@@ -350,14 +335,16 @@ export function Hero() {
     <section ref={hero} className="px-5 pt-16 pb-12 text-center sm:pt-24">
       {/* The label keeps one steady name for the page while the job in the line keeps changing. */}
       <h1
-        aria-label="Your resume, rewritten for every job"
+        aria-label="Your resume, tailored to every job you apply for"
         className="isolate mx-auto max-w-5xl font-serif text-[2.4rem] leading-[1.04] font-semibold tracking-[-0.035em] sm:text-6xl lg:text-7xl xl:text-[5.25rem]"
       >
         {/* Phones drop "Your resume," so the line and the job each fit on one line. */}
-        <span className="max-sm:hidden">Your resume, rewritten for</span>
-        <span className="sm:hidden">Rewritten for</span>
+        <span className="max-sm:hidden">Your resume, tailored to every</span>
+        <span className="sm:hidden">Tailored to every</span>
         <br />
-        <Redline word={titles[title]} />
+        <span className="whitespace-nowrap">
+          <JobTitle word={titles[title]} /> job
+        </span>
       </h1>
       <p className="mx-auto mt-6 max-w-2xl text-lg sm:mt-8 sm:text-xl">
         <span className="max-sm:hidden">
