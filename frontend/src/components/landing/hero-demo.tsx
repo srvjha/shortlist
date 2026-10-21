@@ -330,7 +330,7 @@ export function Hero() {
       {/* The label keeps one steady name for the page while the job in the line keeps changing. */}
       <h1
         aria-label="Your resume, tailored to every job you apply for"
-        className="isolate mx-auto max-w-5xl font-serif text-[2.4rem] leading-[1.04] font-semibold tracking-[-0.035em] sm:text-6xl lg:text-7xl xl:text-[5.25rem]"
+        className="isolate mx-auto max-w-6xl font-serif text-[2.4rem] leading-[1.04] font-semibold tracking-[-0.035em] sm:text-6xl lg:text-7xl"
       >
         {/* Phones drop "Your resume," so the line and the job each fit on one line. */}
         <span className="max-sm:hidden">Your resume, tailored to every</span>
@@ -365,7 +365,7 @@ export function Hero() {
         needed.
       </p>
 
-      <h2 className="mt-20 font-serif text-2xl font-semibold tracking-[-0.01em] sm:text-3xl">
+      <h2 className="mt-20 font-serif text-[1.75rem] leading-tight font-semibold tracking-[-0.02em] sm:text-4xl">
         Try it on an example
       </h2>
       <p className="mx-auto mt-2 max-w-xl text-lg">
