@@ -1004,7 +1004,7 @@ function jobMatch(facts: Facts, jobText: string) {
   return {
     checks,
     hasSkills: hard.matched.length + hard.missing.length + softTotal > 0,
-    keywords: { matched: hard.matched, missing: hard.missing, hard, soft, mustHaveMissing: mustMissing },
+    keywords: { matched: hard.matched, missing: hard.missing, hard, soft, mustHaveMissing: mustMissing, implied: [] },
     title,
   };
 }
@@ -1017,6 +1017,10 @@ const GRADES = [
   { min: 50, grade: "fair", text: "Fair: an ATS can read parts of this, but key details are weak or missing." },
   { min: 0, grade: "poor", text: "Poor: an ATS and a recruiter will likely miss important details." },
 ] as const;
+
+// The plain text the job match reads, which AI evidence is checked against.
+export const resumeText = (input: { text?: string | null; content?: ResumeContent | null }) =>
+  (input.content ? factsFromContent(input.content) : factsFromText(input.text ?? "")).text;
 
 export function scoreResume(input: {
   text?: string | null;
@@ -1103,7 +1107,7 @@ export function scoreResume(input: {
       ? findKnockouts(input.jobText, {
           text: facts.text,
           ...(input.content && { content: visibleContent(input.content) }),
-        })
+        }).map((knockout) => ({ ...knockout, checkedWithAi: false }))
       : null,
     stats: {
       words: facts.words,

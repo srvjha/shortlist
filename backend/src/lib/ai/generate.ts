@@ -36,6 +36,7 @@ export type GenerateStructuredInput<S extends z.ZodType> = {
   userKey?: { provider: AiProvider; apiKey: string; modelId?: string };
   // The plan limit this call counts against. Unset for calls the quota doesn't cover.
   quota?: QuotaKind;
+  timeoutMs?: number;
 };
 
 // Every AI call goes through here so it is logged in ai_runs with tokens, cost and latency.
@@ -84,7 +85,7 @@ export async function generateStructured<S extends z.ZodType>(
       system: input.system,
       messages: [{ role: "user", content }],
       // A hung model call fails here, which records the run as failed and frees its reservation.
-      abortSignal: AbortSignal.timeout(90_000),
+      abortSignal: AbortSignal.timeout(input.timeoutMs ?? 90_000),
       // Strict mode makes OpenAI return every field, so output always matches the schema.
       // AI output schemas must therefore use nullable fields, never optional ones.
       providerOptions: { openai: { strictJsonSchema: true } },

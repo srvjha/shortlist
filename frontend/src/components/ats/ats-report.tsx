@@ -169,6 +169,14 @@ function KeywordList({
   )
 }
 
+function AiLabel() {
+  return (
+    <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-normal text-muted-foreground">
+      checked with AI
+    </span>
+  )
+}
+
 const titleLevels = {
   exact: 'exact match',
   close: 'close match',
@@ -205,6 +213,9 @@ export function AtsReport({
 }) {
   const grade = grades[report.grade]
   const { stats, keywords, parse } = report
+  const impliedSkills = new Set(keywords?.implied.map((i) => i.skill))
+  const mustHaveMissing =
+    keywords?.mustHaveMissing.filter((word) => !impliedSkills.has(word)) ?? []
   const toFix = report.categories.flatMap((category) =>
     sortChecks(category.checks)
       .filter((check) => check.status !== 'pass')
@@ -346,7 +357,7 @@ export function AtsReport({
                     : 'Not found on your resume.'}
                 </p>
               )}
-              {keywords.mustHaveMissing.length > 0 && (
+              {mustHaveMissing.length > 0 && (
                 <div className="flex flex-col gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-4">
                   <p className="flex items-center gap-2 font-medium text-destructive">
                     <CircleXIcon aria-hidden className="size-4 shrink-0" />
@@ -357,7 +368,7 @@ export function AtsReport({
                     search on them first.
                   </p>
                   <ul className="flex flex-wrap gap-1.5">
-                    {keywords.mustHaveMissing.map((word) => (
+                    {mustHaveMissing.map((word) => (
                       <li key={word}>
                         <Badge
                           variant="outline"
@@ -373,10 +384,37 @@ export function AtsReport({
               <KeywordList
                 title="Other hard skills missing"
                 words={keywords.hard.missing.filter(
-                  (word) => !keywords.mustHaveMissing.includes(word),
+                  (word) =>
+                    !keywords.mustHaveMissing.includes(word) &&
+                    !impliedSkills.has(word),
                 )}
                 variant="outline"
               />
+              {keywords.implied.length > 0 && (
+                <div className="flex flex-col gap-2">
+                  <h4 className="flex flex-wrap items-center gap-x-2 font-sans text-sm font-medium">
+                    Implied by your resume{' '}
+                    <span className="text-muted-foreground">
+                      ({keywords.implied.length})
+                    </span>
+                    <AiLabel />
+                  </h4>
+                  <ul className="flex flex-col gap-1.5 text-sm">
+                    {keywords.implied.map(({ skill, evidence }) => (
+                      <li key={skill} className="break-words">
+                        <Badge
+                          variant="outline"
+                          className="mr-2 h-6 text-sm font-normal"
+                        >
+                          {skill}
+                        </Badge>
+                        Implied by {evidence}. Add '{skill}' so keyword searches
+                        find you.
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
               <KeywordList
                 title="Hard skills found"
                 words={keywords.hard.matched}
@@ -419,13 +457,20 @@ export function AtsReport({
                           Preferred
                         </span>
                       )}
+                      {knockout.checkedWithAi && <AiLabel />}
                     </div>
                     <p className="text-sm text-muted-foreground">
                       The job says: <q>{knockout.requirement}</q>
                     </p>
                     {knockout.evidence && (
                       <p className="text-sm text-muted-foreground">
-                        {knockout.evidence}
+                        {knockout.checkedWithAi ? (
+                          <>
+                            Your resume says: <q>{knockout.evidence}</q>
+                          </>
+                        ) : (
+                          knockout.evidence
+                        )}
                       </p>
                     )}
                     <p className="text-sm">{knockout.advice}</p>
