@@ -28,7 +28,7 @@ export const plans = [
     note: 'One payment, about ₹83 a month.',
     cta: 'Get the Season Pass',
     featured: true,
-    badge: 'Most popular for placement season',
+    badge: 'Made for placement season',
     listTitle: 'Everything in Free, plus:',
     features: [
       '40 resumes tailored to a job description each month',
