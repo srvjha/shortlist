@@ -81,6 +81,12 @@ type Source = 'profile' | 'upload' | 'ai' | 'tex' | 'blank'
 
 const sources = [
   {
+    id: 'blank',
+    icon: FilePlusIcon,
+    title: 'Start blank',
+    body: 'A layout, a blank page or your own template',
+  },
+  {
     id: 'profile',
     icon: UserRoundIcon,
     title: 'From my profile',
@@ -103,12 +109,6 @@ const sources = [
     icon: CodeIcon,
     title: 'Paste LaTeX',
     body: 'Keep editing your Overleaf code',
-  },
-  {
-    id: 'blank',
-    icon: FilePlusIcon,
-    title: 'Start blank',
-    body: 'A layout, a blank page or your own template',
   },
 ] as const
 
