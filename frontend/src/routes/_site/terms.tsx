@@ -10,7 +10,7 @@ export const Route = createFileRoute('/_site/terms')({
   component: () => (
     <LegalPage
       title="Terms of use"
-      updated={new Date('2026-09-27T00:00:00+05:30')}
+      updated={new Date('2026-10-21T00:00:00+05:30')}
     >
       <p>
         By using {site.name} you agree to these terms. They are written to be
@@ -45,6 +45,17 @@ export const Route = createFileRoute('/_site/terms')({
         Paid plans are processed by Razorpay. The Season Pass is a one-time
         payment for six months. Pro renews monthly until you cancel, and stays
         active until the end of the paid month.
+      </p>
+      <h2>Refunds</h2>
+      <p>
+        You can ask for a refund within 24 hours of a payment, from Plans and
+        billing. It is automatic, once per payment. You get back what you paid
+        minus the fee Razorpay charged us for that payment, including GST, and
+        we show the exact amount before you confirm. We make no profit on
+        refunds. A refunded Season Pass ends straight away; a refunded Pro
+        subscription is cancelled and ends straight away. After 24 hours,
+        payments can't be refunded. Refunds reach your original payment method
+        in 5 to 7 working days.
       </p>
       <h2>Changes and ending your account</h2>
       <p>

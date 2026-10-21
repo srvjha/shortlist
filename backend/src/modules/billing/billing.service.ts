@@ -1,8 +1,9 @@
-import { and, desc, eq, gt, inArray, isNotNull } from "drizzle-orm";
+import { and, desc, eq, gt, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 import { env } from "../../config/env.js";
 import { db } from "../../db/index.js";
 import { payments, subscriptions, users } from "../../db/schema/index.js";
 import { AppError, ConflictError, ForbiddenError, NotFoundError } from "../../lib/errors.js";
+import { logger } from "../../lib/logger.js";
 import { razorpay } from "../../lib/razorpay.js";
 import { track } from "../../lib/analytics.js";
 
@@ -149,4 +150,120 @@ export async function cancelSubscription(userId: string) {
     .set({ status: "cancelled", cancelledAt: new Date() })
     .where(eq(subscriptions.id, subscription.id));
   return getSubscription(userId);
+}
+
+export const REFUND_WINDOW_MS = 24 * 60 * 60 * 1000;
+
+type RemotePayment = { amount: number; status: string; fee?: number | null; amount_refunded?: number };
+
+// The amount paid minus exactly what Razorpay kept for it: `fee` already includes the GST on it.
+export function refundablePaise(payment: RemotePayment) {
+  if (payment.status !== "captured" || payment.amount_refunded) {
+    throw new ConflictError("This payment has already been refunded");
+  }
+  if (typeof payment.fee !== "number") {
+    throw new AppError(
+      503,
+      "REFUND_FEE_UNAVAILABLE",
+      "Razorpay hasn't reported its fee for this payment yet, so the refund can't be worked out. Try again in a few minutes.",
+    );
+  }
+  const refund = payment.amount - payment.fee;
+  if (refund <= 0) throw new ConflictError("Nothing is left to refund after Razorpay's fee");
+  return refund;
+}
+
+const refundable = (userId: string, now: Date) =>
+  and(
+    eq(payments.userId, userId),
+    eq(payments.status, "captured"),
+    isNull(payments.refundedAt),
+    isNotNull(payments.razorpayPaymentId),
+    gt(payments.capturedAt, new Date(now.getTime() - REFUND_WINDOW_MS)),
+  );
+
+export async function getRefundQuote(userId: string, now = new Date()) {
+  const [row] = await db
+    .select({
+      id: payments.id,
+      razorpayPaymentId: payments.razorpayPaymentId,
+      capturedAt: payments.capturedAt,
+      plan: subscriptions.plan,
+    })
+    .from(payments)
+    .leftJoin(subscriptions, eq(subscriptions.id, payments.subscriptionId))
+    .where(refundable(userId, now))
+    .orderBy(desc(payments.capturedAt))
+    .limit(1);
+  if (!row) return { quote: null };
+  const remote = await razorpay<RemotePayment>("GET", `/payments/${row.razorpayPaymentId}`);
+  const refundPaise = refundablePaise(remote);
+  return {
+    quote: {
+      paymentId: row.id,
+      plan: row.plan,
+      amountPaidPaise: remote.amount,
+      feePaise: remote.amount - refundPaise,
+      refundPaise,
+      refundableUntil: new Date(row.capturedAt!.getTime() + REFUND_WINDOW_MS),
+    },
+  };
+}
+
+// Leaves updated_at alone: the admin revenue view dates a captured payment by it.
+const keepUpdatedAt = sql`${payments.updatedAt}`;
+
+export async function requestRefund(userId: string, paymentId: string, now = new Date()) {
+  // Claimed before Razorpay is called, so a double click or a second tab gets a conflict, not a second refund.
+  const [row] = await db
+    .update(payments)
+    .set({ refundedAt: now, updatedAt: keepUpdatedAt })
+    .where(and(eq(payments.id, paymentId), refundable(userId, now)))
+    .returning();
+  if (!row) throw new ConflictError("Refunds are available once per payment, within 24 hours of paying");
+
+  let refund: { id: string; amount: number };
+  try {
+    const remote = await razorpay<RemotePayment>("GET", `/payments/${row.razorpayPaymentId}`);
+    refund = await razorpay("POST", `/payments/${row.razorpayPaymentId}/refund`, {
+      amount: refundablePaise(remote),
+      speed: "normal",
+      notes: { userId, reason: "Self-serve refund within 24 hours" },
+    });
+  } catch (error) {
+    // ponytail: a refund call that times out after Razorpay processed it is released here too; the retry then
+    // sees amount_refunded and refuses, leaving the plan running. Reconcile from refund.processed if that shows up.
+    await db.update(payments).set({ refundedAt: null, updatedAt: keepUpdatedAt }).where(eq(payments.id, row.id));
+    throw error;
+  }
+
+  const [subscription] = row.subscriptionId
+    ? await db.select().from(subscriptions).where(eq(subscriptions.id, row.subscriptionId))
+    : [];
+  if (subscription?.plan === "pro" && subscription.razorpaySubscriptionId) {
+    await razorpay("POST", `/subscriptions/${subscription.razorpaySubscriptionId}/cancel`, {
+      cancel_at_cycle_end: 0,
+    }).catch((err: unknown) =>
+      logger.error(
+        { err, subscriptionId: subscription.razorpaySubscriptionId },
+        "Refunded Pro subscription was not cancelled in Razorpay; cancel it in the dashboard",
+      ),
+    );
+  }
+
+  await db.transaction(async (tx) => {
+    await tx
+      .update(payments)
+      .set({ status: "refunded", refundedPaise: refund.amount, razorpayRefundId: refund.id })
+      .where(eq(payments.id, row.id));
+    if (subscription) {
+      await tx
+        .update(subscriptions)
+        .set({ status: "expired", currentPeriodEnd: now, cancelledAt: subscription.cancelledAt ?? now })
+        .where(eq(subscriptions.id, subscription.id));
+    }
+    await recomputePlan(userId, tx);
+  });
+  track(userId, "refund_requested", { amount_inr: refund.amount / 100 });
+  return { paymentId: row.id, refundPaise: refund.amount, razorpayRefundId: refund.id };
 }

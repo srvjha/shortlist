@@ -100,6 +100,10 @@ const faqs = [
     a: 'Yes, from Settings. You keep Pro until the end of the month you have paid for.',
   },
   {
+    q: 'Can I get a refund?',
+    a: "Yes, within 24 hours of paying. Click Request a refund in Plans and billing and it happens automatically. You get back what you paid minus Razorpay's fee for that payment (including GST), and you see the exact amount before you confirm. Your plan ends straight away. After 24 hours, payments can't be refunded.",
+  },
+  {
     q: 'Can I use my own AI key?',
     a: 'Yes. Add an OpenAI, Anthropic or OpenRouter key in Settings and your AI requests run on it, with no monthly limits from us. You pay the provider directly.',
   },

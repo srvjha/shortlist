@@ -19,7 +19,14 @@ import {
 } from "./modules/admin/admin.schemas.js";
 import { atsReport, createAtsReportBody, createResumeAtsReportBody } from "./modules/ats/ats.schemas.js";
 import { coverageQuery, coverageResponse } from "./modules/coverage/coverage.routes.js";
-import { checkoutResponse, createCheckoutBody, subscriptionResponse } from "./modules/billing/billing.schemas.js";
+import {
+  checkoutResponse,
+  createCheckoutBody,
+  createRefundBody,
+  refundQuoteResponse,
+  refundResponse,
+  subscriptionResponse,
+} from "./modules/billing/billing.schemas.js";
 import {
   createPromoCodeBody,
   createRedemptionBody,
@@ -530,6 +537,22 @@ const paths: ZodOpenApiPathsObject = {
       summary: "Cancel Pro at the end of the billing period",
       tag: "Billing",
       response: subscriptionResponse,
+    }),
+  },
+  "/v1/refunds/quote": {
+    get: op({
+      summary: "What a refund of the latest payment would return, while it is within 24 hours",
+      tag: "Billing",
+      response: refundQuoteResponse,
+    }),
+  },
+  "/v1/refunds": {
+    post: op({
+      summary: "Refund a payment made in the last 24 hours, less Razorpay's fee, and end its plan",
+      tag: "Billing",
+      body: createRefundBody,
+      response: refundResponse,
+      status: 201,
     }),
   },
 

@@ -53,7 +53,13 @@ async function onPaymentCaptured(
 
   await tx
     .update(payments)
-    .set({ status: "captured", razorpayPaymentId: payment.id, method: payment.method ?? null, raw })
+    .set({
+      status: "captured",
+      capturedAt: new Date(),
+      razorpayPaymentId: payment.id,
+      method: payment.method ?? null,
+      raw,
+    })
     .where(eq(payments.id, row.id));
 
   if (row.subscriptionId) {
@@ -94,6 +100,8 @@ async function onSubscriptionEvent(tx: Tx, event: RazorpayEvent, raw: unknown) {
     logger.warn({ subscriptionId: remote.id }, "Webhook for unknown subscription");
     return;
   }
+  // Ended for good (completed, or refunded and cancelled here); a late cancelled event must not revive it.
+  if (row.status === "expired") return;
 
   const status =
     event.event === "subscription.cancelled"
@@ -125,6 +133,7 @@ async function onSubscriptionEvent(tx: Tx, event: RazorpayEvent, raw: unknown) {
         razorpayPaymentId: payment.id,
         amountPaise: payment.amount ?? 0,
         status: "captured",
+        capturedAt: new Date(),
         method: payment.method ?? null,
         raw,
       })
@@ -134,6 +143,7 @@ async function onSubscriptionEvent(tx: Tx, event: RazorpayEvent, raw: unknown) {
 }
 
 // A full refund ends the Season Pass it paid for straight away; a partial one (a goodwill credit) changes nothing.
+// Self-serve refunds (requestRefund) are partial and end the plan themselves, so this is a no-op for them.
 // Pro is left alone: it renews through Razorpay, so a refunded Pro month is cancelled there and that event ends it.
 async function onRefund(tx: Tx, event: RazorpayEvent) {
   const refund = event.payload.refund?.entity;

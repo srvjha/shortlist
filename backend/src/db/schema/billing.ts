@@ -51,6 +51,11 @@ export const payments = pgTable(
     currency: text().notNull().default("INR"),
     status: paymentStatus().notNull().default("created"),
     method: text(), // upi, card, netbanking, ...
+    capturedAt: timestamp({ withTimezone: true }),
+    // Set when a self-serve refund is claimed, before Razorpay is called, so a second request can't refund again.
+    refundedAt: timestamp({ withTimezone: true }),
+    refundedPaise: integer(),
+    razorpayRefundId: text().unique(),
     // Latest webhook payload from Razorpay, kept for debugging.
     raw: jsonb(),
     ...timestamps,
