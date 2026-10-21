@@ -577,6 +577,7 @@ const stepLabels: Record<string, string> = {
   chat_edit: 'Chat edit',
   fix_compile: 'Fix LaTeX',
   draft: 'Write from notes',
+  ats_match: 'ATS job match',
 }
 
 export const stepLabel = (step: string) => stepLabels[step] ?? step

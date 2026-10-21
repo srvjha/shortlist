@@ -1253,7 +1253,7 @@ export interface paths {
                                     id: string;
                                     createdAt: string;
                                     /** @enum {string} */
-                                    step: "import" | "jd_parse" | "plan" | "rewrite" | "verify" | "inline_edit" | "chat_edit" | "fix_compile" | "draft";
+                                    step: "import" | "jd_parse" | "plan" | "rewrite" | "verify" | "inline_edit" | "chat_edit" | "fix_compile" | "draft" | "ats_match";
                                     /** @enum {string} */
                                     status: "pending" | "succeeded" | "failed";
                                     model: string;
@@ -8273,6 +8273,10 @@ export interface components {
                     missing: string[];
                 };
                 mustHaveMissing: string[];
+                implied: {
+                    skill: string;
+                    evidence: string;
+                }[];
             } | null;
             title: {
                 jobTitle: string;
@@ -8299,6 +8303,7 @@ export interface components {
                 status: "met" | "not-met" | "unclear" | "not-on-resume";
                 evidence: string | null;
                 advice: string;
+                checkedWithAi: boolean;
             }[] | null;
             stats: {
                 words: number;
