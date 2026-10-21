@@ -11,8 +11,6 @@ import {
   motion,
   useInView,
   useReducedMotion,
-  useScroll,
-  useTransform,
 } from 'motion/react'
 import { useEffect, useRef, useState } from 'react'
 import { ease } from '@/components/landing/reveal'
@@ -27,10 +25,74 @@ import { cn } from '@/lib/utils'
 // In `after`, *stars* mark the words the job asked for.
 const demos = [
   {
+    field: 'Marketing',
+    name: 'Ananya Rao',
+    contact: 'ananya@example.com | linkedin.com/in/ananya | Pune',
+    company: 'Skincare brand, Pune',
+    dates: 'Jun 2024 – Present',
+    role: 'Marketing Associate',
+    job: {
+      title: 'Marketing Executive',
+      where: 'Beauty e-commerce, Mumbai',
+      asks: ['Social media', 'Campaigns', 'Google Analytics', 'Budgets'],
+      missing: ['Budgets'],
+    },
+    bullets: [
+      {
+        before:
+          'Handled Instagram page, posted reels 4 times a week, followers went from 8k to 21k',
+        after:
+          'Ran the brand’s *social media*, posting 4 reels a week and growing followers from 8k to 21k',
+      },
+      {
+        before:
+          'Helped in Diwali sale campaign, followed up with 30 influencers, sale got 1,200 orders',
+        after:
+          'Coordinated 30 influencers for the Diwali sale *campaign*, which drove 1,200 orders',
+      },
+      { before: 'Member of college dance society', after: null },
+    ],
+    skills: ['Skills', 'Tools', 'Canva, Meta Business Suite, Google Analytics'],
+    refused: {
+      text: 'Managed a ₹20L monthly ad budget',
+      missing: 'an ad budget',
+    },
+  },
+  {
+    field: 'Finance',
+    name: 'Priya Nair',
+    contact: 'priya@example.com | linkedin.com/in/priya | Mumbai',
+    company: 'Mehta & Iyer, Chartered Accountants',
+    dates: 'Aug 2023 – Present',
+    role: 'Audit Associate',
+    job: {
+      title: 'Financial Analyst',
+      where: 'Private bank, Mumbai',
+      asks: ['Excel', 'Financial modelling', 'Valuation', 'Due diligence'],
+      missing: ['Due diligence'],
+    },
+    bullets: [
+      {
+        before: 'Made Excel models for 12 clients as part of audit work',
+        after: 'Built *financial models* in *Excel* for 12 audit clients',
+      },
+      {
+        before: 'Helped the team with valuation of a ₹40 Cr acquisition',
+        after: 'Supported the *valuation* of a ₹40 Cr acquisition',
+      },
+      { before: 'Managed the office cricket league', after: null },
+    ],
+    skills: ['Skills', 'Tools', 'Excel, Power BI, Tally, SQL'],
+    refused: {
+      text: 'Led due diligence on three cross-border deals',
+      missing: 'due diligence and cross-border deals',
+    },
+  },
+  {
     field: 'Software',
     name: 'Aarav Sharma',
     contact: 'aarav@example.com | github.com/aarav | Bengaluru',
-    company: 'Razorpay',
+    company: 'Payments startup, Bengaluru',
     dates: 'May 2025 – Jul 2025',
     role: 'Software Engineering Intern',
     job: {
@@ -58,67 +120,6 @@ const demos = [
       missing: 'Kafka and 10M events',
     },
   },
-  {
-    field: 'Finance',
-    name: 'Priya Nair',
-    contact: 'priya@example.com | linkedin.com/in/priya | Mumbai',
-    company: 'Deloitte',
-    dates: 'Aug 2023 – Present',
-    role: 'Audit Associate',
-    job: {
-      title: 'Financial Analyst',
-      where: 'Private bank, Mumbai',
-      asks: ['Excel', 'Financial modelling', 'Valuation', 'Due diligence'],
-      missing: ['Due diligence'],
-    },
-    bullets: [
-      {
-        before: 'Made Excel models for 12 clients as part of audit work',
-        after: 'Built *financial models* in *Excel* for 12 audit clients',
-      },
-      {
-        before: 'Helped the team with valuation of a ₹40 Cr acquisition',
-        after: 'Supported the *valuation* of a ₹40 Cr acquisition',
-      },
-      { before: 'Managed the office cricket league', after: null },
-    ],
-    skills: ['Skills', 'Tools', 'Excel, Power BI, Tally, SQL'],
-    refused: {
-      text: 'Led due diligence on three cross-border deals',
-      missing: 'due diligence and cross-border deals',
-    },
-  },
-  {
-    field: 'Marketing',
-    name: 'Ananya Rao',
-    contact: 'ananya@example.com | linkedin.com/in/ananya | Delhi',
-    company: 'Meesho',
-    dates: 'Jun 2023 – Present',
-    role: 'Marketing Associate',
-    job: {
-      title: 'Growth Marketer',
-      where: 'Beauty e-commerce, Mumbai',
-      asks: ['SEO', 'Performance marketing', 'GA4', 'Revenue growth'],
-      missing: ['Revenue growth'],
-    },
-    bullets: [
-      {
-        before: 'Ran Google and Meta ads with a ₹15L monthly budget',
-        after:
-          'Managed ₹15L a month in *performance marketing* across Google and Meta',
-      },
-      {
-        before: 'Improved blog traffic 3x by working on SEO',
-        after: 'Tripled organic blog traffic by leading *SEO* work',
-      },
-      { before: 'Handled the team Instagram page', after: null },
-    ],
-    skills: ['Skills', 'Tools', 'GA4, Google Ads, Meta Ads, Ahrefs'],
-    refused: {
-      text: 'Grew revenue by 25% in one quarter',
-      missing: 'revenue and 25%',
-    },
-  },
 ]
 
 type Demo = (typeof demos)[number]
@@ -128,9 +129,9 @@ const sectionRule =
 
 // One tick streams one word; a hidden bullet takes a few ticks so its strike lands like a beat.
 const hidePause = 3
-const tickMs = 110
+const tickMs = 170
 // How long a finished resume stays before the demo moves to the next job, long enough to read it.
-const holdMs = 4000
+const holdMs = 7000
 
 // The headline keeps its own quicker rhythm, independent of the demo, across many fields.
 const titles = [
@@ -166,7 +167,7 @@ const spans = (demo: Demo) => {
   })
 }
 
-// The streamed part of a rewrite: each word arrives out of a soft blur.
+// The streamed part of a rewrite: each word fades in.
 function Streamed({ text, upTo }: { text: string; upTo: number }) {
   const reduceMotion = useReducedMotion()
   return wordsOf(text)
@@ -177,10 +178,8 @@ function Streamed({ text, upTo }: { text: string; upTo: number }) {
         <Tag
           key={index}
           className="whitespace-pre-wrap"
-          initial={
-            reduceMotion ? false : { opacity: 0, filter: 'blur(6px)', y: 3 }
-          }
-          animate={{ opacity: 1, filter: 'blur(0px)', y: 0 }}
+          initial={reduceMotion ? false : { opacity: 0 }}
+          animate={{ opacity: 1 }}
           transition={{ duration: 0.35, ease }}
         >
           {word}
@@ -201,16 +200,15 @@ function Choice({
   children: React.ReactNode
 }) {
   return (
-    <motion.button
+    <button
       type="button"
       aria-pressed={pressed}
       aria-label={label}
       onClick={onClick}
-      whileTap={{ scale: 0.94 }}
-      className="inline-flex h-9 items-center gap-1.5 rounded-full px-3.5 text-sm font-medium text-muted-foreground hover:text-foreground focus-visible:outline-2 aria-pressed:bg-foreground aria-pressed:text-background"
+      className="inline-flex h-11 min-w-11 justify-center items-center gap-1.5 rounded-full px-3.5 text-sm font-medium text-muted-foreground hover:text-foreground focus-visible:outline-2 aria-pressed:bg-foreground aria-pressed:text-background"
     >
       {children}
-    </motion.button>
+    </button>
   )
 }
 
@@ -244,7 +242,10 @@ function JobTitle({ word }: { word: string }) {
           aria-hidden="true"
           className="absolute inset-x-0 bottom-[0.1em] -z-10 h-[0.28em] origin-left bg-highlight/80 dark:bg-primary/40"
           initial={{ scaleX: 0 }}
-          animate={{ scaleX: 1, transition: { delay: 0.2, duration: 0.5, ease } }}
+          animate={{
+            scaleX: 1,
+            transition: { delay: 0.2, duration: 0.5, ease },
+          }}
         />
         {word}
       </motion.span>
@@ -313,13 +314,6 @@ export function Hero() {
     return () => clearTimeout(timer)
   }, [done, picked, reduceMotion, onScreen, index])
 
-  const stage = useRef<HTMLDivElement>(null)
-  const { scrollYProgress } = useScroll({
-    target: stage,
-    offset: ['start end', 'start 0.3'],
-  })
-  const scale = useTransform(scrollYProgress, [0, 1], [0.94, 1])
-
   const typed = (i: number) =>
     Math.max(0, Math.min(ticks - bulletSpans[i].start, bulletSpans[i].length))
   const finished = (i: number) => typed(i) >= bulletSpans[i].length
@@ -347,20 +341,14 @@ export function Hero() {
         </span>
       </h1>
       <p className="mx-auto mt-6 max-w-2xl text-lg sm:mt-8 sm:text-xl">
-        <span className="max-sm:hidden">
-          Paste a job description and get your resume rewritten for it in under
-          a minute. Every change is highlighted, and you keep only the ones you
-          like.
-        </span>
-        <span className="sm:hidden">
-          Paste a job, get your resume rewritten for it, and keep the changes
-          you like.
-        </span>
+        Paste the job you want. Our AI rewrites your resume for it, using only
+        what you have really done. You see every change and keep the ones you
+        like.
       </p>
       <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
         <Button size="lg" asChild className="h-12 rounded-full px-7 text-base">
           <Link to="/login" search={{ mode: 'signup' }}>
-            Build my resume
+            Build my resume free
           </Link>
         </Button>
         <Button
@@ -373,13 +361,21 @@ export function Hero() {
         </Button>
       </div>
       <p className="mt-4 text-base text-muted-foreground">
-        Free, unlimited resumes. No card needed.
+        Free plan: 1 tailored resume and 50 AI edits every month. No card
+        needed.
+      </p>
+
+      <h2 className="mt-20 font-serif text-2xl font-semibold tracking-[-0.01em] sm:text-3xl">
+        Try it on an example
+      </h2>
+      <p className="mx-auto mt-2 max-w-xl text-lg">
+        Pick a field. Watch the resume change for the job, then keep or skip
+        each change.
       </p>
 
       <div
-        ref={stage}
         data-ui
-        className="mx-auto mt-20 grid w-full max-w-2xl items-start gap-3 text-left xl:max-w-6xl xl:grid-cols-[minmax(0,1fr)_34rem_minmax(0,1fr)] xl:gap-4"
+        className="mx-auto mt-8 grid w-full max-w-2xl items-start gap-3 text-left xl:max-w-6xl xl:grid-cols-[minmax(0,1fr)_34rem_minmax(0,1fr)] xl:gap-4"
       >
         <aside className="flex flex-col gap-5 rounded-2xl bg-card p-5 xl:sticky xl:top-24">
           <div
@@ -416,14 +412,14 @@ export function Hero() {
                 </Choice>
               </div>
             )}
-            <p className="text-sm text-muted-foreground">Tailoring for</p>
+            <p className="text-base text-muted-foreground">Tailoring for</p>
             <p className="mt-1 font-serif text-2xl leading-tight font-semibold">
               {demo.job.title}
             </p>
             <p className="text-base">{demo.job.where}</p>
           </div>
           <div>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-base text-muted-foreground">
               What the job asks for
             </p>
             <ul className="mt-2 flex flex-wrap gap-1.5 text-sm">
@@ -447,16 +443,15 @@ export function Hero() {
                 )
               })}
             </ul>
-            <p className="mt-2 text-sm text-muted-foreground">
+            <p className="mt-2 text-base text-muted-foreground">
               Grey: not on your resume, so it won’t be added.
             </p>
           </div>
         </aside>
 
-        <motion.figure
+        <figure
           aria-label={`${demo.name}'s resume, tailored for a ${demo.job.title} role`}
-          style={{ scale: reduceMotion ? 1 : scale }}
-          className="origin-top bg-sheet px-6 pt-10 pb-8 text-left text-sheet-foreground ring-1 ring-black/5 sm:px-12"
+          className="bg-sheet px-6 pt-10 pb-8 text-left text-sheet-foreground ring-1 ring-black/5 sm:px-12"
         >
           <div className="text-center font-serif">
             <p className="text-2xl tracking-wide [font-variant-caps:small-caps]">
@@ -505,9 +500,9 @@ export function Hero() {
           <p className="mt-1.5 font-serif text-sm sm:text-[15px]">
             <b>{demo.skills[1]}</b>: {demo.skills[2]}
           </p>
-        </motion.figure>
+        </figure>
 
-        <div className="rounded-2xl bg-card p-4 text-left text-sm">
+        <div className="rounded-2xl bg-card p-4 text-left text-base">
           <div className="flex min-h-9 items-center justify-between gap-3">
             <p className="font-medium" aria-live={picked ? 'polite' : 'off'}>
               {done
@@ -529,15 +524,14 @@ export function Hero() {
             )}
           </div>
           {/* Changes arrive like messages: a typing indicator, then the row. */}
-          <ul className="mt-2 flex min-h-52 flex-col gap-2">
+          <ul className="mt-2 flex min-h-80 flex-col gap-2">
             <AnimatePresence initial={false}>
               {demo.bullets.map((bullet, i) =>
                 finished(i) ? (
                   <motion.li
                     key={`${demo.field}-${i}`}
-                    layout={!reduceMotion}
-                    initial={{ opacity: 0, y: 10, scale: 0.97 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.35, ease }}
                     className="flex items-center gap-3 rounded-xl bg-secondary py-1 pr-1 pl-3"
@@ -576,9 +570,8 @@ export function Hero() {
               {done ? (
                 <motion.li
                   key={`${demo.field}-refused`}
-                  layout={!reduceMotion}
-                  initial={{ opacity: 0, y: 10, scale: 0.97 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.35, ease }}
                   className="rounded-xl bg-destructive/10 px-3 py-2.5 text-destructive dark:bg-secondary dark:text-muted-foreground"
@@ -589,7 +582,6 @@ export function Hero() {
               ) : (
                 <motion.li
                   key="typing"
-                  layout={!reduceMotion}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0, transition: { duration: 0.1 } }}
