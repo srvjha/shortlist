@@ -25,3 +25,25 @@ export const subscriptionResponse = z.object({
     })
     .nullable(),
 });
+
+export const refundQuoteResponse = z.object({
+  // Null when no payment is still inside its 24 hour refund window.
+  quote: z
+    .object({
+      paymentId: z.uuid(),
+      plan: z.enum(["season_pass", "pro"]).nullable(),
+      amountPaidPaise: z.number().int(),
+      feePaise: z.number().int(),
+      refundPaise: z.number().int(),
+      refundableUntil: z.date(),
+    })
+    .nullable(),
+});
+
+export const createRefundBody = z.object({ paymentId: z.uuid() });
+
+export const refundResponse = z.object({
+  paymentId: z.uuid(),
+  refundPaise: z.number().int(),
+  razorpayRefundId: z.string(),
+});

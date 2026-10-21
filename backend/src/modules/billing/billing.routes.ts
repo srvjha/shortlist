@@ -4,7 +4,14 @@ import { sendData } from "../../lib/http.js";
 import { verifyWebhookSignature } from "../../lib/razorpay.js";
 import { currentUser, requireAuth } from "../../middleware/require-auth.js";
 import { validated } from "../../middleware/validate.js";
-import { checkoutResponse, createCheckoutBody, subscriptionResponse } from "./billing.schemas.js";
+import {
+  checkoutResponse,
+  createCheckoutBody,
+  createRefundBody,
+  refundQuoteResponse,
+  refundResponse,
+  subscriptionResponse,
+} from "./billing.schemas.js";
 import * as service from "./billing.service.js";
 import { handleRazorpayEvent } from "./webhooks.js";
 
@@ -25,6 +32,18 @@ billingRouter.get("/subscription", requireAuth, async (req, res) => {
 billingRouter.delete("/subscription", requireAuth, async (req, res) => {
   sendData(res, subscriptionResponse, await service.cancelSubscription(currentUser(req).id));
 });
+
+billingRouter.get("/refunds/quote", requireAuth, async (req, res) => {
+  sendData(res, refundQuoteResponse, await service.getRefundQuote(currentUser(req).id));
+});
+
+billingRouter.post(
+  "/refunds",
+  requireAuth,
+  ...validated({ body: createRefundBody }, async (req, res) => {
+    sendData(res, refundResponse, await service.requestRefund(currentUser(req).id, req.body.paymentId), 201);
+  }),
+);
 
 // Mounted before express.json() in app.ts: the signature is computed over the raw body.
 export const razorpayWebhookRouter = Router();
