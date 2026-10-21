@@ -4,7 +4,6 @@ import {
   FileTextIcon,
   FileUpIcon,
   LinkIcon,
-  LockIcon,
   PenLineIcon,
 } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
@@ -17,10 +16,6 @@ import { recommendTemplate } from '@/lib/recommend-template'
 import { site } from '@/lib/site'
 import { categoryName, templateCatalog } from '@/lib/templates'
 import { cn } from '@/lib/utils'
-
-// The editor's own tab bar, drawn as it looks in the product.
-const tabBar =
-  'flex items-center justify-between gap-2 border-b px-4 py-2.5 text-sm' // taste-skill-ignore
 
 const heading =
   'font-serif text-[2rem] leading-[1.05] font-semibold tracking-[-0.02em] sm:text-5xl'
@@ -180,66 +175,59 @@ export function TemplateFinder() {
 
 const stages = [
   {
-    title: 'First, bring the resume you have',
-    body: 'Upload a PDF, paste your Overleaf .tex file, or start from a blank form.',
+    title: '1. Bring your resume',
+    body: 'Upload the PDF you already have, or fill in a simple form. No resume yet? Start blank.',
   },
   {
-    title: 'Then paste the job description',
-    body: 'We pick out the skills the role asks for and check which ones your resume already shows.',
+    title: '2. Add the job',
+    body: 'Paste the job description. We pick out what the role asks for and check what your resume already shows.',
   },
   {
-    title: 'Keep only the changes you like',
-    body: 'Rewrites come back highlighted. Anything not in your profile is flagged and never applied.',
+    title: '3. Approve the changes',
+    body: 'The AI rewrites your points for this job. Each change is highlighted, and you keep only the ones you like.',
   },
   {
-    title: 'Send one link, not an attachment',
-    body: 'The link always shows your latest version, and you can see when it was opened.',
+    title: '4. Download or share',
+    body: 'Get a clean PDF to upload anywhere, or send one link that always shows your latest version.',
   },
 ]
 
 function StageFragment({ index }: { index: number }) {
   if (index === 0)
     return (
-      <div className="overflow-hidden rounded-xl border bg-card text-left">
-        <div className={tabBar}>
-          <span className="font-medium">main.tex</span>
-          <span className="text-muted-foreground">Compiled in 1.2s</span>
-        </div>
-        <pre className="overflow-x-auto p-4 font-mono text-[13px] leading-6">
-          <code>
-            <span className="text-muted-foreground">{'\\section'}</span>
-            {'{Experience}\n'}
-            <span className="text-muted-foreground">
-              {'\\resumeSubheading'}
-            </span>
-            {'\n  {Razorpay}{May 2025 -- Jul 2025}\n'}
-            <span className="text-muted-foreground">{'\\resumeItem'}</span>
-            {'{Built the payouts service in '}
-            <span className="text-primary">{'\\textbf'}</span>
-            {'{Go}}'}
-          </code>
-        </pre>
+      <div className="rounded-xl border bg-card p-4 text-left text-base">
+        <p className="flex items-center gap-3 rounded-lg bg-muted px-3 py-2.5">
+          <FileUpIcon className="size-5 shrink-0 text-primary" />
+          <span className="min-w-0 flex-1 truncate font-medium">
+            Ananya_Rao_Resume.pdf
+          </span>
+        </p>
+        <p className="mt-3">
+          Read into the editor: 2 jobs, 7 points, 9 skills.
+        </p>
+        <p className="mt-1 text-muted-foreground">
+          Every line stays yours to edit.
+        </p>
       </div>
     )
   if (index === 1)
     return (
-      <div className="rounded-xl border bg-card p-4 text-left text-sm">
+      <div className="rounded-xl border bg-card p-4 text-left text-base">
         <p className="font-medium">Job description</p>
         <div className="mt-2 rounded-lg bg-muted p-3 text-muted-foreground">
           <p className="line-clamp-3">
-            We’re hiring a Backend Engineer to build payment services in Go and
-            PostgreSQL. You’ll own APIs end to end, work with Kafka and Docker,
-            and keep latency low at scale.
+            We are hiring a Marketing Executive to plan social media, run
+            campaigns with creators, and report results from Google Analytics.
+            You will also help manage monthly budgets.
           </p>
         </div>
-        <p className="mt-4 font-medium">Skills this role asks for</p>
-        <ul className="mt-2 flex flex-wrap gap-1.5">
+        <p className="mt-4 font-medium">What this role asks for</p>
+        <ul className="mt-2 flex flex-wrap gap-1.5 text-sm">
           {[
-            ['Go', true],
-            ['PostgreSQL', true],
-            ['APIs', true],
-            ['Docker', true],
-            ['Kafka', false],
+            ['Social media', true],
+            ['Campaigns', true],
+            ['Google Analytics', true],
+            ['Budgets', false],
           ].map(([skill, found]) => (
             <li
               key={String(skill)}
@@ -259,51 +247,42 @@ function StageFragment({ index }: { index: number }) {
     )
   if (index === 2)
     return (
-      <div className="flex flex-col gap-2 text-left text-sm">
+      <div className="flex flex-col gap-2 text-left text-base">
         <div className="rounded-xl border bg-card p-4">
           <p className="text-muted-foreground line-through">
-            Worked on payouts service in Go
+            Helped in Diwali sale campaign, followed up with 30 influencers
           </p>
-          <p className="mt-1 text-base">
-            Built the merchant payouts service in{' '}
+          <p className="mt-1">
+            Coordinated 30 influencers for the Diwali sale{' '}
             <span className="rounded-[2px] bg-highlight/70 px-0.5 dark:bg-primary/30">
-              Go
+              campaign
             </span>
-            , handling 2M requests a day
           </p>
           <p className="mt-2 font-medium text-success">Accepted</p>
         </div>
         <div className="rounded-xl border border-destructive/40 bg-card p-4 dark:border-border">
-          <p className="text-base">
-            Scaled Kafka pipelines to 10M events a day
-          </p>
+          <p>Managed a ₹20L monthly ad budget</p>
           <p className="mt-2 text-destructive dark:text-muted-foreground">
-            Not applied. Not found in your profile: Kafka, 10M.
+            Not applied. Your resume never mentions a budget.
           </p>
         </div>
       </div>
     )
   return (
-    <div className="rounded-xl border bg-card p-4 text-left text-sm">
-      <p className="flex min-w-0 items-center gap-2 rounded-lg bg-muted px-3 py-2.5 break-all">
-        <LinkIcon className="size-4 shrink-0 text-muted-foreground" />
-        {site.displayDomain}/aarav/backend-engineer
+    <div className="rounded-xl border bg-card p-4 text-left text-base">
+      <p className="flex items-center gap-3 rounded-lg bg-muted px-3 py-2.5">
+        <FileTextIcon className="size-5 shrink-0 text-primary" />
+        <span className="min-w-0 flex-1 truncate font-medium">
+          Ananya_Rao_Marketing_Executive.pdf
+        </span>
       </p>
-      <dl className="mt-4 grid grid-cols-2 gap-3">
-        <div>
-          <dt className="text-muted-foreground">Opened</dt>
-          <dd className="mt-1 flex items-center gap-2 text-lg font-medium">
-            <EyeIcon className="size-4 text-primary" />3 times
-          </dd>
-        </div>
-        <div>
-          <dt className="text-muted-foreground">Last viewed from</dt>
-          <dd className="mt-1 text-lg font-medium">LinkedIn</dd>
-        </div>
-      </dl>
+      <p className="mt-2 flex min-w-0 items-center gap-3 rounded-lg bg-muted px-3 py-2.5 break-all">
+        <LinkIcon className="size-5 shrink-0 text-primary" />
+        {site.displayDomain}/ananya/marketing
+      </p>
       <p className="mt-4 flex items-center gap-2 text-muted-foreground">
-        <LockIcon className="size-4" />
-        Phone and email stay hidden unless you show them.
+        <EyeIcon className="size-4 shrink-0" />
+        See how many times your link was opened.
       </p>
     </div>
   )
@@ -322,7 +301,7 @@ export function Stages() {
           data-reveal
           className={cn(heading, 'text-center')}
         >
-          From job post to tailored resume
+          How it works
         </h2>
         <ol className="mt-12 grid gap-4 md:grid-cols-2">
           {stages.map((stage, index) => (
