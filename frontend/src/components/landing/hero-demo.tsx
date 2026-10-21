@@ -290,15 +290,16 @@ export function Hero() {
     setSkipped([])
   }
 
-  // Keeps cycling through the jobs while the hero is on screen. The pause button, or choosing a job
-  // or a change, stops it (WCAG 2.2.2).
+  // The headline goes through the jobs once and rests back on the first; the demo keeps cycling while the hero
+  // is on screen. The pause button, or choosing a job or a change, stops both (WCAG 2.2.2).
   const hero = useRef<HTMLElement>(null)
   const onScreen = useInView(hero, { amount: 0.2 })
 
   const [title, setTitle] = useState(0)
   const swapped = useRef(false)
   useEffect(() => {
-    if (picked || reduceMotion || !onScreen) return
+    if (picked || reduceMotion || !onScreen || (swapped.current && title === 0))
+      return
     const timer = setTimeout(
       () => {
         swapped.current = true
