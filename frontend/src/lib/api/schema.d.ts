@@ -6681,6 +6681,7 @@ export interface paths {
                                     refundPaise: number;
                                     refundableUntil: string;
                                 } | null;
+                                reason: string | null;
                             };
                         };
                     };
@@ -6713,7 +6714,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Refund a payment made in the last 24 hours, less Razorpay's fee, and end its plan */
+        /** Refund a payment made in the last 6 hours, less Razorpay's fee, and end its plan */
         post: {
             parameters: {
                 query?: never;

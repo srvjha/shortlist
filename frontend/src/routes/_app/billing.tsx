@@ -125,6 +125,7 @@ function Billing({
   const { data: refundQuote, error: refundQuoteError } =
     useQuery(refundQuoteQuery)
   const quote = refundQuote?.quote
+  const refundBlocked = refundQuote?.reason
   const [confirmRefund, setConfirmRefund] = useState(false)
 
   const refund = useMutation({
@@ -208,6 +209,7 @@ function Billing({
         </CardContent>
         {((activeSub?.plan === 'pro' && activeSub.status === 'active') ||
           quote ||
+          refundBlocked ||
           refundQuoteError) && (
           <CardFooter className="flex flex-col items-start gap-3">
             <div className="flex flex-wrap gap-2">
@@ -235,8 +237,12 @@ function Billing({
             {quote && (
               <p className="text-sm text-muted-foreground">
                 You can get {formatInr(quote.refundPaise)} back until{' '}
-                {formatDateTime(quote.refundableUntil)}.
+                {formatDateTime(quote.refundableUntil)}, as long as you make no
+                more than 3 tailored and 3 AI-written resumes before then.
               </p>
+            )}
+            {refundBlocked && (
+              <p className="text-sm text-muted-foreground">{refundBlocked}</p>
             )}
             {refundQuoteError && (
               <p className="text-sm text-muted-foreground">
