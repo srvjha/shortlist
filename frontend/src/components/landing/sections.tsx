@@ -10,12 +10,11 @@ import {
 import {
   AnimatePresence,
   motion,
-  useInView,
   useReducedMotion,
   useScroll,
   useTransform,
 } from 'motion/react'
-import { useEffect, useId, useMemo, useRef, useState } from 'react'
+import { useId, useMemo, useRef, useState } from 'react'
 import { Reveal, ease } from '@/components/landing/reveal'
 import { Button } from '@/components/ui/button'
 import type { ResumeContent } from '@/lib/api/types'
@@ -33,10 +32,12 @@ const heading =
   'font-serif text-[2rem] leading-[1.05] font-semibold tracking-[-0.02em] sm:text-5xl'
 
 const examples = [
-  'Backend Engineer',
+  'Marketing Executive',
   'Financial Analyst',
-  'Product Designer',
+  'Sales Executive',
   'Final-year student',
+  'Management Consultant',
+  'Software Engineer',
 ]
 
 // The same rules the editor uses to suggest a template, run on one typed job.
@@ -69,49 +70,13 @@ function suggestFor(jobTitle: string) {
 }
 
 export function TemplateFinder() {
-  const reduceMotion = useReducedMotion()
   const inputId = useId()
   const [jobTitle, setJobTitle] = useState(examples[0])
-  const [typing, setTyping] = useState(true)
-  const box = useRef<HTMLDivElement>(null)
-  const seen = useInView(box, { once: true, amount: 0.6 })
-
-  // Types each example once, ending back on the first, unless the visitor clicks in first (WCAG 2.2.2).
-  // It waits until the box is on screen, so the motion carries on below the hero instead of finishing unseen.
-  useEffect(() => {
-    if (!typing || reduceMotion || !seen) return
-    let example = 0
-    let length = examples[0].length
-    let deleting = true
-    let timer: ReturnType<typeof setTimeout>
-    const step = () => {
-      const text = examples[example]
-      if (deleting) {
-        length -= 1
-        if (length === 0) {
-          deleting = false
-          example = (example + 1) % examples.length
-        }
-      } else {
-        length += 1
-      }
-      setJobTitle(examples[example].slice(0, length))
-      const full = !deleting && length === examples[example].length
-      if (full && example === 0) return setTyping(false)
-      if (full) deleting = true
-      timer = setTimeout(
-        step,
-        full ? 3000 : deleting && text === examples[example] ? 35 : 90,
-      )
-    }
-    timer = setTimeout(step, 1200)
-    return () => clearTimeout(timer)
-  }, [typing, reduceMotion, seen])
   const suggestion = useMemo(() => suggestFor(jobTitle), [jobTitle])
   const ordered = [
     ...templateCatalog.filter((t) => t.id === suggestion.templateId),
     ...templateCatalog.filter((t) => t.id !== suggestion.templateId),
-  ].slice(0, 8)
+  ].slice(0, 3)
 
   return (
     <Reveal
@@ -120,21 +85,21 @@ export function TemplateFinder() {
       className="mx-auto max-w-6xl px-5 pt-28 text-center"
     >
       <h2 id="templates" data-reveal className={heading}>
-        Templates for the job you want
+        A resume that fits your field
       </h2>
+      <p data-reveal className="mx-auto mt-4 max-w-2xl text-lg">
+        Marketing, finance, HR, sales, operations, consulting, design, data or
+        tech. Tell us the job and we suggest a layout that suits it.
+      </p>
       <div data-reveal className="mx-auto mt-10 max-w-4xl">
         <label htmlFor={inputId} className="text-lg">
           Type the job you’re applying for
         </label>
-        <div ref={box} data-ui className="mt-3 rounded-2xl bg-card px-5 py-4">
+        <div data-ui className="mt-3 rounded-2xl bg-card px-5 py-4">
           <input
             id={inputId}
             value={jobTitle}
-            onChange={(event) => {
-              setTyping(false)
-              setJobTitle(event.target.value)
-            }}
-            onFocus={() => setTyping(false)}
+            onChange={(event) => setJobTitle(event.target.value)}
             spellCheck={false}
             autoComplete="off"
             className="w-full bg-transparent text-center font-serif text-[2rem] font-semibold tracking-[-0.02em] caret-primary outline-none sm:text-6xl"
@@ -145,17 +110,15 @@ export function TemplateFinder() {
             <button
               key={example}
               type="button"
-              onClick={() => {
-                setTyping(false)
-                setJobTitle(example)
-              }}
-              className="min-h-11 rounded-full bg-secondary px-4 text-base transition-transform hover:bg-accent active:scale-95"
+              aria-pressed={example === jobTitle}
+              onClick={() => setJobTitle(example)}
+              className="min-h-11 rounded-full bg-secondary px-4 text-base hover:bg-accent focus-visible:outline-2 aria-pressed:bg-foreground aria-pressed:text-background"
             >
               {example}
             </button>
           ))}
         </div>
-        <p className="mt-6 text-lg" aria-live={typing ? 'off' : 'polite'}>
+        <p className="mt-6 text-lg" aria-live="polite">
           We’d start you on{' '}
           <span className="font-semibold">
             {templateCatalog.find((t) => t.id === suggestion.templateId)?.name}
@@ -164,15 +127,9 @@ export function TemplateFinder() {
         </p>
       </div>
 
-      <ul className="mt-14 grid grid-cols-2 gap-x-3 gap-y-7 text-left md:grid-cols-4">
+      <ul className="mx-auto mt-14 grid max-w-4xl grid-cols-2 gap-x-3 gap-y-7 text-left md:grid-cols-3">
         {ordered.map((template, index) => (
-          <motion.li
-            key={template.id}
-            layout={!reduceMotion}
-            transition={{ duration: 0.5, ease }}
-            data-reveal
-            className="max-md:nth-[n+5]:hidden"
-          >
+          <li key={template.id} data-reveal className="max-md:nth-3:hidden">
             <Link
               to="/templates"
               hash={template.id}
@@ -185,7 +142,7 @@ export function TemplateFinder() {
                   width={1020}
                   height={1320}
                   loading="lazy"
-                  className="aspect-4/5 w-full object-cover object-top transition-transform duration-500 group-hover:scale-[1.03]"
+                  className="aspect-4/5 w-full object-cover object-top"
                 />
               </div>
               <div
@@ -212,7 +169,7 @@ export function TemplateFinder() {
                 </p>
               </div>
             </Link>
-          </motion.li>
+          </li>
         ))}
       </ul>
       <Button
@@ -221,7 +178,7 @@ export function TemplateFinder() {
         asChild
         className="mt-10 rounded-full"
       >
-        <Link to="/templates">See all {templateCatalog.length} templates</Link>
+        <Link to="/templates">View all {templateCatalog.length} templates</Link>
       </Button>
     </Reveal>
   )
