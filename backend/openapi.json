@@ -3547,7 +3547,8 @@
                                   "inline_edit",
                                   "chat_edit",
                                   "fix_compile",
-                                  "draft"
+                                  "draft",
+                                  "ats_match"
                                 ]
                               },
                               "status": {
@@ -26423,6 +26424,25 @@
                     "items": {
                       "type": "string"
                     }
+                  },
+                  "implied": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "skill": {
+                          "type": "string"
+                        },
+                        "evidence": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "skill",
+                        "evidence"
+                      ],
+                      "additionalProperties": false
+                    }
                   }
                 },
                 "required": [
@@ -26430,7 +26450,8 @@
                   "missing",
                   "hard",
                   "soft",
-                  "mustHaveMissing"
+                  "mustHaveMissing",
+                  "implied"
                 ],
                 "additionalProperties": false
               },
@@ -26576,6 +26597,9 @@
                     },
                     "advice": {
                       "type": "string"
+                    },
+                    "checkedWithAi": {
+                      "type": "boolean"
                     }
                   },
                   "required": [
@@ -26585,7 +26609,8 @@
                     "required",
                     "status",
                     "evidence",
-                    "advice"
+                    "advice",
+                    "checkedWithAi"
                   ],
                   "additionalProperties": false
                 }
