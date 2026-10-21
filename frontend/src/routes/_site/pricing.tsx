@@ -1,7 +1,7 @@
 import { Link, createFileRoute } from '@tanstack/react-router'
-import { CheckIcon, KeyRoundIcon, ShieldCheckIcon } from 'lucide-react'
+import { KeyRoundIcon } from 'lucide-react'
 import { FaqList } from '@/components/site/faq-list'
-import { Badge } from '@/components/ui/badge'
+import { PricingCards } from '@/components/site/pricing-cards'
 import { Button } from '@/components/ui/button'
 import {
   Table,
@@ -11,9 +11,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Spinner } from '@/components/ui/spinner'
-import { useCheckout } from '@/hooks/use-checkout'
-import { useSession } from '@/lib/auth-client'
 import { plans } from '@/lib/plans'
 import { site } from '@/lib/site'
 import { cn } from '@/lib/utils'
@@ -139,12 +136,12 @@ export const Route = createFileRoute('/_site/pricing')({
   head: () => ({
     meta: [
       {
-        title: `Pricing: Free Resume Builder, Paid AI Tailoring | ${site.name}`,
+        title: `Pricing: AI Resume Builder, Free to Start | ${site.name}`,
       },
       {
         name: 'description',
         content:
-          'Build unlimited resumes free. Season Pass ₹499 for six months of AI tailoring, or Pro at ₹129 a month.',
+          'Tailor your resume to each job with AI. Start free, get the Season Pass at ₹499 for six months, or Pro at ₹129 a month.',
       },
     ],
     links: [{ rel: 'canonical', href: `${site.url}/pricing` }],
@@ -158,138 +155,26 @@ export const Route = createFileRoute('/_site/pricing')({
   component: PricingPage,
 })
 
-function PlanCta({
-  plan,
-  className,
-}: {
-  plan: (typeof plans)[number]
-  className?: string
-}) {
-  const featured = 'featured' in plan && plan.featured
-  const { data: session } = useSession()
-  const { checkout, me } = useCheckout({ enabled: !!session })
-  const style = {
-    size: 'lg',
-    variant: featured ? 'default' : 'outline',
-    className: cn('w-full', className),
-  } as const
-
-  if (plan.id === 'free')
-    return (
-      <Button {...style} asChild>
-        <Link to="/login" search={{ mode: 'signup' }}>
-          {plan.cta}
-        </Link>
-      </Button>
-    )
-  // Signed out: sign up, then land on billing with this plan picked.
-  if (!session)
-    return (
-      <Button {...style} asChild>
-        <Link
-          to="/login"
-          search={{ mode: 'signup', redirect: `/billing?plan=${plan.id}` }}
-        >
-          {plan.cta}
-        </Link>
-      </Button>
-    )
-  // Already on a paid plan: billing shows what they have and when it renews.
-  if (me && me.plan !== 'free')
-    return (
-      <Button {...style} asChild>
-        <Link to="/billing">Manage your plan</Link>
-      </Button>
-    )
-  return (
-    <Button
-      {...style}
-      onClick={() => checkout.mutate(plan.id)}
-      disabled={checkout.isPending}
-    >
-      {checkout.isPending && <Spinner data-icon="inline-start" />}
-      {plan.cta}
-    </Button>
-  )
-}
-
 function PricingPage() {
   return (
     <div className="mx-auto max-w-6xl px-5 pt-14 pb-10 lg:pt-20">
       <div className="mx-auto max-w-2xl text-center">
-        {/* One sentence per line, so the break never splits "Pay only for more AI help". */}
-        <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
-          <span className="block">Resumes are free.</span>
-          <span className="block">Pay only for more AI help.</span>
+        <p className="text-sm font-semibold tracking-wide text-primary uppercase">
+          Pricing
+        </p>
+        {/* One sentence per line, so the break never splits "Pay when you need more AI". */}
+        <h1 className="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">
+          <span className="block">Start free.</span>
+          <span className="block">Pay when you need more AI.</span>
         </h1>
         <p className="mt-4 text-lg text-muted-foreground">
-          Build, edit, download and share as many resumes as you like at no
-          cost. Upgrade when you are tailoring one for every application.
+          Tailor your resume to each job description, edit it by asking the AI,
+          and turn rough notes into a full resume. Try it all free, then upgrade
+          when you apply every week.
         </p>
       </div>
 
-      {/* Cards share row lines (subgrid) so names, prices, buttons and lists align across plans. */}
-      <div className="mt-14 grid gap-5 lg:grid-cols-3 lg:grid-rows-[auto_auto_auto_auto_auto_1fr]">
-        {plans.map((plan) => {
-          const featured = 'featured' in plan && plan.featured
-          return (
-            <section
-              key={plan.id}
-              aria-labelledby={`plan-${plan.id}`}
-              className={cn(
-                'flex flex-col rounded-2xl border bg-card p-7 sm:p-8 lg:row-span-6 lg:grid lg:grid-rows-subgrid lg:gap-y-0',
-                featured &&
-                  'border-primary/60 shadow-[0_24px_48px_-24px_rgb(0_0_0/0.25)] ring-1 ring-primary/60',
-              )}
-            >
-              <div className="flex items-center justify-between gap-3">
-                <h2
-                  id={`plan-${plan.id}`}
-                  className="font-sans text-xl font-semibold"
-                >
-                  {plan.name}
-                </h2>
-                {featured && <Badge>Best value</Badge>}
-              </div>
-              <p className="mt-2 font-serif text-lg text-muted-foreground">
-                {plan.forWhom}
-              </p>
-              <p className="mt-6 flex items-baseline gap-1.5">
-                <span className="font-serif text-5xl font-semibold tracking-tight tabular-nums">
-                  {plan.price}
-                </span>
-                {plan.period && (
-                  <span className="text-muted-foreground">{plan.period}</span>
-                )}
-              </p>
-              <p className="mt-2 text-sm text-muted-foreground">{plan.note}</p>
-              <PlanCta plan={plan} className="mt-6" />
-              <div className="mt-8 border-t pt-6">
-                <p className="text-sm font-medium">{plan.listTitle}</p>
-                <ul className="mt-4 flex flex-col gap-3">
-                  {plan.features.map((feature) => (
-                    <li key={feature} className="flex gap-3">
-                      <CheckIcon
-                        aria-hidden
-                        className="mt-0.5 size-5 shrink-0 text-primary"
-                      />
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </section>
-          )
-        })}
-      </div>
-
-      <p className="mt-8 text-center text-sm text-muted-foreground">
-        <ShieldCheckIcon
-          aria-hidden
-          className="mr-2 inline size-4 align-[-3px] text-primary"
-        />
-        Pay with UPI, cards or net banking through Razorpay
-      </p>
+      <PricingCards headingLevel={2} className="mt-14" />
 
       {/* Deliberately quieter than the plan cards: it works on any plan and isn't a plan itself. */}
       <section
