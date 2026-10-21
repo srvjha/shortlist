@@ -63,9 +63,15 @@ export const atsReport = z
         ),
       }),
     ),
-    // Null when no job was given. `matched` and `missing` are the hard skills.
+    // Null when no job was given. `matched` and `missing` are the hard skills. `implied` are missing hard skills
+    // an AI check found the resume clearly implies, with the resume's words as evidence; they don't change the score.
     keywords: skillLists
-      .extend({ hard: skillLists, soft: skillLists, mustHaveMissing: z.array(z.string()) })
+      .extend({
+        hard: skillLists,
+        soft: skillLists,
+        mustHaveMissing: z.array(z.string()),
+        implied: z.array(z.object({ skill: z.string(), evidence: z.string() })),
+      })
       .nullable(),
     // Null without a job, or when the job's title can't be read.
     title: z
@@ -97,6 +103,8 @@ export const atsReport = z
           status: z.enum(["met", "not-met", "unclear", "not-on-resume"]),
           evidence: z.string().nullable(),
           advice: z.string(),
+          // The rules found it unclear and an AI check gave the status and evidence.
+          checkedWithAi: z.boolean(),
         }),
       )
       .nullable(),

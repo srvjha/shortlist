@@ -100,6 +100,7 @@ describe("scoreResume", () => {
       hard: { matched: ["Go", "PostgreSQL", "Kafka", "Redis"], missing: ["Kubernetes", "GraphQL"] },
       soft: { matched: [], missing: ["Communication"] },
       mustHaveMissing: ["Kubernetes"],
+      implied: [],
     });
     expect(withJob.categories.map((c) => c.maxScore)).toEqual([15, 10, 15, 25, 10, 25]);
     const checks = checksOf(withJob, "job");
