@@ -4,6 +4,7 @@ import { generateStructured } from "../../lib/ai/generate.js";
 import { redact } from "../../lib/ai/redact.js";
 import type { ResumeContent } from "../../schemas/resume-content.js";
 import type { atsReport } from "./ats.schemas.js";
+import { findSkills } from "./skills/match.js";
 
 type AtsReport = z.infer<typeof atsReport>;
 
@@ -31,12 +32,15 @@ const normalize = (text: string) => text.toLowerCase().replace(/\s+/g, " ").trim
 // Drops anything the model can't back with words that are really in the resume, or that it wasn't asked about.
 export function grounded(ai: AiMatch, resumeText: string, asked: { skills: string[]; requirements: number }): AiMatch {
   const resume = normalize(resumeText);
+  // A bare year or number like "2019" proves nothing on its own, so evidence needs a word.
   const found = (evidence: string | null): evidence is string =>
-    Boolean(evidence && normalize(evidence).length >= 2 && resume.includes(normalize(evidence)));
+    Boolean(evidence && /\p{L}{2}/u.test(evidence) && resume.includes(normalize(evidence)));
   return {
     skills: ai.skills.flatMap((s) => {
       const skill = asked.skills.find((name) => normalize(name) === normalize(s.skill));
-      return skill && found(s.evidence) ? [{ skill, evidence: s.evidence }] : [];
+      // The evidence must name a skill we know of, so a vague line can't stand in for one.
+      const names = found(s.evidence) ? findSkills(s.evidence).map((hit) => hit.skill) : [];
+      return skill && names.some((name) => name !== skill) ? [{ skill, evidence: s.evidence! }] : [];
     }),
     requirements: ai.requirements.filter(
       (r) => r.status !== "unclear" && r.number >= 1 && r.number <= asked.requirements && found(r.evidence),
@@ -104,7 +108,7 @@ ${input.resumeText.slice(0, 15_000)}
         userId: input.userId,
         step: "ats_match",
         tier: "fast",
-        quota: "edit",
+        quota: "ats",
         schema: aiMatchOutput,
         system,
         prompt: redacted.text,

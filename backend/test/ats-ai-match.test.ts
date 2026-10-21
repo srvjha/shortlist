@@ -65,6 +65,14 @@ describe("grounded", () => {
     };
     expect(grounded(ai, resume, asked).requirements).toEqual([]);
   });
+
+  it("drops a bare year as proof, and a skill whose evidence names no skill", () => {
+    const ai = {
+      skills: [{ skill: "SQL", evidence: "Pune University" }],
+      requirements: [{ number: 1, status: "met" as const, evidence: "2019" }],
+    };
+    expect(grounded(ai, `${resume} 2019`, asked)).toEqual({ skills: [], requirements: [] });
+  });
 });
 
 describe("mergeAiMatch", () => {
@@ -110,7 +118,7 @@ describe("withAiMatch", () => {
     const second = await withAiMatch(report, { ...input, jobText });
     expect(generateStructured).toHaveBeenCalledTimes(1);
     const call = generateStructured.mock.calls[0]![0];
-    expect(call).toMatchObject({ tier: "fast", step: "ats_match", quota: "edit", timeoutMs: 8000 });
+    expect(call).toMatchObject({ tier: "fast", step: "ats_match", quota: "ats", timeoutMs: 8000 });
     expect(call.prompt).not.toContain("priya.nair@example.com");
     expect(call.prompt).not.toContain("98765 43210");
     expect(first.keywords!.implied).toEqual([{ skill, evidence: "Next.js admin dashboard" }]);
