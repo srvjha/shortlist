@@ -8,28 +8,28 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
-  Light mode is "paper": a cool sage grey, never pure white. The only white surface is the
+  Light mode is "paper": a warm off-white, never pure white. The only white surface is the
   resume sheet itself, because that is what the PDF will look like.
   Accent is fountain-pen teal; the highlighter marks AI changes.
 */
 :root {
-  --background: #eef0eb;
+  --background: #faf7f0;
   --foreground: #18201d;
-  --card: #f7f8f4;
+  --card: #fffdf8;
   --card-foreground: #18201d;
-  --popover: #f7f8f4;
+  --popover: #fffdf8;
   --popover-foreground: #18201d;
   --primary: #0b6e65;
-  --primary-foreground: #f4f7f3;
-  --secondary: #e2e6df;
+  --primary-foreground: #fbf9f4;
+  --secondary: #f2ede2;
   --secondary-foreground: #18201d;
-  --muted: #e5e9e2;
-  --muted-foreground: #59645f;
-  --accent: #dfe5dd;
+  --muted: #f4f0e6;
+  --muted-foreground: #5a5d55;
+  --accent: #efe9dc;
   --accent-foreground: #18201d;
   --destructive: #b3261e;
-  --border: #d3d9d1;
-  --input: #7d8882;
+  --border: #e6dfd1;
+  --input: #8a8579;
   --ring: #0b6e65;
   --radius: 0.625rem;
 
@@ -39,13 +39,13 @@
   --sheet: #ffffff;
   --sheet-foreground: #111111;
 
-  --sidebar: #e7eae4;
+  --sidebar: #f6f2e9;
   --sidebar-foreground: #18201d;
   --sidebar-primary: #0b6e65;
-  --sidebar-primary-foreground: #f4f7f3;
-  --sidebar-accent: #dbe1d8;
+  --sidebar-primary-foreground: #fbf9f4;
+  --sidebar-accent: #ece6d9;
   --sidebar-accent-foreground: #18201d;
-  --sidebar-border: #d3d9d1;
+  --sidebar-border: #e6dfd1;
   --sidebar-ring: #0b6e65;
 
   --chart-1: #0b6e65;
