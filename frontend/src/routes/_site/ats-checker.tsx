@@ -30,7 +30,7 @@ const faqs = [
   },
   {
     q: 'How is the score worked out?',
-    a: 'With fixed rules, not AI, so the same resume always gets the same score. It looks at things like contact details, standard section headings, bullet length, numbers in your bullets and overall length. A PDF is also read the way an ATS parser reads it, to catch columns, contact details in the page header and icon fonts. Add a job description to see which of its must-have and other skills you are missing, how your title compares, and which requirements a recruiter will check. Skills are matched using data from O*NET and ESCO.',
+    a: 'With fixed rules, not AI, so the same resume always gets the same score. It looks at things like contact details, standard section headings, bullet length, numbers in your bullets and overall length. A PDF is also read the way an ATS parser reads it, to catch columns, contact details in the page header and icon fonts. Add a job description to see which of its must-have and other skills you are missing, how your title compares, and which requirements a recruiter will check. Skills are matched using data from O*NET and ESCO. When you are signed in and add a job description, AI also checks the skills your resume implies (PostgreSQL for SQL, say) and requirements the rules could not settle, quoting your resume as evidence. It never changes the score.',
   },
 ]
 
