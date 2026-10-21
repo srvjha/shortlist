@@ -7,15 +7,9 @@ import {
   LockIcon,
   PenLineIcon,
 } from 'lucide-react'
-import {
-  AnimatePresence,
-  motion,
-  useReducedMotion,
-  useScroll,
-  useTransform,
-} from 'motion/react'
-import { useId, useMemo, useRef, useState } from 'react'
-import { Reveal, ease } from '@/components/landing/reveal'
+import { AnimatePresence, motion } from 'motion/react'
+import { useId, useMemo, useState } from 'react'
+import { Reveal } from '@/components/landing/reveal'
 import { Button } from '@/components/ui/button'
 import type { ResumeContent } from '@/lib/api/types'
 import { plans } from '@/lib/plans'
@@ -523,138 +517,30 @@ const starts = [
     source: 'upload',
   },
   {
-    icon: FileTextIcon,
-    label: 'Paste a .tex file',
-    hint: 'Your Overleaf resume compiles here as it is.',
-    action: 'Sign up and paste my .tex',
-    source: 'tex',
-  },
-  {
     icon: PenLineIcon,
     label: 'Start from a blank form',
     hint: 'Fill in your details, then pick a template.',
     action: 'Sign up and start blank',
     source: 'blank',
   },
-] as const
-
-// Real renders of four templates, laid on the field like printed resumes on a desk. They sit in the
-// side margins only, so nothing ever covers the heading or the dialog.
-const prints = [
   {
-    id: 'developer',
-    side: 'left',
-    top: '18%',
-    inset: '4%',
-    rotate: -9,
-    sway: 2,
-    float: 6,
-  },
-  {
-    id: 'finance',
-    side: 'left',
-    top: '50%',
-    inset: '11%',
-    rotate: 5,
-    sway: -1.5,
-    float: 7.5,
-  },
-  {
-    id: 'consulting',
-    side: 'right',
-    top: '14%',
-    inset: '10%',
-    rotate: 7,
-    sway: -2,
-    float: 6.8,
-  },
-  {
-    id: 'designer',
-    side: 'right',
-    top: '48%',
-    inset: '3%',
-    rotate: -6,
-    sway: 1.5,
-    float: 8,
+    icon: FileTextIcon,
+    label: 'Paste a LaTeX (.tex) file',
+    hint: 'Made your resume on Overleaf? It works here as it is.',
+    action: 'Sign up and paste my .tex',
+    source: 'tex',
   },
 ] as const
-
-function Print({
-  print,
-  progress,
-}: {
-  print: (typeof prints)[number]
-  progress: ReturnType<typeof useScroll>['scrollYProgress']
-}) {
-  const reduceMotion = useReducedMotion()
-  const from = print.side === 'left' ? -80 : 80
-  // Drifts in from its own side and settles as the section scrolls into place.
-  const x = useTransform(progress, [0, 1], [reduceMotion ? 0 : from, 0])
-  const rotate = useTransform(
-    progress,
-    [0, 1],
-    [reduceMotion ? print.rotate : print.rotate * 1.8, print.rotate],
-  )
-  return (
-    <motion.div
-      aria-hidden="true"
-      style={{ x, rotate, top: print.top, [print.side]: print.inset }}
-      whileHover={reduceMotion ? undefined : { rotate: 0, scale: 1.04 }}
-      transition={{ duration: 0.25, ease }}
-      className="absolute hidden w-52 hover:z-10 min-[1400px]:block 2xl:w-60"
-    >
-      {/* Keeps floating once settled, each print on its own slow rhythm, like paper in a light draught. */}
-      <motion.div
-        className="bg-sheet p-2"
-        animate={
-          reduceMotion
-            ? undefined
-            : { y: [0, -14, 0], rotate: [0, print.sway, 0] }
-        }
-        transition={{
-          duration: print.float,
-          repeat: Infinity,
-          ease: 'easeInOut',
-        }}
-      >
-        <img
-          src={`/templates/thumbs/${print.id}.webp`}
-          alt=""
-          width={560}
-          height={724}
-          loading="lazy"
-          className="aspect-[560/724] w-full"
-        />
-      </motion.div>
-    </motion.div>
-  )
-}
 
 export function FinalCta() {
-  const field = useRef<HTMLElement>(null)
-  const { scrollYProgress } = useScroll({
-    target: field,
-    offset: ['start end', 'start 0.25'],
-  })
   const [source, setSource] =
     useState<(typeof starts)[number]['source']>('upload')
   const chosen = starts.find((s) => s.source === source) ?? starts[0]
 
   return (
-    <section
-      ref={field}
-      aria-labelledby="start"
-      className="relative mt-28 overflow-hidden bg-primary"
-    >
-      {prints.map((print) => (
-        <Print key={print.id} print={print} progress={scrollYProgress} />
-      ))}
-      <Reveal className="relative px-5 py-20 text-center text-primary-foreground sm:py-28">
-        <h2
-          id="start"
-          data-reveal
-          className="mx-auto max-w-4xl font-serif text-5xl leading-[0.95] font-semibold tracking-[-0.035em] sm:text-7xl lg:text-8xl"
-        >
+    <section aria-labelledby="start" className="mt-28 bg-primary">
+      <Reveal className="px-5 py-20 text-center text-primary-foreground sm:py-28">
+        <h2 id="start" data-reveal className={cn(heading, 'mx-auto max-w-4xl')}>
           Start with what you have
         </h2>
         <p
