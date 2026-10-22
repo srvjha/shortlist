@@ -178,11 +178,11 @@ function LockedReview({ signedIn }: { signedIn: boolean }) {
     >
       <Heading />
       <div className="flex max-w-xl flex-col items-start gap-3">
-        <span className="flex items-center gap-2 text-sm text-muted-foreground">
-          <LockIcon className="size-4" aria-hidden />
-          Part of Season Pass and Pro
-        </span>
-        <p className="font-serif text-2xl leading-tight">
+        <p className="flex items-center gap-2 font-serif text-2xl leading-tight">
+          <LockIcon
+            className="size-5 shrink-0 text-muted-foreground"
+            aria-hidden
+          />
           Get a recruiter-style read of this resume
         </p>
         <ul className="list-disc pl-5 text-sm text-muted-foreground">
