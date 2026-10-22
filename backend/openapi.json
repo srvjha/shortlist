@@ -3548,7 +3548,8 @@
                                   "chat_edit",
                                   "fix_compile",
                                   "draft",
-                                  "ats_match"
+                                  "ats_match",
+                                  "ats_review"
                                 ]
                               },
                               "status": {
@@ -18977,6 +18978,73 @@
         }
       }
     },
+    "/v1/ats-reviews": {
+      "post": {
+        "summary": "AI review of resume text: verdict, strengths, top fixes and job fit (Season Pass and Pro, not stored)",
+        "tags": [
+          "ATS"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "text": {
+                    "type": "string",
+                    "minLength": 200,
+                    "maxLength": 50000
+                  },
+                  "jobDescription": {
+                    "type": "string",
+                    "maxLength": 20000
+                  }
+                },
+                "required": [
+                  "text"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AtsReview"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/resumes/{resumeId}/share-links": {
       "get": {
         "summary": "List share links",
@@ -26863,6 +26931,86 @@
           "parse",
           "knockouts",
           "stats"
+        ],
+        "additionalProperties": false
+      },
+      "AtsReview": {
+        "type": "object",
+        "properties": {
+          "verdict": {
+            "type": "string"
+          },
+          "strengths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "fixes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string"
+                },
+                "why": {
+                  "type": "string"
+                },
+                "line": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "rewrite": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "title",
+                "why",
+                "line",
+                "rewrite"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "jobFit": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "summary": {
+                    "type": "string"
+                  },
+                  "gaps": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "summary",
+                  "gaps"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "verdict",
+          "strengths",
+          "fixes",
+          "jobFit"
         ],
         "additionalProperties": false
       }

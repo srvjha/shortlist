@@ -1253,7 +1253,7 @@ export interface paths {
                                     id: string;
                                     createdAt: string;
                                     /** @enum {string} */
-                                    step: "import" | "jd_parse" | "plan" | "rewrite" | "verify" | "inline_edit" | "chat_edit" | "fix_compile" | "draft" | "ats_match";
+                                    step: "import" | "jd_parse" | "plan" | "rewrite" | "verify" | "inline_edit" | "chat_edit" | "fix_compile" | "draft" | "ats_match" | "ats_review";
                                     /** @enum {string} */
                                     status: "pending" | "succeeded" | "failed";
                                     model: string;
@@ -5774,6 +5774,60 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/ats-reviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** AI review of resume text: verdict, strengths, top fixes and job fit (Season Pass and Pro, not stored) */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        text: string;
+                        jobDescription?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description OK */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: components["schemas"]["AtsReview"];
+                        };
+                    };
+                };
+                /** @description Error */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/resumes/{resumeId}/share-links": {
         parameters: {
             query?: never;
@@ -8428,6 +8482,20 @@ export interface components {
                 sections: string[];
                 quantifiedBullets: number;
             };
+        };
+        AtsReview: {
+            verdict: string;
+            strengths: string[];
+            fixes: {
+                title: string;
+                why: string;
+                line: string | null;
+                rewrite: string | null;
+            }[];
+            jobFit: {
+                summary: string;
+                gaps: string[];
+            } | null;
         };
     };
     responses: never;

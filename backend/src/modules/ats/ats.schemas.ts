@@ -116,3 +116,22 @@ export const atsReport = z
     }),
   })
   .meta({ id: "AtsReport" });
+
+export const createAtsReviewBody = z.object({
+  text: z.string().trim().min(200).max(50_000),
+  jobDescription: z.string().trim().max(20_000).optional(),
+});
+
+// The AI's reading of a resume, for Season Pass and Pro, also the model's output schema (nullable, never optional:
+// see generateStructured). `line` is a resume line copied exactly, or null for a fix about the whole resume;
+// `rewrite` is null without a line or when the model's version brought in a new number.
+export const aiReviewOutput = z.object({
+  verdict: z.string(),
+  strengths: z.array(z.string()),
+  fixes: z.array(
+    z.object({ title: z.string(), why: z.string(), line: z.string().nullable(), rewrite: z.string().nullable() }),
+  ),
+  jobFit: z.object({ summary: z.string(), gaps: z.array(z.string()) }).nullable(),
+});
+
+export const atsReview = aiReviewOutput.meta({ id: "AtsReview" });

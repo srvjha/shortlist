@@ -17,7 +17,13 @@ import {
   createAdminSubscriptionBody,
   updateAdminUserBody,
 } from "./modules/admin/admin.schemas.js";
-import { atsReport, createAtsReportBody, createResumeAtsReportBody } from "./modules/ats/ats.schemas.js";
+import {
+  atsReport,
+  atsReview,
+  createAtsReportBody,
+  createAtsReviewBody,
+  createResumeAtsReportBody,
+} from "./modules/ats/ats.schemas.js";
 import { coverageQuery, coverageResponse } from "./modules/coverage/coverage.routes.js";
 import {
   checkoutResponse,
@@ -459,6 +465,15 @@ const paths: ZodOpenApiPathsObject = {
       auth: false,
       body: createAtsReportBody,
       response: atsReport,
+    }),
+  },
+  "/v1/ats-reviews": {
+    post: op({
+      summary: "AI review of resume text: verdict, strengths, top fixes and job fit (Season Pass and Pro, not stored)",
+      tag: "ATS",
+      body: createAtsReviewBody,
+      response: atsReview,
+      status: 201,
     }),
   },
   "/v1/resumes/{resumeId}/share-links": {

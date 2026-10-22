@@ -3,7 +3,7 @@ import { track, trackServer } from "../../lib/analytics.js";
 import { NotFoundError } from "../../lib/errors.js";
 import { sendData } from "../../lib/http.js";
 import { oneAtATime } from "../../lib/latex/compile.js";
-import { atsLimiter, compileLimiter } from "../../middleware/rate-limit.js";
+import { aiLimiter, atsLimiter, compileLimiter } from "../../middleware/rate-limit.js";
 import { currentUser, requireAuth } from "../../middleware/require-auth.js";
 import { validated } from "../../middleware/validate.js";
 import type { ResumeContent } from "../../schemas/resume-content.js";
@@ -13,7 +13,14 @@ import { texForVersion } from "../pdfs/pdfs.service.js";
 import { resumeParams } from "../resumes/resumes.schemas.js";
 import { getResume } from "../resumes/resumes.service.js";
 import { withAiMatch } from "./ai-match.js";
-import { atsReport, createAtsReportBody, createResumeAtsReportBody } from "./ats.schemas.js";
+import { reviewResume } from "./ai-review.js";
+import {
+  atsReport,
+  atsReview,
+  createAtsReportBody,
+  createAtsReviewBody,
+  createResumeAtsReportBody,
+} from "./ats.schemas.js";
 import type { Expected } from "./parser/quality.js";
 import { parsePdfItems, parseTex, resumeText, scoreResume, texToText } from "./scoring.js";
 
@@ -120,5 +127,19 @@ atsRouter.post(
       withJob: Boolean(jobDescription),
     });
     sendData(res, atsReport, report);
+  }),
+);
+
+// Season Pass and Pro: an AI reviewer's verdict and top fixes, asked for after the rule-based report.
+// Like the public report, the text is never stored; only the run's tokens and cost are logged.
+atsRouter.post(
+  "/ats-reviews",
+  requireAuth,
+  aiLimiter,
+  ...validated({ body: createAtsReviewBody }, async (req, res) => {
+    const userId = currentUser(req).id;
+    const review = await reviewResume({ userId, ...req.body });
+    track(userId, "ats_review_created", { withJob: Boolean(req.body.jobDescription), fixes: review.fixes.length });
+    sendData(res, atsReview, review, 201);
   }),
 );
