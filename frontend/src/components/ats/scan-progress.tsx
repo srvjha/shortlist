@@ -57,7 +57,7 @@ export function ScanProgress({ steps }: { steps: string[] }) {
       ref={panel}
       role="status"
       aria-live="polite"
-      className="mx-auto mt-8 flex max-w-3xl flex-col gap-4 rounded-2xl border bg-card p-5 sm:p-7"
+      className="mx-auto mt-10 flex max-w-3xl flex-col gap-4 rounded-2xl border bg-card p-5 sm:p-7"
     >
       <p className="font-sans font-semibold">Checking your resume</p>
       <ol className="flex flex-col gap-3">
