@@ -20,16 +20,24 @@ const normalize = (text: string) => text.toLowerCase().replace(/\s+/g, " ").trim
 // Numbers outside placeholders, so a rewrite can't bring in a figure the line never had.
 const numbers = (text: string) => text.replace(/\[[^\]]*\]/g, "").match(/\d+(?:[.,]\d+)*/g) ?? [];
 
-// A fix's line must really be in the resume, and its rewrite may only use numbers the line already has.
+// A fix's line must be a real resume line, not a lone heading, and its rewrite must change it using only the
+// numbers the line already has.
 export function groundedReview(review: AiReview, resumeText: string): AiReview {
   const resume = normalize(resumeText);
   return {
     verdict: review.verdict,
     strengths: review.strengths.slice(0, 3),
     fixes: review.fixes.slice(0, 5).map((fix) => {
-      const line = fix.line && /\p{L}{2}/u.test(fix.line) && resume.includes(normalize(fix.line)) ? fix.line : null;
+      const line =
+        fix.line && fix.line.trim().split(/\s+/).length >= 3 && resume.includes(normalize(fix.line)) ? fix.line : null;
       const lineNumbers = new Set(numbers(line ?? ""));
-      const rewrite = line && fix.rewrite && numbers(fix.rewrite).every((n) => lineNumbers.has(n)) ? fix.rewrite : null;
+      const rewrite =
+        line &&
+        fix.rewrite &&
+        normalize(fix.rewrite) !== normalize(line) &&
+        numbers(fix.rewrite).every((n) => lineNumbers.has(n))
+          ? fix.rewrite
+          : null;
       return { ...fix, line, rewrite };
     }),
     jobFit: review.jobFit && { summary: review.jobFit.summary, gaps: review.jobFit.gaps.slice(0, 5) },

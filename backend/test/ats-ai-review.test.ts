@@ -16,6 +16,7 @@ describe("groundedReview", () => {
         fixes: [
           fix("•  built billing APIs in node.js   serving 3M requests a day", null),
           fix("Led a team of 12 engineers", "Led a team of 12 engineers to ship faster"),
+          fix("Acme", "Acme"),
         ],
         jobFit: null,
       },
@@ -23,6 +24,7 @@ describe("groundedReview", () => {
     );
     expect(review.fixes.map((f) => f.line)).toEqual([
       "•  built billing APIs in node.js   serving 3M requests a day",
+      null,
       null,
     ]);
     expect(review.fixes[1]!.rewrite).toBeNull();
@@ -36,6 +38,7 @@ describe("groundedReview", () => {
         strengths: [],
         fixes: [
           fix(line, "Built an admin dashboard used by 40 support agents"),
+          fix(line, "wrote an admin dashboard for the support team"),
           fix(line, "Built an admin dashboard used by [number] support agents, cutting reply time by [X%]"),
           fix(
             "Built billing APIs in Node.js serving 3M requests a day",
@@ -47,6 +50,7 @@ describe("groundedReview", () => {
       resume,
     );
     expect(review.fixes.map((f) => f.rewrite)).toEqual([
+      null,
       null,
       "Built an admin dashboard used by [number] support agents, cutting reply time by [X%]",
       "Designed Node.js billing APIs handling 3M requests a day",
