@@ -5,16 +5,17 @@ import { AppError, NotFoundError } from "../../lib/errors.js";
 import { hasUserAiKey } from "../ai-keys/ai-keys.service.js";
 
 export type Plan = (typeof users.$inferSelect)["plan"];
-export type QuotaKind = "tailor" | "edit" | "import" | "draft" | "job" | "ats";
+export type QuotaKind = "tailor" | "edit" | "import" | "draft" | "job" | "ats" | "review";
 
 // Monthly AI limits per plan; resumes are unlimited on every plan (1000 = unlimited). Paid limits are fair-use caps.
 // Imports are free on every plan; the cap only stops abuse. Job descriptions are parsed once per posting, then reused.
 // Free gets one resume written from notes per account (counted for all time), to see it work once.
 // ATS checks with a job description have their own cap, so they never use up the AI edits people see.
+// The AI resume review is paid only; free is 0 and is turned away by assertPaidPlan before the quota.
 export const planLimits: Record<Plan, Record<QuotaKind | "resumes", number>> = {
-  free: { resumes: 1000, tailor: 1, edit: 50, import: 20, draft: 1, job: 10, ats: 20 },
-  season_pass: { resumes: 1000, tailor: 40, edit: 1000, import: 20, draft: 30, job: 100, ats: 200 },
-  pro: { resumes: 1000, tailor: 60, edit: 1000, import: 20, draft: 30, job: 100, ats: 200 },
+  free: { resumes: 1000, tailor: 1, edit: 50, import: 20, draft: 1, job: 10, ats: 20, review: 0 },
+  season_pass: { resumes: 1000, tailor: 40, edit: 1000, import: 20, draft: 30, job: 100, ats: 200, review: 100 },
+  pro: { resumes: 1000, tailor: 60, edit: 1000, import: 20, draft: 30, job: 100, ats: 200, review: 100 },
 };
 
 const stepsFor: Record<QuotaKind, (typeof aiRuns.$inferSelect)["step"][]> = {
@@ -24,6 +25,7 @@ const stepsFor: Record<QuotaKind, (typeof aiRuns.$inferSelect)["step"][]> = {
   draft: ["draft"],
   job: ["jd_parse"],
   ats: ["ats_match"],
+  review: ["ats_review"],
 };
 
 // Calendar month in UTC.
