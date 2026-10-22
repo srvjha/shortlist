@@ -31,6 +31,7 @@ const stepLabels: Record<AiRunList['runs'][number]['step'], string> = {
   fix_compile: 'Fix LaTeX',
   draft: 'Write from notes',
   ats_match: 'ATS job match',
+  ats_review: 'ATS AI review',
 }
 
 export function AiRunsCard() {

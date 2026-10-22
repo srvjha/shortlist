@@ -7,6 +7,7 @@ import {
   UploadCloudIcon,
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import { AiReview } from '@/components/ats/ai-review'
 import { AtsReport } from '@/components/ats/ats-report'
 import { ScanProgress, scanSteps, stepMs } from '@/components/ats/scan-progress'
 import { Button } from '@/components/ui/button'
@@ -370,6 +371,7 @@ export function AtsChecker() {
             }
           />
         </div>
+        <AiReview text={text} jobDescription={jobDescription.trim()} />
       </section>
     )
 
