@@ -23,7 +23,7 @@ describe("groundedReview", () => {
       resume,
     );
     expect(review.fixes.map((f) => f.line)).toEqual([
-      "•  built billing APIs in node.js   serving 3M requests a day",
+      "built billing APIs in node.js   serving 3M requests a day",
       null,
       null,
     ]);

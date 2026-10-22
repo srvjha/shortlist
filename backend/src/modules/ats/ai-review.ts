@@ -12,12 +12,14 @@ verdict: two or three plain sentences on how the resume reads in a recruiter's f
 strengths: up to three things the resume already does well, each one sentence.
 fixes: the three to five changes that would improve it most, most important first. title is a short instruction, why is one sentence.
 line is the resume line the fix is about, copied exactly, character for character, or null when the fix is about the whole resume.
-rewrite is a better version of that line, or null. A rewrite keeps every fact of the line and adds none. Where a number would help but the line has none, write a placeholder in square brackets, like [X%] or [number of users], for the person to fill in.
+rewrite is a stronger version of that line, or null: lead with an action verb and make the result clear. A rewrite keeps every fact of the line and never adds a task, tool, skill or activity the line doesn't state; what the resume lacks belongs in the fix's why or in jobFit gaps. Where a number would help but the line has none, write a placeholder in square brackets, like [X%] or [number of users], for the person to fill in. Placeholders are only for numbers.
 jobFit: only when a job description is given, otherwise null. summary is two sentences on how well the resume fits the role; gaps lists up to five things the job asks for that the resume doesn't show.
 Write in simple English. No hype, and never promise interviews or offers.`;
 
 const normalize = (text: string) => text.toLowerCase().replace(/\s+/g, " ").trim();
 // Numbers outside placeholders, so a rewrite can't bring in a figure the line never had.
+// A bullet marker the model copied with the line.
+const unbullet = (text: string) => text.replace(/^[\s•◦▪*·–-]+/u, "");
 const numbers = (text: string) => text.replace(/\[[^\]]*\]/g, "").match(/\d+(?:[.,]\d+)*/g) ?? [];
 
 // A fix's line must be a real resume line, not a lone heading, and its rewrite must change it using only the
@@ -38,7 +40,7 @@ export function groundedReview(review: AiReview, resumeText: string): AiReview {
         numbers(fix.rewrite).every((n) => lineNumbers.has(n))
           ? fix.rewrite
           : null;
-      return { ...fix, line, rewrite };
+      return { ...fix, line: line && unbullet(line), rewrite: rewrite && unbullet(rewrite) };
     }),
     jobFit: review.jobFit && { summary: review.jobFit.summary, gaps: review.jobFit.gaps.slice(0, 5) },
   };
