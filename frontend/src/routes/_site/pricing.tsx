@@ -49,6 +49,10 @@ const comparison: { label: string; values: [string, string, string] }[] = [
     values: ['Included', 'Included', 'Included'],
   },
   {
+    label: 'AI review in the ATS checker: verdict, top fixes and rewrites',
+    values: ['Not included', '100 a month', '100 a month'],
+  },
+  {
     label: 'Share links with view analytics',
     values: ['Included', 'Included', 'Included'],
   },
