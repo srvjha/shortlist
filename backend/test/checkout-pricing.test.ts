@@ -31,34 +31,47 @@ vi.mock("../src/config/env.js", async (original) => ({
   env: {
     ...(await original<typeof import("../src/config/env.js")>()).env,
     RAZORPAY_KEY_ID: "rzp_test_x",
-    RAZORPAY_PRO_PLAN_ID: "plan_inr",
-    RAZORPAY_PRO_USD_PLAN_ID: "plan_usd",
+    RAZORPAY_PRO_PLAN_ID: "plan_india",
+    RAZORPAY_PRO_EMERGING_PLAN_ID: "plan_emerging",
+    RAZORPAY_PRO_GLOBAL_PLAN_ID: "plan_global",
   },
 }));
 
-import { createCheckout } from "../src/modules/billing/billing.service.js";
+import { createCheckout, tierFor } from "../src/modules/billing/billing.service.js";
 
 beforeEach(() => {
   inserted.length = 0;
-  selects.splice(0, selects.length, [{ isAnonymous: false }], [{ isAnonymous: false }]);
+  selects.splice(0, selects.length, [{ isAnonymous: false }], [{ isAnonymous: false }], [{ isAnonymous: false }]);
   razorpay.mockReset();
   razorpay.mockResolvedValue({ id: "remote_1" });
 });
 
+describe("price tiers", () => {
+  it("puts India, and any country it can't tell, on India's price", () => {
+    expect(tierFor("IN")).toBe("india");
+    expect(tierFor(null)).toBe("india");
+    expect(tierFor("NG")).toBe("emerging");
+    expect(tierFor("US")).toBe("global");
+  });
+});
+
 describe("checkout pricing", () => {
-  it("charges the Season Pass at ₹499, or ₹749 for the USD price", async () => {
-    await expect(createCheckout("u", "season_pass")).resolves.toMatchObject({ amountPaise: 49_900 });
-    await expect(createCheckout("u", "season_pass", "usd")).resolves.toMatchObject({ amountPaise: 74_900 });
-    expect(razorpay.mock.calls.map(([, , body]) => (body as { amount: number }).amount)).toEqual([49_900, 74_900]);
+  it("charges the Season Pass by the visitor's country", async () => {
+    await expect(createCheckout("u", "season_pass", "IN")).resolves.toMatchObject({ amountPaise: 49_900 });
+    await expect(createCheckout("u", "season_pass", "PK")).resolves.toMatchObject({ amountPaise: 41_900 });
+    await expect(createCheckout("u", "season_pass", "GB")).resolves.toMatchObject({ amountPaise: 74_900 });
+    expect(razorpay.mock.calls.map(([, , body]) => (body as { amount: number }).amount)).toEqual([
+      49_900, 41_900, 74_900,
+    ]);
   });
 
-  it("subscribes Pro to the USD plan when the visitor chose USD", async () => {
+  it("subscribes Pro to the plan for the visitor's tier", async () => {
     selects.splice(0, selects.length, [{ isAnonymous: false }], []);
-    await expect(createCheckout("u", "pro", "usd")).resolves.toMatchObject({ amountPaise: 34_900 });
+    await expect(createCheckout("u", "pro", "US")).resolves.toMatchObject({ amountPaise: 34_900 });
     expect(razorpay).toHaveBeenLastCalledWith(
       "POST",
       "/subscriptions",
-      expect.objectContaining({ plan_id: "plan_usd" }),
+      expect.objectContaining({ plan_id: "plan_global" }),
     );
   });
 });

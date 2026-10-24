@@ -7,12 +7,57 @@ import { razorpay } from "../../lib/razorpay.js";
 import { track } from "../../lib/analytics.js";
 import { runsSince } from "../usage/quotas.js";
 
-// In paise. Every payment is in rupees; "usd" is the global price list, $9 and $4 converted.
-export const prices = {
-  inr: { season_pass: 49_900, pro: 12_900 },
-  usd: { season_pass: 74_900, pro: 34_900 },
+// Prices follow the visitor's country, read from their IP. India pays in rupees; everyone else sees US dollars,
+// lower where incomes are lower. Every payment is still charged in rupees, at the amounts below, in paise.
+export const tiers = {
+  india: { currency: "INR", season_pass: { label: "₹499", paise: 49_900 }, pro: { label: "₹129", paise: 12_900 } },
+  emerging: { currency: "USD", season_pass: { label: "$5", paise: 41_900 }, pro: { label: "$2", paise: 16_900 } },
+  global: { currency: "USD", season_pass: { label: "$9", paise: 74_900 }, pro: { label: "$4", paise: 34_900 } },
 } as const;
-export type Pricing = keyof typeof prices;
+export type Tier = keyof typeof tiers;
+
+// ponytail: a hand-picked list. Move a country here, or add a tier, as sign-ups from it show up.
+const emerging = new Set([
+  "PK",
+  "BD",
+  "LK",
+  "NP",
+  "MM",
+  "ID",
+  "PH",
+  "VN",
+  "KH",
+  "LA",
+  "NG",
+  "KE",
+  "GH",
+  "EG",
+  "ET",
+  "TZ",
+  "UG",
+  "MA",
+  "DZ",
+  "TN",
+  "BR",
+  "MX",
+  "CO",
+  "PE",
+  "AR",
+  "BO",
+  "EC",
+  "VE",
+]);
+
+// An unknown country gets India's price: guessing wrong must never overcharge someone in India.
+export function tierFor(country: string | null): Tier {
+  if (!country || country === "IN") return "india";
+  return emerging.has(country) ? "emerging" : "global";
+}
+
+export function pricingFor(country: string | null) {
+  const tier = tierFor(country);
+  return { tier, country, ...tiers[tier] };
+}
 
 type Plan = (typeof users.$inferSelect)["plan"];
 
@@ -57,12 +102,13 @@ export async function assertNotGuest(userId: string, executor: Pick<typeof db, "
     throw new ForbiddenError("Create an account first, so your plan isn't deleted with this guest account");
 }
 
-export async function createCheckout(userId: string, plan: "season_pass" | "pro", pricing: Pricing = "inr") {
+export async function createCheckout(userId: string, plan: "season_pass" | "pro", country: string | null) {
   const keyId = env.RAZORPAY_KEY_ID;
   if (!keyId) throw new AppError(503, "PAYMENTS_NOT_CONFIGURED", "Payments are not configured");
   await assertNotGuest(userId);
-  track(userId, "checkout_started", { plan, pricing });
-  const amount = prices[pricing][plan];
+  const tier = tierFor(country);
+  track(userId, "checkout_started", { plan, tier, country });
+  const amount = tiers[tier][plan].paise;
 
   if (plan === "season_pass") {
     const order = await razorpay<{ id: string }>("POST", "/orders", {
@@ -91,7 +137,11 @@ export async function createCheckout(userId: string, plan: "season_pass" | "pro"
     };
   }
 
-  const planId = pricing === "usd" ? env.RAZORPAY_PRO_USD_PLAN_ID : env.RAZORPAY_PRO_PLAN_ID;
+  const planId = {
+    india: env.RAZORPAY_PRO_PLAN_ID,
+    emerging: env.RAZORPAY_PRO_EMERGING_PLAN_ID,
+    global: env.RAZORPAY_PRO_GLOBAL_PLAN_ID,
+  }[tier];
   if (!planId) throw new AppError(503, "PAYMENTS_NOT_CONFIGURED", "The Pro plan is not configured");
   const [existing] = await db
     .select({ id: subscriptions.id })

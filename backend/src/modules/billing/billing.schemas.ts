@@ -1,9 +1,15 @@
 import { z } from "zod";
 
-// "usd" is the global price ($9 and $4), still charged in rupees at ₹749 and ₹349.
-export const createCheckoutBody = z.object({
-  plan: z.enum(["season_pass", "pro"]),
-  pricing: z.enum(["inr", "usd"]).default("inr"),
+export const createCheckoutBody = z.object({ plan: z.enum(["season_pass", "pro"]) });
+
+const price = z.object({ label: z.string(), paise: z.number().int() });
+// The prices for the visitor's country. `paise` is what is actually charged, always in rupees.
+export const pricingResponse = z.object({
+  tier: z.enum(["india", "emerging", "global"]),
+  country: z.string().nullable(),
+  currency: z.enum(["INR", "USD"]),
+  season_pass: price,
+  pro: price,
 });
 
 export const checkoutResponse = z.object({

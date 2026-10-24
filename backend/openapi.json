@@ -20989,6 +20989,112 @@
         }
       }
     },
+    "/v1/pricing": {
+      "get": {
+        "summary": "Prices for the visitor's country",
+        "tags": [
+          "Billing"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "tier": {
+                          "type": "string",
+                          "enum": [
+                            "india",
+                            "emerging",
+                            "global"
+                          ]
+                        },
+                        "country": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "currency": {
+                          "type": "string",
+                          "enum": [
+                            "INR",
+                            "USD"
+                          ]
+                        },
+                        "season_pass": {
+                          "type": "object",
+                          "properties": {
+                            "label": {
+                              "type": "string"
+                            },
+                            "paise": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            }
+                          },
+                          "required": [
+                            "label",
+                            "paise"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "pro": {
+                          "type": "object",
+                          "properties": {
+                            "label": {
+                              "type": "string"
+                            },
+                            "paise": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            }
+                          },
+                          "required": [
+                            "label",
+                            "paise"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "tier",
+                        "country",
+                        "currency",
+                        "season_pass",
+                        "pro"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/checkouts": {
       "post": {
         "summary": "Start a Razorpay checkout",
@@ -21011,14 +21117,6 @@
                     "enum": [
                       "season_pass",
                       "pro"
-                    ]
-                  },
-                  "pricing": {
-                    "default": "inr",
-                    "type": "string",
-                    "enum": [
-                      "inr",
-                      "usd"
                     ]
                   }
                 },

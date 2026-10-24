@@ -6532,6 +6532,67 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/pricing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Prices for the visitor's country */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                /** @enum {string} */
+                                tier: "india" | "emerging" | "global";
+                                country: string | null;
+                                /** @enum {string} */
+                                currency: "INR" | "USD";
+                                season_pass: {
+                                    label: string;
+                                    paise: number;
+                                };
+                                pro: {
+                                    label: string;
+                                    paise: number;
+                                };
+                            };
+                        };
+                    };
+                };
+                /** @description Error */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/checkouts": {
         parameters: {
             query?: never;
@@ -6554,11 +6615,6 @@ export interface paths {
                     "application/json": {
                         /** @enum {string} */
                         plan: "season_pass" | "pro";
-                        /**
-                         * @default inr
-                         * @enum {string}
-                         */
-                        pricing?: "inr" | "usd";
                     };
                 };
             };
