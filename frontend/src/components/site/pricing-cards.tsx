@@ -1,10 +1,12 @@
 import { Link } from '@tanstack/react-router'
 import { CheckIcon, StarIcon } from 'lucide-react'
+import { CurrencyToggle } from '@/components/site/currency-toggle'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import { useCheckout } from '@/hooks/use-checkout'
 import { useSession } from '@/lib/auth-client'
+import { useCurrency } from '@/lib/currency'
 import { plans } from '@/lib/plans'
 import { cn } from '@/lib/utils'
 
@@ -68,8 +70,12 @@ export function PricingCards({
   className?: string
 }) {
   const Heading = `h${headingLevel}` as const
+  const currency = useCurrency()
   return (
     <div className={className}>
+      <div className="mb-8 flex justify-center">
+        <CurrencyToggle />
+      </div>
       {/* Cards share row lines (subgrid) so names, prices, buttons and lists align across plans. */}
       <ul
         aria-label="Plans and prices"
@@ -102,13 +108,15 @@ export function PricingCards({
               <p className="mt-2 text-muted-foreground">{plan.forWhom}</p>
               <p className="mt-6 flex items-baseline gap-1.5">
                 <span className="font-serif text-5xl font-semibold tracking-tight tabular-nums">
-                  {plan.price}
+                  {plan.price[currency]}
                 </span>
                 {plan.period && (
                   <span className="text-muted-foreground">{plan.period}</span>
                 )}
               </p>
-              <p className="mt-2 text-sm text-muted-foreground">{plan.note}</p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {plan.note[currency]}
+              </p>
               <PlanCta plan={plan} />
               <div className="mt-8 border-t pt-6">
                 <p className="text-sm font-medium">{plan.listTitle}</p>
@@ -129,8 +137,10 @@ export function PricingCards({
         })}
       </ul>
       <p className="mt-6 text-center text-sm text-muted-foreground">
-        Pay with UPI, cards or net banking through Razorpay. Changed your mind?
-        Ask for a refund within 6 hours.
+        {currency === 'inr'
+          ? 'Pay with UPI, cards or net banking through Razorpay.'
+          : 'Pay by card through Razorpay. Your bank converts the rupee amount.'}{' '}
+        Changed your mind? Ask for a refund within 6 hours.
       </p>
     </div>
   )

@@ -11,6 +11,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { useCurrency } from '@/lib/currency'
+import type { Currency } from '@/lib/currency'
 import { plans } from '@/lib/plans'
 import { site } from '@/lib/site'
 import { cn } from '@/lib/utils'
@@ -72,11 +74,22 @@ const comparison: { label: string; values: [string, string, string] }[] = [
     label: 'Contact details unlocked with a password',
     values: ['Not included', 'Included', 'Included'],
   },
-  {
+]
+
+const priceRow: Record<Currency, (typeof comparison)[number]> = {
+  inr: {
     label: 'Price',
     values: ['Free', '₹499 once, for 6 months', '₹129 a month'],
   },
-]
+  usd: {
+    label: 'Price',
+    values: [
+      'Free',
+      '$9 once, for 6 months (charged as ₹749)',
+      '$4 a month (charged as ₹349)',
+    ],
+  },
+}
 
 const faqs = [
   {
@@ -85,7 +98,7 @@ const faqs = [
   },
   {
     q: 'What is the difference between Season Pass and Pro?',
-    a: 'Both unlock the paid features. Season Pass is one payment of ₹499 for 6 months with 40 tailored resumes a month, best for a placement season. Pro is ₹129 a month with 60 tailored resumes a month, cancel anytime, best if you apply a lot or want to pay monthly.',
+    a: 'Both unlock the paid features. Season Pass is one payment for 6 months (₹499, or $9 on the USD price list) with 40 tailored resumes a month, best for a busy job search. Pro is monthly (₹129, or $4) with 60 tailored resumes a month, cancel anytime, best if you apply a lot or want to pay monthly.',
   },
   {
     q: 'What counts as a resume tailored with AI?',
@@ -164,6 +177,7 @@ export const Route = createFileRoute('/_site/pricing')({
 })
 
 function PricingPage() {
+  const currency = useCurrency()
   return (
     <div className="mx-auto max-w-6xl px-5 pt-14 pb-10 lg:pt-20">
       <div className="mx-auto max-w-2xl text-center">
@@ -241,7 +255,7 @@ function PricingPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {comparison.map((row) => (
+              {[...comparison, priceRow[currency]].map((row) => (
                 <TableRow key={row.label}>
                   <TableCell className="font-medium whitespace-normal">
                     {row.label}

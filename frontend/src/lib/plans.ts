@@ -1,13 +1,17 @@
 // Shared by the pricing page and the landing page.
-// Keep these numbers in step with planLimits in backend/src/modules/usage/quotas.ts.
+// Keep these numbers in step with planLimits in backend/src/modules/usage/quotas.ts, and the prices with
+// `prices` in backend/src/modules/billing/billing.service.ts. USD prices are charged in rupees.
 export const plans = [
   {
     id: 'free',
     name: 'Free',
     forWhom: 'Try the AI on your resume before you pay anything.',
-    price: '₹0',
+    price: { inr: '₹0', usd: '$0' },
     period: null,
-    note: 'Free, forever. No card needed.',
+    note: {
+      inr: 'Free, forever. No card needed.',
+      usd: 'Free, forever. No card needed.',
+    },
     cta: 'Start free',
     listTitle: 'Includes:',
     // The basics (downloads, history, link privacy) are in the comparison table; this list sells the plan.
@@ -22,13 +26,16 @@ export const plans = [
   {
     id: 'season_pass',
     name: 'Season Pass',
-    forWhom: 'For placement season, when you apply to new roles every week.',
-    price: '₹499',
+    forWhom: 'For a busy job search, when you apply to new roles every week.',
+    price: { inr: '₹499', usd: '$9' },
     period: '/ 6 months',
-    note: 'One payment, about ₹83 a month.',
+    note: {
+      inr: 'One payment, about ₹83 a month.',
+      usd: 'One payment, about $1.50 a month. Charged as ₹749.',
+    },
     cta: 'Get the Season Pass',
     featured: true,
-    badge: 'Made for placement season',
+    badge: 'Best value',
     listTitle: 'Everything in Free, plus:',
     features: [
       '40 resumes tailored to a job description each month',
@@ -43,9 +50,12 @@ export const plans = [
     id: 'pro',
     name: 'Pro',
     forWhom: 'For a longer job search, paid month by month.',
-    price: '₹129',
+    price: { inr: '₹129', usd: '$4' },
     period: '/ month',
-    note: 'Billed monthly. Cancel anytime.',
+    note: {
+      inr: 'Billed monthly. Cancel anytime.',
+      usd: 'Charged ₹349 a month. Cancel anytime.',
+    },
     cta: 'Choose Pro',
     listTitle: 'Everything in Free, plus:',
     features: [
