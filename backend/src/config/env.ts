@@ -85,12 +85,15 @@ const envSchema = z.object({
   RAZORPAY_WEBHOOK_SECRET: optionalString,
   // Monthly plan created in the Razorpay dashboard for Pro.
   RAZORPAY_PRO_PLAN_ID: optionalString,
+  // A second monthly Pro plan at the USD price (₹349), for visitors who view prices in USD.
+  RAZORPAY_PRO_USD_PLAN_ID: optionalString,
   // "test" switches to the RAZORPAY_TEST_* values, so live credentials stay in place while testing.
   RAZORPAY_MODE: z.preprocess(emptyAsUnset, z.enum(["live", "test"]).default("live")),
   RAZORPAY_TEST_KEY_ID: optionalString,
   RAZORPAY_TEST_KEY_SECRET: optionalString,
   RAZORPAY_TEST_WEBHOOK_SECRET: optionalString,
   RAZORPAY_TEST_PRO_PLAN_ID: optionalString,
+  RAZORPAY_TEST_PRO_USD_PLAN_ID: optionalString,
 });
 
 const parsed = envSchema
@@ -124,5 +127,6 @@ export const env =
         RAZORPAY_KEY_SECRET: settings.RAZORPAY_TEST_KEY_SECRET,
         RAZORPAY_WEBHOOK_SECRET: settings.RAZORPAY_TEST_WEBHOOK_SECRET,
         RAZORPAY_PRO_PLAN_ID: settings.RAZORPAY_TEST_PRO_PLAN_ID,
+        RAZORPAY_PRO_USD_PLAN_ID: settings.RAZORPAY_TEST_PRO_USD_PLAN_ID,
       }
     : settings;

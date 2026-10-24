@@ -7,7 +7,12 @@ import { razorpay } from "../../lib/razorpay.js";
 import { track } from "../../lib/analytics.js";
 import { runsSince } from "../usage/quotas.js";
 
-export const prices = { season_pass: 49_900, pro: 12_900 } as const;
+// In paise. Every payment is in rupees; "usd" is the global price list, $9 and $4 converted.
+export const prices = {
+  inr: { season_pass: 49_900, pro: 12_900 },
+  usd: { season_pass: 74_900, pro: 34_900 },
+} as const;
+export type Pricing = keyof typeof prices;
 
 type Plan = (typeof users.$inferSelect)["plan"];
 
@@ -52,15 +57,16 @@ export async function assertNotGuest(userId: string, executor: Pick<typeof db, "
     throw new ForbiddenError("Create an account first, so your plan isn't deleted with this guest account");
 }
 
-export async function createCheckout(userId: string, plan: "season_pass" | "pro") {
+export async function createCheckout(userId: string, plan: "season_pass" | "pro", pricing: Pricing = "inr") {
   const keyId = env.RAZORPAY_KEY_ID;
   if (!keyId) throw new AppError(503, "PAYMENTS_NOT_CONFIGURED", "Payments are not configured");
   await assertNotGuest(userId);
-  track(userId, "checkout_started", { plan });
+  track(userId, "checkout_started", { plan, pricing });
+  const amount = prices[pricing][plan];
 
   if (plan === "season_pass") {
     const order = await razorpay<{ id: string }>("POST", "/orders", {
-      amount: prices.season_pass,
+      amount,
       currency: "INR",
       receipt: `sp_${Date.now()}`,
       notes: { userId, plan },
@@ -71,7 +77,7 @@ export async function createCheckout(userId: string, plan: "season_pass" | "pro"
         userId,
         subscriptionId: subscription!.id,
         razorpayOrderId: order.id,
-        amountPaise: prices.season_pass,
+        amountPaise: amount,
       });
     });
     return {
@@ -80,12 +86,13 @@ export async function createCheckout(userId: string, plan: "season_pass" | "pro"
       plan,
       orderId: order.id,
       razorpaySubscriptionId: null,
-      amountPaise: prices.season_pass,
+      amountPaise: amount,
       currency: "INR" as const,
     };
   }
 
-  if (!env.RAZORPAY_PRO_PLAN_ID) throw new AppError(503, "PAYMENTS_NOT_CONFIGURED", "The Pro plan is not configured");
+  const planId = pricing === "usd" ? env.RAZORPAY_PRO_USD_PLAN_ID : env.RAZORPAY_PRO_PLAN_ID;
+  if (!planId) throw new AppError(503, "PAYMENTS_NOT_CONFIGURED", "The Pro plan is not configured");
   const [existing] = await db
     .select({ id: subscriptions.id })
     .from(subscriptions)
@@ -94,7 +101,7 @@ export async function createCheckout(userId: string, plan: "season_pass" | "pro"
   if (existing) throw new ConflictError("You already have an active Pro subscription");
 
   const remote = await razorpay<{ id: string }>("POST", "/subscriptions", {
-    plan_id: env.RAZORPAY_PRO_PLAN_ID,
+    plan_id: planId,
     total_count: 120,
     customer_notify: 1,
     notes: { userId, plan },
@@ -106,7 +113,7 @@ export async function createCheckout(userId: string, plan: "season_pass" | "pro"
     plan,
     orderId: null,
     razorpaySubscriptionId: remote.id,
-    amountPaise: prices.pro,
+    amountPaise: amount,
     currency: "INR" as const,
   };
 }

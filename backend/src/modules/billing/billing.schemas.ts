@@ -1,6 +1,10 @@
 import { z } from "zod";
 
-export const createCheckoutBody = z.object({ plan: z.enum(["season_pass", "pro"]) });
+// "usd" is the global price ($9 and $4), still charged in rupees at ₹749 and ₹349.
+export const createCheckoutBody = z.object({
+  plan: z.enum(["season_pass", "pro"]),
+  pricing: z.enum(["inr", "usd"]).default("inr"),
+});
 
 export const checkoutResponse = z.object({
   provider: z.literal("razorpay"),

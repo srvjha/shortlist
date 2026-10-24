@@ -21,7 +21,12 @@ billingRouter.post(
   "/checkouts",
   requireAuth,
   ...validated({ body: createCheckoutBody }, async (req, res) => {
-    sendData(res, checkoutResponse, await service.createCheckout(currentUser(req).id, req.body.plan), 201);
+    sendData(
+      res,
+      checkoutResponse,
+      await service.createCheckout(currentUser(req).id, req.body.plan, req.body.pricing),
+      201,
+    );
   }),
 );
 

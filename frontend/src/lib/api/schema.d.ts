@@ -6554,6 +6554,11 @@ export interface paths {
                     "application/json": {
                         /** @enum {string} */
                         plan: "season_pass" | "pro";
+                        /**
+                         * @default inr
+                         * @enum {string}
+                         */
+                        pricing?: "inr" | "usd";
                     };
                 };
             };

@@ -21012,6 +21012,14 @@
                       "season_pass",
                       "pro"
                     ]
+                  },
+                  "pricing": {
+                    "default": "inr",
+                    "type": "string",
+                    "enum": [
+                      "inr",
+                      "usd"
+                    ]
                   }
                 },
                 "required": [
