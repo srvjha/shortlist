@@ -1,13 +1,13 @@
 import { Link } from '@tanstack/react-router'
 import { CheckIcon, StarIcon } from 'lucide-react'
-import { CurrencyToggle } from '@/components/site/currency-toggle'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import { useCheckout } from '@/hooks/use-checkout'
 import { useSession } from '@/lib/auth-client'
-import { useCurrency } from '@/lib/currency'
+import type { Pricing } from '@/lib/api/types'
 import { plans } from '@/lib/plans'
+import { fallbackPricing, priceNote } from '@/lib/pricing'
 import { cn } from '@/lib/utils'
 
 type Plan = (typeof plans)[number]
@@ -65,17 +65,17 @@ function PlanCta({ plan }: { plan: Plan }) {
 export function PricingCards({
   headingLevel = 3,
   className,
+  pricing = fallbackPricing,
 }: {
   headingLevel?: 2 | 3
   className?: string
+  pricing?: Pricing | null
 }) {
   const Heading = `h${headingLevel}` as const
-  const currency = useCurrency()
+  const prices = pricing ?? fallbackPricing
+  const free = prices.currency === 'INR' ? '₹0' : '$0'
   return (
     <div className={className}>
-      <div className="mb-8 flex justify-center">
-        <CurrencyToggle />
-      </div>
       {/* Cards share row lines (subgrid) so names, prices, buttons and lists align across plans. */}
       <ul
         aria-label="Plans and prices"
@@ -108,14 +108,16 @@ export function PricingCards({
               <p className="mt-2 text-muted-foreground">{plan.forWhom}</p>
               <p className="mt-6 flex items-baseline gap-1.5">
                 <span className="font-serif text-5xl font-semibold tracking-tight tabular-nums">
-                  {plan.price[currency]}
+                  {plan.id === 'free' ? free : prices[plan.id].label}
                 </span>
                 {plan.period && (
                   <span className="text-muted-foreground">{plan.period}</span>
                 )}
               </p>
               <p className="mt-2 text-sm text-muted-foreground">
-                {plan.note[currency]}
+                {plan.id === 'free'
+                  ? 'Free, forever. No card needed.'
+                  : priceNote(plan.id, prices)}
               </p>
               <PlanCta plan={plan} />
               <div className="mt-8 border-t pt-6">
@@ -137,10 +139,20 @@ export function PricingCards({
         })}
       </ul>
       <p className="mt-6 text-center text-sm text-muted-foreground">
-        {currency === 'inr'
+        {prices.currency === 'INR'
           ? 'Pay with UPI, cards or net banking through Razorpay.'
-          : 'Pay by card through Razorpay. Your bank converts the rupee amount.'}{' '}
+          : 'Prices for your country. Pay by card through Razorpay; your bank converts the rupee amount.'}{' '}
         Changed your mind? Ask for a refund within 6 hours.
+      </p>
+      <p className="mt-2 text-center text-xs text-muted-foreground">
+        <a
+          href="https://db-ip.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline-offset-4 hover:underline"
+        >
+          IP Geolocation by DB-IP
+        </a>
       </p>
     </div>
   )

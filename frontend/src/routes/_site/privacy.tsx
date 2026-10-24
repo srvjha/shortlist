@@ -34,6 +34,15 @@ export const Route = createFileRoute('/_site/privacy')({
           Payment records from Razorpay. We never see or store your card or UPI
           details.
         </li>
+        <li>
+          The country your IP address is in, looked up when you view prices so
+          we can show the prices for your country. The IP address itself is not
+          stored. IP Geolocation by{' '}
+          <a href="https://db-ip.com" target="_blank" rel="noopener noreferrer">
+            DB-IP
+          </a>
+          .
+        </li>
       </ul>
       <h2>How AI features use your data</h2>
       <p>

@@ -27,6 +27,7 @@ export type RequestBody<
 
 export type Me = ResponseData<'/v1/me', 'get'>
 export type Usage = ResponseData<'/v1/usage', 'get'>
+export type Pricing = ResponseData<'/v1/pricing', 'get'>
 export type Profile = ResponseData<'/v1/profile', 'get'>
 export type ResumeContent = Profile['content']
 export type ResumeSection = ResumeContent['sections'][number]

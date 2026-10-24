@@ -4,7 +4,7 @@ import {
   getRequestHeader,
   setCookie,
 } from '@tanstack/react-start/server'
-import type { PublicProfile, PublicResume } from '@/lib/api/types'
+import type { Pricing, PublicProfile, PublicResume } from '@/lib/api/types'
 import { apiUrl } from '@/lib/env'
 
 type Outcome<T> =
@@ -119,3 +119,11 @@ export const fetchPublicProfile = createServerFn({ method: 'GET' })
       forwardedHeaders(),
     ),
   )
+
+// Prices for the visitor's country. Pages render on this server, so the API is told the visitor's IP.
+export const fetchPricing = createServerFn({ method: 'GET' }).handler(
+  async () => {
+    const outcome = await call<Pricing>('/v1/pricing', forwardedHeaders())
+    return outcome.status === 'ok' ? outcome.data : null
+  },
+)

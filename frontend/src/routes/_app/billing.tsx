@@ -20,8 +20,7 @@ import { Progress } from '@/components/ui/progress'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Spinner } from '@/components/ui/spinner'
 import { useCheckout } from '@/hooks/use-checkout'
-import { CurrencyToggle } from '@/components/site/currency-toggle'
-import { useCurrency } from '@/lib/currency'
+import { fallbackPricing } from '@/lib/pricing'
 import { api, errorMessage, unwrap } from '@/lib/api/client'
 import {
   meQuery,
@@ -29,7 +28,7 @@ import {
   subscriptionQuery,
   usageQuery,
 } from '@/lib/api/queries'
-import type { Me } from '@/lib/api/types'
+import type { Me, Pricing } from '@/lib/api/types'
 import { formatDate, formatDateTime, formatInr, planLabels } from '@/lib/format'
 import { site } from '@/lib/site'
 import { cn } from '@/lib/utils'
@@ -72,16 +71,15 @@ const paidPlans = [
   {
     id: 'season_pass',
     name: 'Season Pass',
-    price: {
-      inr: '₹499 for 6 months',
-      usd: '$9 for 6 months (charged as ₹749)',
-    },
+    price: (p: Pricing) =>
+      `${p.season_pass.label} for 6 months${p.currency === 'INR' ? '' : ` (charged as ${formatInr(p.season_pass.paise)})`}`,
     body: 'One payment for 6 months. 40 AI-tailored resumes a month and unlimited AI edits.',
   },
   {
     id: 'pro',
     name: 'Pro',
-    price: { inr: '₹129 a month', usd: '$4 a month (charged as ₹349)' },
+    price: (p: Pricing) =>
+      `${p.pro.label} a month${p.currency === 'INR' ? '' : ` (charged as ${formatInr(p.pro.paise)})`}`,
     body: 'The same AI limits as the Season Pass, billed monthly. Cancel anytime.',
   },
 ] as const
@@ -126,7 +124,12 @@ function Billing({
   const { data: usage } = useQuery(usageQuery)
   const { data: subscription } = useQuery(subscriptionQuery)
   const { checkout, waiting, refresh } = useCheckout()
-  const currency = useCurrency()
+  // Fetched by the browser, so the API sees this visitor's own IP and country.
+  const { data: pricing = fallbackPricing } = useQuery({
+    queryKey: ['pricing'],
+    queryFn: () => unwrap(api.GET('/v1/pricing')),
+    staleTime: Infinity,
+  })
   const [confirmCancel, setConfirmCancel] = useState(false)
   const { data: refundQuote, error: refundQuoteError } =
     useQuery(refundQuoteQuery)
@@ -281,7 +284,6 @@ function Billing({
         )}
       </Card>
 
-      {me.plan === 'free' && <CurrencyToggle className="self-start" />}
       {me.plan === 'free' && (
         <div className="grid gap-4 sm:grid-cols-2">
           {paidPlans.map((plan) => (
@@ -296,7 +298,7 @@ function Billing({
                   {plan.name}
                   {plan.id === 'season_pass' && <Badge>Best value</Badge>}
                 </CardTitle>
-                <CardDescription>{plan.price[currency]}</CardDescription>
+                <CardDescription>{plan.price(pricing)}</CardDescription>
               </CardHeader>
               <CardContent className="text-sm text-muted-foreground">
                 {plan.body}

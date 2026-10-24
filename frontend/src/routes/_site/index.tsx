@@ -8,6 +8,7 @@ import {
   PlanPicker,
   TemplateFinder,
 } from '@/components/landing/sections'
+import { fetchPricing } from '@/lib/public-api'
 import { site } from '@/lib/site'
 
 const title = `Free AI Resume Builder, Tailored to Every Job | ${site.name}`
@@ -55,17 +56,19 @@ export const Route = createFileRoute('/_site/')({
       },
     ],
   }),
+  loader: () => fetchPricing(),
   component: LandingPage,
 })
 
 function LandingPage() {
+  const pricing = Route.useLoaderData()
   return (
     <>
       <Hero />
       <JobAndShare />
       <TemplateFinder />
       <Bento />
-      <PlanPicker />
+      <PlanPicker pricing={pricing} />
       <Faq />
       <FinalCta />
     </>

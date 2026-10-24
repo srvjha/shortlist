@@ -5,7 +5,7 @@ import { useId, useMemo, useRef, useState } from 'react'
 import { Reveal, ease } from '@/components/landing/reveal'
 import { PricingCards } from '@/components/site/pricing-cards'
 import { Button } from '@/components/ui/button'
-import type { ResumeContent } from '@/lib/api/types'
+import type { Pricing, ResumeContent } from '@/lib/api/types'
 import { recommendTemplate } from '@/lib/recommend-template'
 import { categoryName, templateCatalog } from '@/lib/templates'
 import { cn } from '@/lib/utils'
@@ -170,7 +170,7 @@ export function TemplateFinder() {
   )
 }
 
-export function PlanPicker() {
+export function PlanPicker({ pricing }: { pricing: Pricing | null }) {
   return (
     <Reveal
       as="section"
@@ -184,7 +184,7 @@ export function PlanPicker() {
         Start free. Pay only when you want more AI help.
       </p>
       <div data-reveal className="mt-10 text-left">
-        <PricingCards />
+        <PricingCards pricing={pricing} />
       </div>
     </Reveal>
   )

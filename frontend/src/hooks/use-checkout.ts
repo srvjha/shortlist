@@ -3,7 +3,6 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import { api, errorMessage, unwrap } from '@/lib/api/client'
 import { meQuery, queryKeys } from '@/lib/api/queries'
-import { useCurrency } from '@/lib/currency'
 import { openRazorpayCheckout } from '@/lib/razorpay'
 import { site } from '@/lib/site'
 
@@ -14,7 +13,6 @@ export function useCheckout({ enabled = true }: { enabled?: boolean } = {}) {
   const queryClient = useQueryClient()
   const { data: me } = useQuery({ ...meQuery, enabled })
   const [waiting, setWaiting] = useState(false)
-  const pricing = useCurrency()
 
   const refresh = () => {
     queryClient.invalidateQueries({ queryKey: queryKeys.subscription })
@@ -25,7 +23,7 @@ export function useCheckout({ enabled = true }: { enabled?: boolean } = {}) {
   const checkout = useMutation({
     mutationFn: async (plan: PaidPlan) => {
       const session = await unwrap(
-        api.POST('/v1/checkouts', { body: { plan, pricing } }),
+        api.POST('/v1/checkouts', { body: { plan } }),
       )
       await openRazorpayCheckout({
         key: session.keyId,
