@@ -39,6 +39,7 @@ import {
 } from '@/components/ui/sheet'
 import { Spinner } from '@/components/ui/spinner'
 import { Textarea } from '@/components/ui/textarea'
+import { useCheckout } from '@/hooks/use-checkout'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { api, errorMessage, unwrap } from '@/lib/api/client'
 import { aiErrorMessage } from '@/lib/api/errors'
@@ -51,6 +52,8 @@ import {
 } from '@/lib/api/queries'
 import type { ResumeContent, Suggestion } from '@/lib/api/types'
 import { fixInstruction } from '@/lib/ats'
+import { formatDate } from '@/lib/format'
+import { plans } from '@/lib/plans'
 import { panelStorage } from '@/lib/panel-storage'
 import { CoverageReport } from './coverage-report'
 import { SuggestionReview } from './suggestion-review'
@@ -322,8 +325,16 @@ export function AiPanel({
       setSuggestion(next)
       if (body.type === 'edit') setRequest('')
     },
-    onError: (error) => toast.error(aiErrorMessage(error)),
+    onError: (error) => {
+      // A quota error means the counts shown are stale; refetch so the upgrade card appears.
+      queryClient.invalidateQueries({ queryKey: queryKeys.usage })
+      toast.error(aiErrorMessage(error))
+    },
   })
+  const tailorsLeft =
+    usage?.plan === 'free' && !usage.ownAiKey
+      ? Math.max(0, usage.tailor.limit - usage.tailor.used)
+      : null
 
   const ats = useMutation({
     mutationFn: (forJob: string | null) =>
@@ -541,6 +552,13 @@ export function AiPanel({
                 <p className="text-sm text-muted-foreground">
                   Reorders, trims and rephrases your resume for one job.
                 </p>
+                {usage && tailorsLeft !== null && (
+                  <p className="text-xs text-muted-foreground tabular-nums">
+                    {usage.trialEndsAt
+                      ? `${tailorsLeft} of ${usage.tailor.limit} tailored resumes left in your first week, until ${formatDate(usage.trialEndsAt)}`
+                      : `${tailorsLeft} of ${usage.tailor.limit} tailored resume left this month`}
+                  </p>
+                )}
               </div>
               <FieldGroup className="gap-4">
                 <Field>
@@ -571,22 +589,26 @@ export function AiPanel({
                     onChange={(event) => setInstructions(event.target.value)}
                   />
                 </Field>
-                <Button
-                  disabled={!jobId}
-                  onClick={() =>
-                    jobId &&
-                    suggest.mutate({
-                      type: 'tailor',
-                      jobId,
-                      ...(instructions.trim() && {
-                        instructions: instructions.trim(),
-                      }),
-                    })
-                  }
-                >
-                  <SparklesIcon data-icon="inline-start" />
-                  Tailor resume
-                </Button>
+                {tailorsLeft === 0 ? (
+                  <TailorUpgrade />
+                ) : (
+                  <Button
+                    disabled={!jobId}
+                    onClick={() =>
+                      jobId &&
+                      suggest.mutate({
+                        type: 'tailor',
+                        jobId,
+                        ...(instructions.trim() && {
+                          instructions: instructions.trim(),
+                        }),
+                      })
+                    }
+                  >
+                    <SparklesIcon data-icon="inline-start" />
+                    Tailor resume
+                  </Button>
+                )}
               </FieldGroup>
             </section>
 
@@ -723,5 +745,37 @@ export function AiPanel({
         {body}
       </SheetContent>
     </Sheet>
+  )
+}
+
+const seasonPass = plans.find((plan) => plan.id === 'season_pass')!
+
+// Shown in place of the Tailor button once a Free account has no tailored resumes left.
+function TailorUpgrade() {
+  const { checkout } = useCheckout()
+  return (
+    <div className="flex flex-col gap-3 rounded-lg border border-primary/30 bg-primary/5 p-4">
+      <div className="flex flex-col gap-1">
+        <p className="text-sm font-semibold">
+          You've used your free tailored resumes
+        </p>
+        <p className="text-sm text-muted-foreground">
+          The Season Pass gives you 40 tailored resumes a month and unlimited AI
+          edits, for {seasonPass.price} {seasonPass.period}. {seasonPass.note}
+        </p>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <Button
+          onClick={() => checkout.mutate('season_pass')}
+          disabled={checkout.isPending}
+        >
+          {checkout.isPending && <Spinner data-icon="inline-start" />}
+          {seasonPass.cta}
+        </Button>
+        <Button variant="ghost" asChild>
+          <Link to="/billing">See all plans</Link>
+        </Button>
+      </div>
+    </div>
   )
 }
