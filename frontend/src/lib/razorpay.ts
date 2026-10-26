@@ -10,9 +10,14 @@ type RazorpayOptions = {
   modal?: { ondismiss?: () => void }
 }
 
+type RazorpayCheckout = {
+  open: () => void
+  on: (event: 'payment.failed', callback: () => void) => void
+}
+
 declare global {
   interface Window {
-    Razorpay?: new (options: RazorpayOptions) => { open: () => void }
+    Razorpay?: new (options: RazorpayOptions) => RazorpayCheckout
   }
 }
 
@@ -36,9 +41,16 @@ function loadScript() {
   return loading
 }
 
-export async function openRazorpayCheckout(options: RazorpayOptions) {
+// Razorpay keeps its window open after a failed attempt so the user can retry there;
+// `onFailed` only records it, and the window's ondismiss decides what to say.
+export async function openRazorpayCheckout(
+  options: RazorpayOptions,
+  onFailed?: () => void,
+) {
   await loadScript()
   if (!window.Razorpay)
     throw new Error('The payment window is unavailable. Try again.')
-  new window.Razorpay(options).open()
+  const checkout = new window.Razorpay(options)
+  if (onFailed) checkout.on('payment.failed', onFailed)
+  checkout.open()
 }
