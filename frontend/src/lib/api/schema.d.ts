@@ -281,6 +281,7 @@ export interface paths {
                                     used: number;
                                     limit: number;
                                 };
+                                trialEndsAt: string | null;
                                 edit: {
                                     used: number;
                                     limit: number;
@@ -7393,6 +7394,7 @@ export interface paths {
                                         used: number;
                                         limit: number;
                                     };
+                                    trialEndsAt: string | null;
                                     edit: {
                                         used: number;
                                         limit: number;
@@ -7544,6 +7546,7 @@ export interface paths {
                                         used: number;
                                         limit: number;
                                     };
+                                    trialEndsAt: string | null;
                                     edit: {
                                         used: number;
                                         limit: number;
@@ -7793,6 +7796,7 @@ export interface paths {
                                         used: number;
                                         limit: number;
                                     };
+                                    trialEndsAt: string | null;
                                     edit: {
                                         used: number;
                                         limit: number;

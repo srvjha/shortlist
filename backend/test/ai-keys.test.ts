@@ -54,7 +54,7 @@ beforeEach(() => {
         table === userAiKeys
           ? [...(saved ? [saved] : []), ...others].map((row) => project(row, columns))
           : columns?.plan
-            ? [{ plan: "free" }]
+            ? [{ plan: "free", createdAt: new Date("2026-01-01") }]
             : columns?.value
               ? [{ value: 1 }]
               : [{ resetAt: null }];

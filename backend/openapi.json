@@ -435,6 +435,12 @@
                           ],
                           "additionalProperties": false
                         },
+                        "trialEndsAt": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
                         "edit": {
                           "type": "object",
                           "properties": {
@@ -503,6 +509,7 @@
                         "periodEnd",
                         "resumes",
                         "tailor",
+                        "trialEndsAt",
                         "edit",
                         "import",
                         "draft"
@@ -23229,6 +23236,12 @@
                               ],
                               "additionalProperties": false
                             },
+                            "trialEndsAt": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
                             "edit": {
                               "type": "object",
                               "properties": {
@@ -23297,6 +23310,7 @@
                             "periodEnd",
                             "resumes",
                             "tailor",
+                            "trialEndsAt",
                             "edit",
                             "import",
                             "draft"
@@ -23832,6 +23846,12 @@
                               ],
                               "additionalProperties": false
                             },
+                            "trialEndsAt": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
                             "edit": {
                               "type": "object",
                               "properties": {
@@ -23900,6 +23920,7 @@
                             "periodEnd",
                             "resumes",
                             "tailor",
+                            "trialEndsAt",
                             "edit",
                             "import",
                             "draft"
@@ -24527,6 +24548,12 @@
                               ],
                               "additionalProperties": false
                             },
+                            "trialEndsAt": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
                             "edit": {
                               "type": "object",
                               "properties": {
@@ -24595,6 +24622,7 @@
                             "periodEnd",
                             "resumes",
                             "tailor",
+                            "trialEndsAt",
                             "edit",
                             "import",
                             "draft"

@@ -18,6 +18,10 @@ export const planLimits: Record<Plan, Record<QuotaKind | "resumes", number>> = {
   pro: { resumes: 1000, tailor: 60, edit: 1000, import: 20, draft: 30, job: 100, ats: 200, review: 100 },
 };
 
+// A new Free account can tailor 5 resumes in its first 7 days, counted from sign-up, then gets the monthly limit.
+const TRIAL_DAYS = 7;
+const TRIAL_TAILORS = 5;
+
 const stepsFor: Record<QuotaKind, (typeof aiRuns.$inferSelect)["step"][]> = {
   tailor: ["rewrite"],
   edit: ["chat_edit", "inline_edit", "fix_compile"],
@@ -43,10 +47,25 @@ type Step = (typeof aiRuns.$inferInsert)["step"];
 // A reserved run whose request crashed before recording a result stops counting after this long.
 const PENDING_TTL = sql`now() - interval '10 minutes'`;
 
-async function planOf(userId: string, executor: Executor = db): Promise<Plan> {
-  const [user] = await executor.select({ plan: users.plan }).from(users).where(eq(users.id, userId)).limit(1);
+async function accountOf(userId: string, executor: Executor = db) {
+  const [user] = await executor
+    .select({ plan: users.plan, createdAt: users.createdAt })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
   if (!user) throw new NotFoundError("User");
-  return user.plan;
+  return user;
+}
+
+async function planOf(userId: string, executor: Executor = db): Promise<Plan> {
+  return (await accountOf(userId, executor)).plan;
+}
+
+// When a Free account's tailoring trial ends, or null once it has ended (or on a paid plan).
+export function trialEndsAt(account: { plan: Plan; createdAt: Date }, now = new Date()) {
+  if (account.plan !== "free") return null;
+  const end = new Date(account.createdAt.getTime() + TRIAL_DAYS * 24 * 60 * 60 * 1000);
+  return end > now ? end : null;
 }
 
 // `allTime` counts every run, for allowances given once per account rather than per month.
@@ -114,10 +133,20 @@ export async function reserveAiRun(userId: string, kind: QuotaKind, step: Step) 
 }
 
 async function checkQuota(userId: string, kind: QuotaKind, executor: Executor = db) {
-  const plan = await planOf(userId, executor);
-  const limit = planLimits[plan][kind];
+  const account = await accountOf(userId, executor);
+  const { plan } = account;
+  const trial = kind === "tailor" ? trialEndsAt(account) : null;
+  const limit = trial ? TRIAL_TAILORS : planLimits[plan][kind];
   const once = kind === "draft" && plan === "free";
-  const used = await usedThisPeriod(userId, kind, once, executor);
+  // A trial counts every tailor since sign-up, so it doesn't start over on the 1st of the month.
+  const used = await usedThisPeriod(userId, kind, once || Boolean(trial), executor);
+  if (used >= limit && trial) {
+    throw quotaError(
+      `You've used all ${TRIAL_TAILORS} tailored resumes in your first week. The Season Pass includes 40 a month`,
+      limit,
+      used,
+    );
+  }
   if (used >= limit && once) {
     throw quotaError(
       "You've used your free AI-written resume. Season Pass and Pro include more, or add your own AI key.",
@@ -144,10 +173,12 @@ export async function assertResumeQuota(userId: string) {
 }
 
 export async function getUsage(userId: string) {
-  const plan = await planOf(userId);
+  const account = await accountOf(userId);
+  const { plan } = account;
   const limits = planLimits[plan];
+  const trial = trialEndsAt(account);
   const [tailor, edit, importCount, draft, resumeCount, ownAiKey] = await Promise.all([
-    usedThisPeriod(userId, "tailor"),
+    usedThisPeriod(userId, "tailor", Boolean(trial)),
     usedThisPeriod(userId, "edit"),
     usedThisPeriod(userId, "import"),
     usedThisPeriod(userId, "draft", plan === "free"),
@@ -160,7 +191,8 @@ export async function getUsage(userId: string) {
     periodStart: periodStart(),
     periodEnd: periodEnd(),
     resumes: { used: resumeCount, limit: limits.resumes },
-    tailor: { used: tailor, limit: limits.tailor },
+    tailor: { used: tailor, limit: trial ? TRIAL_TAILORS : limits.tailor },
+    trialEndsAt: trial,
     edit: { used: edit, limit: limits.edit },
     import: { used: importCount, limit: limits.import },
     draft: { used: draft, limit: limits.draft },

@@ -13,6 +13,8 @@ export const usageResponse = z.object({
   periodEnd: z.date(),
   resumes: counter,
   tailor: counter,
+  // While set, a new Free account's tailor limit is the first-week trial, counted from sign-up.
+  trialEndsAt: z.date().nullable(),
   edit: counter,
   import: counter,
   // Resumes written by AI from the user's notes; on Free this counts for all time, not per month.
