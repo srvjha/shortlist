@@ -8,4 +8,5 @@ export const site = {
   displayDomain: 'shortlist.co.in',
   // Routed to the team's inbox by Cloudflare Email Routing.
   contactEmail: 'support@shortlist.co.in',
+  x: 'https://x.com/J_srv001',
 }

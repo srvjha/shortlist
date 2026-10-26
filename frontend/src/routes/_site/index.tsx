@@ -23,6 +23,7 @@ const structuredData = {
       url: site.url,
       logo: `${site.url}/favicon.svg`,
       email: site.contactEmail,
+      sameAs: [site.x],
     },
     {
       '@type': 'WebApplication',
