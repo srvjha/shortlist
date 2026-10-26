@@ -12,7 +12,7 @@ export const plans = [
     listTitle: 'Includes:',
     // The basics (downloads, history, link privacy) are in the comparison table; this list sells the plan.
     features: [
-      '1 resume tailored to a job description each month',
+      '5 resumes tailored to a job description in your first week, then 1 each month',
       '50 AI edits each month',
       '1 resume written by AI from your notes, to try it',
       'Import your old resume from a PDF or LaTeX file',

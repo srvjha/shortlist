@@ -1272,7 +1272,7 @@ export const docs: DocPage[] = [
                 <tr>
                   <td>Free</td>
                   <td>₹0</td>
-                  <td>1 a month</td>
+                  <td>5 in the first week, then 1 a month</td>
                   <td>50 a month</td>
                   <td>Free</td>
                 </tr>

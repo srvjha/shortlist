@@ -22,7 +22,11 @@ const comparison: { label: string; values: [string, string, string] }[] = [
   },
   {
     label: 'Resumes tailored to a job description',
-    values: ['1 a month', '40 a month', '60 a month'],
+    values: [
+      '5 in your first week, then 1 a month',
+      '40 a month',
+      '60 a month',
+    ],
   },
   {
     label: 'Resumes written by AI from your notes',
@@ -81,7 +85,7 @@ const comparison: { label: string; values: [string, string, string] }[] = [
 const faqs = [
   {
     q: 'Is the free plan really free?',
-    a: 'Yes. Resumes you write yourself are free and unlimited, including every template, downloads, the ATS checker, version history and share links with their analytics and privacy options. Tailoring a resume to a job description is the main paid feature: Free includes one a month to try it, because each AI request costs us money to run.',
+    a: 'Yes. Resumes you write yourself are free and unlimited, including every template, downloads, the ATS checker, version history and share links with their analytics and privacy options. Tailoring a resume to a job description is the main paid feature: Free includes 5 in your first week to try it properly, then one a month, because each AI request costs us money to run.',
   },
   {
     q: 'What is the difference between Season Pass and Pro?',

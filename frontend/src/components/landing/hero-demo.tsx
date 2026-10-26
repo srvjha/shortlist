@@ -110,8 +110,8 @@ export function Hero() {
         </Button>
       </div>
       <p className="mt-4 text-base text-muted-foreground">
-        Free plan: 1 tailored resume and 50 AI edits every month. No card
-        needed.
+        Free plan: 5 tailored resumes in your first week, then 1 every month. No
+        card needed.
       </p>
       <HowItWorksVideo />
     </section>

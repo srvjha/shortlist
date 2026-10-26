@@ -197,7 +197,7 @@ const faqs = [
   },
   {
     q: 'Is it free?',
-    a: 'Yes. The Free plan includes 1 resume tailored to a job description and 50 AI edits each month, and you can make and edit as many resumes as you like by hand. The Season Pass is ₹499 for six months if you are applying a lot.',
+    a: 'Yes. The Free plan includes 5 resumes tailored to a job description in your first week, then 1 each month, plus 50 AI edits each month, and you can make and edit as many resumes as you like by hand. The Season Pass is ₹499 for six months if you are applying a lot.',
   },
   {
     q: 'Does the AI add things I haven’t done?',
