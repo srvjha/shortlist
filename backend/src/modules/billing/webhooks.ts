@@ -4,51 +4,26 @@ import { payments, subscriptions, webhookEvents } from "../../db/schema/index.js
 import { logger } from "../../lib/logger.js";
 import { recomputePlan } from "./billing.service.js";
 import { track } from "../../lib/analytics.js";
-
-type Entity = Record<string, unknown> & { id: string };
-type RazorpayEvent = {
-  event: string;
-  payload: {
-    payment?: {
-      entity: Entity & {
-        order_id?: string;
-        method?: string;
-        amount?: number;
-        amount_refunded?: number;
-        notes?: Record<string, string>;
-      };
-    };
-    subscription?: {
-      entity: Entity & { current_start?: number; current_end?: number; notes?: Record<string, string> };
-    };
-    refund?: { entity: Entity & { payment_id?: string; amount?: number } };
-  };
-};
+import type { BillingEvent, ProviderId } from "./providers/index.js";
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 const SEASON_PASS_MONTHS = 6;
-const fromUnix = (seconds?: number) => (seconds ? new Date(seconds * 1000) : null);
 
-// Razorpay retries deliveries; each event id is processed once. Recorded in the same transaction as the
+// Providers retry deliveries; each event id is processed once. Recorded in the same transaction as the
 // event's effects, so a failure rolls both back and the retry runs it again.
-async function firstDelivery(tx: Tx, eventId: string | undefined) {
+async function firstDelivery(tx: Tx, provider: ProviderId, eventId: string | undefined) {
   if (!eventId) return true;
   const inserted = await tx
     .insert(webhookEvents)
-    .values({ id: `razorpay:${eventId}` })
+    .values({ id: `${provider}:${eventId}` })
     .onConflictDoNothing()
     .returning({ id: webhookEvents.id });
   return inserted.length > 0;
 }
 
-async function onPaymentCaptured(
-  tx: Tx,
-  payment: NonNullable<RazorpayEvent["payload"]["payment"]>["entity"],
-  raw: unknown,
-) {
-  if (!payment.order_id) return null; // Subscription payments are handled by subscription.charged.
-  const [row] = await tx.select().from(payments).where(eq(payments.providerCheckoutId, payment.order_id)).limit(1);
+async function onPaid(tx: Tx, event: Extract<BillingEvent, { type: "paid" }>, raw: unknown) {
+  const [row] = await tx.select().from(payments).where(eq(payments.providerCheckoutId, event.checkoutId)).limit(1);
   if (!row || row.status === "captured") return null;
 
   await tx
@@ -56,8 +31,9 @@ async function onPaymentCaptured(
     .set({
       status: "captured",
       capturedAt: new Date(),
-      providerPaymentId: payment.id,
-      method: payment.method ?? null,
+      providerPaymentId: event.paymentId,
+      method: event.method,
+      ...(event.amount !== undefined && { amount: event.amount }),
       raw,
     })
     .where(eq(payments.id, row.id));
@@ -85,56 +61,52 @@ async function onPaymentCaptured(
       .where(eq(subscriptions.id, row.subscriptionId));
   }
   await recomputePlan(row.userId, tx);
-  return () => track(row.userId, "payment_captured", { amount_inr: row.amount / 100 });
+  const amount = event.amount ?? row.amount;
+  // Keeps the property name `amount_inr` that existing dashboards read.
+  return () => track(row.userId, "payment_captured", { [`amount_${row.currency.toLowerCase()}`]: amount / 100 });
 }
 
-async function onSubscriptionEvent(tx: Tx, event: RazorpayEvent, raw: unknown) {
-  const remote = event.payload.subscription?.entity;
-  if (!remote) return;
+async function onSubscription(
+  tx: Tx,
+  provider: ProviderId,
+  event: Extract<BillingEvent, { type: "subscription" }>,
+  raw: unknown,
+) {
   const [row] = await tx
     .select()
     .from(subscriptions)
-    .where(eq(subscriptions.providerSubscriptionId, remote.id))
+    .where(eq(subscriptions.providerSubscriptionId, event.subscriptionId))
     .limit(1);
   if (!row) {
-    logger.warn({ subscriptionId: remote.id }, "Webhook for unknown subscription");
+    logger.warn({ subscriptionId: event.subscriptionId }, "Webhook for unknown subscription");
     return;
   }
   // Ended for good (completed, or refunded and cancelled here); a late cancelled event must not revive it.
   if (row.status === "expired") return;
 
-  const status =
-    event.event === "subscription.cancelled"
-      ? ("cancelled" as const)
-      : event.event === "subscription.completed"
-        ? ("expired" as const)
-        : event.event === "subscription.halted"
-          ? ("past_due" as const)
-          : ("active" as const);
-
   await tx
     .update(subscriptions)
     .set({
-      status,
-      currentPeriodStart: fromUnix(remote.current_start) ?? row.currentPeriodStart,
-      currentPeriodEnd: fromUnix(remote.current_end) ?? row.currentPeriodEnd,
-      ...(status === "cancelled" && !row.cancelledAt && { cancelledAt: new Date() }),
+      status: event.status,
+      currentPeriodStart: event.periodStart ?? row.currentPeriodStart,
+      currentPeriodEnd: event.periodEnd ?? row.currentPeriodEnd,
+      ...(event.status === "cancelled" && !row.cancelledAt && { cancelledAt: new Date() }),
     })
     .where(eq(subscriptions.id, row.id));
 
-  const payment = event.payload.payment?.entity;
-  if (event.event === "subscription.charged" && payment) {
+  if (event.charge) {
     await tx
       .insert(payments)
       .values({
         userId: row.userId,
         subscriptionId: row.id,
-        providerCheckoutId: payment.order_id ?? remote.id,
-        providerPaymentId: payment.id,
-        amount: payment.amount ?? 0,
+        provider,
+        providerCheckoutId: event.charge.checkoutId,
+        providerPaymentId: event.charge.paymentId,
+        amount: event.charge.amount,
         status: "captured",
         capturedAt: new Date(),
-        method: payment.method ?? null,
+        method: event.charge.method,
         raw,
       })
       .onConflictDoNothing({ target: payments.providerPaymentId });
@@ -144,14 +116,10 @@ async function onSubscriptionEvent(tx: Tx, event: RazorpayEvent, raw: unknown) {
 
 // A full refund ends the Season Pass it paid for straight away; a partial one (a goodwill credit) changes nothing.
 // Self-serve refunds (requestRefund) are partial and end the plan themselves, so this is a no-op for them.
-// Pro is left alone: it renews through Razorpay, so a refunded Pro month is cancelled there and that event ends it.
-async function onRefund(tx: Tx, event: RazorpayEvent) {
-  const refund = event.payload.refund?.entity;
-  if (!refund?.payment_id) return;
-  const [row] = await tx.select().from(payments).where(eq(payments.providerPaymentId, refund.payment_id)).limit(1);
-  // Several partial refunds can add up to the full amount, which the payment's running total shows.
-  const refunded = event.payload.payment?.entity.amount_refunded ?? refund.amount ?? 0;
-  if (!row || refunded < row.amount) return;
+// A recurring Pro is left alone: it is cancelled at the provider for a refund, and that event ends it.
+async function onRefund(tx: Tx, event: Extract<BillingEvent, { type: "refunded" }>) {
+  const [row] = await tx.select().from(payments).where(eq(payments.providerPaymentId, event.paymentId)).limit(1);
+  if (!row || event.refunded < row.amount) return;
 
   await tx.update(payments).set({ status: "refunded" }).where(eq(payments.id, row.id));
   if (!row.subscriptionId) return;
@@ -164,45 +132,42 @@ async function onRefund(tx: Tx, event: RazorpayEvent) {
   await recomputePlan(row.userId, tx);
 }
 
-export async function handleRazorpayEvent(event: RazorpayEvent, eventId: string | undefined) {
-  // Analytics run only after the transaction commits, so a rolled-back event is never counted.
-  const afterCommit = await db.transaction(async (tx) => {
-    if (!(await firstDelivery(tx, eventId))) return null;
-    return applyEvent(tx, event);
-  });
-  afterCommit?.();
-}
-
-async function applyEvent(tx: Tx, event: RazorpayEvent) {
-  switch (event.event) {
-    case "payment.captured":
-      return event.payload.payment ? onPaymentCaptured(tx, event.payload.payment.entity, event) : null;
-    case "payment.failed":
-      if (event.payload.payment?.entity.order_id) {
-        await tx
-          .update(payments)
-          .set({ status: "failed", raw: event })
-          // Retries share an order, and Razorpay may deliver an earlier failure after the capture.
-          .where(
-            and(
-              eq(payments.providerCheckoutId, event.payload.payment.entity.order_id),
-              ne(payments.status, "captured"),
-            ),
-          );
-      }
+async function apply(tx: Tx, provider: ProviderId, event: BillingEvent, raw: unknown) {
+  switch (event.type) {
+    case "paid":
+      return onPaid(tx, event, raw);
+    case "failed":
+      await tx
+        .update(payments)
+        .set({ status: "failed", raw })
+        // Retries share a checkout, and the provider may deliver an earlier failure after the capture.
+        .where(and(eq(payments.providerCheckoutId, event.checkoutId), ne(payments.status, "captured")));
       return null;
-    case "refund.processed":
+    case "refunded":
       await onRefund(tx, event);
       return null;
-    case "subscription.activated":
-    case "subscription.charged":
-    case "subscription.cancelled":
-    case "subscription.completed":
-    case "subscription.halted":
-      await onSubscriptionEvent(tx, event, event);
-      return null;
-    default:
-      logger.info({ event: event.event }, "Ignored Razorpay event");
+    case "subscription":
+      await onSubscription(tx, provider, event, raw);
       return null;
   }
+}
+
+export async function handleEvents(
+  provider: ProviderId,
+  eventId: string | undefined,
+  events: BillingEvent[],
+  raw: unknown,
+) {
+  if (events.length === 0) {
+    logger.info({ provider, eventId }, "Ignored payment webhook");
+    return;
+  }
+  // Analytics run only after the transaction commits, so a rolled-back event is never counted.
+  const afterCommit = await db.transaction(async (tx) => {
+    if (!(await firstDelivery(tx, provider, eventId))) return [];
+    const done = [];
+    for (const event of events) done.push(await apply(tx, provider, event, raw));
+    return done;
+  });
+  for (const run of afterCommit) run?.();
 }

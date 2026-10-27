@@ -13,7 +13,7 @@ import {
 } from "../../db/schema/index.js";
 import { ConflictError, NotFoundError } from "../../lib/errors.js";
 import { logger } from "../../lib/logger.js";
-import { razorpay } from "../../lib/razorpay.js";
+import { providerOf } from "../billing/providers/index.js";
 import { storage } from "../../lib/storage.js";
 import { isReservedUsername, isUsernameTaken, usernameCooldownEnd } from "./usernames.js";
 
@@ -82,13 +82,13 @@ export async function updateMe(userId: string, changes: { name?: string | undefi
 // Deletes the account, the user's files and, through foreign key cascades, every row they own.
 export async function deleteMe(userId: string) {
   const activePro = await db
-    .select({ remoteId: subscriptions.providerSubscriptionId })
+    .select({ provider: subscriptions.provider, remoteId: subscriptions.providerSubscriptionId })
     .from(subscriptions)
     .where(and(eq(subscriptions.userId, userId), eq(subscriptions.plan, "pro"), eq(subscriptions.status, "active")));
-  for (const { remoteId } of activePro) {
-    if (!remoteId) continue;
+  for (const { provider, remoteId } of activePro) {
+    if (!provider || !remoteId) continue;
     // Stop future charges; a failure here must not block deletion.
-    await razorpay("POST", `/subscriptions/${remoteId}/cancel`, { cancel_at_cycle_end: 0 }).catch((err) =>
+    await Promise.resolve(providerOf(provider).cancel(remoteId, false)).catch((err) =>
       logger.error({ err, remoteId }, "Could not cancel subscription during account deletion"),
     );
   }

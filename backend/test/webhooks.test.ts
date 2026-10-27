@@ -39,7 +39,11 @@ vi.mock("../src/db/index.js", () => {
 });
 vi.mock("../src/lib/analytics.js", () => ({ track: vi.fn() }));
 
-import { handleRazorpayEvent } from "../src/modules/billing/webhooks.js";
+import { razorpayEvents } from "../src/modules/billing/providers/razorpay.js";
+import { handleEvents } from "../src/modules/billing/webhooks.js";
+
+const handleRazorpayEvent = (event: typeof failed, eventId: string) =>
+  handleEvents("razorpay", eventId, razorpayEvents(event), event);
 
 const failed = {
   event: "payment.failed",
@@ -64,5 +68,37 @@ describe("Razorpay webhooks", () => {
     await expect(handleRazorpayEvent(failed, "evt_2")).rejects.toThrow("database down");
     expect(state.calls).toEqual(["tx.insert", "tx.update"]);
     expect(state.committed).toBe(false);
+  });
+});
+
+describe("Razorpay events", () => {
+  it("translates a monthly charge into a subscription update with its payment", () => {
+    const [event] = razorpayEvents({
+      event: "subscription.charged",
+      payload: {
+        subscription: { entity: { id: "sub_1", current_start: 1_800_000_000, current_end: 1_802_592_000 } },
+        payment: { entity: { id: "pay_2", order_id: "order_2", amount: 12_900, method: "upi" } },
+      },
+    });
+    expect(event).toEqual({
+      type: "subscription",
+      subscriptionId: "sub_1",
+      status: "active",
+      periodStart: new Date(1_800_000_000_000),
+      periodEnd: new Date(1_802_592_000_000),
+      charge: { paymentId: "pay_2", checkoutId: "order_2", amount: 12_900, method: "upi" },
+    });
+  });
+
+  it("uses the payment's running refund total, so partial refunds add up", () => {
+    expect(
+      razorpayEvents({
+        event: "refund.processed",
+        payload: {
+          refund: { entity: { id: "rfnd_2", payment_id: "pay_1", amount: 100 } },
+          payment: { entity: { id: "pay_1", amount_refunded: 49_900 } },
+        },
+      }),
+    ).toEqual([{ type: "refunded", paymentId: "pay_1", refunded: 49_900 }]);
   });
 });

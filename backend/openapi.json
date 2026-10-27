@@ -21037,54 +21037,102 @@
                   "type": "object",
                   "properties": {
                     "data": {
-                      "type": "object",
-                      "properties": {
-                        "provider": {
-                          "type": "string",
-                          "const": "razorpay"
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "plan": {
+                              "type": "string",
+                              "enum": [
+                                "season_pass",
+                                "pro"
+                              ]
+                            },
+                            "amount": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "currency": {
+                              "type": "string",
+                              "enum": [
+                                "INR",
+                                "USD"
+                              ]
+                            },
+                            "provider": {
+                              "type": "string",
+                              "const": "razorpay"
+                            },
+                            "keyId": {
+                              "type": "string"
+                            },
+                            "orderId": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "razorpaySubscriptionId": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "plan",
+                            "amount",
+                            "currency",
+                            "provider",
+                            "keyId",
+                            "orderId",
+                            "razorpaySubscriptionId"
+                          ],
+                          "additionalProperties": false
                         },
-                        "keyId": {
-                          "type": "string"
-                        },
-                        "plan": {
-                          "type": "string",
-                          "enum": [
-                            "season_pass",
-                            "pro"
-                          ]
-                        },
-                        "orderId": {
-                          "type": [
-                            "string",
-                            "null"
-                          ]
-                        },
-                        "razorpaySubscriptionId": {
-                          "type": [
-                            "string",
-                            "null"
-                          ]
-                        },
-                        "amountPaise": {
-                          "type": "integer",
-                          "minimum": -9007199254740991,
-                          "maximum": 9007199254740991
-                        },
-                        "currency": {
-                          "type": "string",
-                          "const": "INR"
+                        {
+                          "type": "object",
+                          "properties": {
+                            "plan": {
+                              "type": "string",
+                              "enum": [
+                                "season_pass",
+                                "pro"
+                              ]
+                            },
+                            "amount": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "currency": {
+                              "type": "string",
+                              "enum": [
+                                "INR",
+                                "USD"
+                              ]
+                            },
+                            "provider": {
+                              "type": "string",
+                              "const": "polar"
+                            },
+                            "url": {
+                              "type": "string",
+                              "format": "uri"
+                            }
+                          },
+                          "required": [
+                            "plan",
+                            "amount",
+                            "currency",
+                            "provider",
+                            "url"
+                          ],
+                          "additionalProperties": false
                         }
-                      },
-                      "required": [
-                        "provider",
-                        "keyId",
-                        "plan",
-                        "orderId",
-                        "razorpaySubscriptionId",
-                        "amountPaise",
-                        "currency"
                       ],
-                      "additionalProperties": false
+                      "type": "object"
                     }
                   },
                   "required": [

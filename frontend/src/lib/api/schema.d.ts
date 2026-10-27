@@ -6567,16 +6567,26 @@ export interface paths {
                     content: {
                         "application/json": {
                             data: {
+                                /** @enum {string} */
+                                plan: "season_pass" | "pro";
+                                amount: number;
+                                /** @enum {string} */
+                                currency: "INR" | "USD";
                                 /** @constant */
                                 provider: "razorpay";
                                 keyId: string;
-                                /** @enum {string} */
-                                plan: "season_pass" | "pro";
                                 orderId: string | null;
                                 razorpaySubscriptionId: string | null;
-                                amountPaise: number;
+                            } | {
+                                /** @enum {string} */
+                                plan: "season_pass" | "pro";
+                                amount: number;
+                                /** @enum {string} */
+                                currency: "INR" | "USD";
                                 /** @constant */
-                                currency: "INR";
+                                provider: "polar";
+                                /** Format: uri */
+                                url: string;
                             };
                         };
                     };

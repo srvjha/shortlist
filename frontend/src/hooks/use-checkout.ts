@@ -25,6 +25,11 @@ export function useCheckout({ enabled = true }: { enabled?: boolean } = {}) {
       const session = await unwrap(
         api.POST('/v1/checkouts', { body: { plan } }),
       )
+      // Polar takes the payment on its own page, then sends the buyer back to /billing.
+      if (session.provider === 'polar') {
+        window.location.assign(session.url)
+        return
+      }
       let failed = false
       const tryAgain = {
         label: 'Try again',

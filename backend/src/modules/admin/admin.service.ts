@@ -129,10 +129,9 @@ export async function getOverview(days: number, timeZone: string) {
       .from(aiRuns),
     db
       .select({
-        paise:
-          sql<number>`coalesce(sum(${payments.amount}) filter (where ${current(payments.updatedAt)}), 0)`.mapWith(
-            Number,
-          ),
+        paise: sql<number>`coalesce(sum(${payments.amount}) filter (where ${current(payments.updatedAt)}), 0)`.mapWith(
+          Number,
+        ),
         previousPaise:
           sql<number>`coalesce(sum(${payments.amount}) filter (where ${previous(payments.updatedAt)}), 0)`.mapWith(
             Number,

@@ -13,7 +13,8 @@ import {
   subscriptionResponse,
 } from "./billing.schemas.js";
 import * as service from "./billing.service.js";
-import { handleRazorpayEvent } from "./webhooks.js";
+import { razorpayEvents } from "./providers/razorpay.js";
+import { handleEvents } from "./webhooks.js";
 
 export const billingRouter = Router();
 
@@ -56,7 +57,8 @@ razorpayWebhookRouter.post(
     if (!Buffer.isBuffer(body) || !verifyWebhookSignature(body, req.get("x-razorpay-signature"))) {
       throw new AppError(400, "INVALID_SIGNATURE", "Webhook signature verification failed");
     }
-    await handleRazorpayEvent(JSON.parse(body.toString("utf8")), req.get("x-razorpay-event-id"));
+    const event = JSON.parse(body.toString("utf8"));
+    await handleEvents("razorpay", req.get("x-razorpay-event-id"), razorpayEvents(event), event);
     res.status(200).json({ data: { received: true } });
   },
 );

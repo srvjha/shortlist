@@ -2,16 +2,25 @@ import { z } from "zod";
 
 export const createCheckoutBody = z.object({ plan: z.enum(["season_pass", "pro"]) });
 
-export const checkoutResponse = z.object({
-  provider: z.literal("razorpay"),
-  keyId: z.string(),
+const checkoutBase = {
   plan: z.enum(["season_pass", "pro"]),
-  // Season Pass is a one-time order; Pro is a recurring subscription.
-  orderId: z.string().nullable(),
-  razorpaySubscriptionId: z.string().nullable(),
-  amountPaise: z.number().int(),
-  currency: z.literal("INR"),
-});
+  // In the currency's minor unit (paise, cents).
+  amount: z.number().int(),
+  currency: z.enum(["INR", "USD"]),
+};
+
+// Razorpay opens its modal on the page; Polar sends the buyer to its own checkout page.
+export const checkoutResponse = z.discriminatedUnion("provider", [
+  z.object({
+    ...checkoutBase,
+    provider: z.literal("razorpay"),
+    keyId: z.string(),
+    // Season Pass is a one-time order; Pro is a recurring subscription.
+    orderId: z.string().nullable(),
+    razorpaySubscriptionId: z.string().nullable(),
+  }),
+  z.object({ ...checkoutBase, provider: z.literal("polar"), url: z.url() }),
+]);
 
 export const subscriptionResponse = z.object({
   plan: z.enum(["free", "season_pass", "pro"]),
