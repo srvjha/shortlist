@@ -5,7 +5,7 @@ import { toNodeHandler } from "better-auth/node";
 import { pinoHttp } from "pino-http";
 import { env } from "./config/env.js";
 import { auth } from "./lib/auth.js";
-import { razorpayWebhookRouter } from "./modules/billing/billing.routes.js";
+import { paymentWebhookRouter } from "./modules/billing/billing.routes.js";
 import { logger } from "./lib/logger.js";
 import { errorHandler } from "./middleware/error-handler.js";
 import { notFound } from "./middleware/not-found.js";
@@ -31,7 +31,7 @@ app.use(requestMetrics);
 // Better Auth reads the raw request body, so it is mounted before express.json().
 app.all("/api/auth/*splat", toNodeHandler(auth));
 
-app.use(razorpayWebhookRouter);
+app.use(paymentWebhookRouter);
 app.use(express.json({ limit: "1mb" }));
 
 // The API is not a website: keep every response (shared PDFs included) out of search results.

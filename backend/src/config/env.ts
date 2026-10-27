@@ -91,6 +91,13 @@ const envSchema = z.object({
   RAZORPAY_TEST_KEY_SECRET: optionalString,
   RAZORPAY_TEST_WEBHOOK_SECRET: optionalString,
   RAZORPAY_TEST_PRO_PLAN_ID: optionalString,
+  // Polar takes payments from outside India. Sandbox and production have separate tokens, products and webhooks.
+  POLAR_SERVER: z.preprocess(emptyAsUnset, z.enum(["sandbox", "production"]).default("production")),
+  POLAR_ACCESS_TOKEN: optionalString,
+  POLAR_WEBHOOK_SECRET: optionalString,
+  // One-time products in Polar, each with a USD price.
+  POLAR_SEASON_PASS_PRODUCT_ID: optionalString,
+  POLAR_PRO_PRODUCT_ID: optionalString,
 });
 
 const parsed = envSchema

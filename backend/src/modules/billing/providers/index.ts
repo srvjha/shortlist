@@ -1,4 +1,4 @@
-import { AppError } from "../../../lib/errors.js";
+import { polarProvider } from "./polar.js";
 import { razorpayProvider } from "./razorpay.js";
 
 export type PaidPlan = "season_pass" | "pro";
@@ -48,13 +48,9 @@ export type PaymentProvider = {
 
 export type Currency = "INR" | "USD";
 
-const providers: Partial<Record<ProviderId, PaymentProvider>> = { razorpay: razorpayProvider };
+const providers: Record<ProviderId, PaymentProvider> = { razorpay: razorpayProvider, polar: polarProvider };
 
-export function providerOf(id: ProviderId) {
-  const provider = providers[id];
-  if (!provider) throw new AppError(503, "PAYMENTS_NOT_CONFIGURED", "Payments are not configured");
-  return provider;
-}
+export const providerOf = (id: ProviderId) => providers[id];
 
 // Prices in the currency's minor unit.
 const regions = {

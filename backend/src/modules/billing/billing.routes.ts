@@ -13,6 +13,7 @@ import {
   subscriptionResponse,
 } from "./billing.schemas.js";
 import * as service from "./billing.service.js";
+import { polarEvents, readPolarWebhook } from "./providers/polar.js";
 import { razorpayEvents } from "./providers/razorpay.js";
 import { handleEvents } from "./webhooks.js";
 
@@ -47,9 +48,9 @@ billingRouter.post(
 );
 
 // Mounted before express.json() in app.ts: the signature is computed over the raw body.
-export const razorpayWebhookRouter = Router();
+export const paymentWebhookRouter = Router();
 
-razorpayWebhookRouter.post(
+paymentWebhookRouter.post(
   "/v1/webhooks/razorpay",
   express.raw({ type: "application/json", limit: "1mb" }),
   async (req, res) => {
@@ -59,6 +60,18 @@ razorpayWebhookRouter.post(
     }
     const event = JSON.parse(body.toString("utf8"));
     await handleEvents("razorpay", req.get("x-razorpay-event-id"), razorpayEvents(event), event);
+    res.status(200).json({ data: { received: true } });
+  },
+);
+
+paymentWebhookRouter.post(
+  "/v1/webhooks/polar",
+  express.raw({ type: "application/json", limit: "1mb" }),
+  async (req, res) => {
+    const body = req.body as Buffer;
+    const event = Buffer.isBuffer(body) ? await readPolarWebhook(body, req.headers as Record<string, string>) : null;
+    if (!event) throw new AppError(400, "INVALID_SIGNATURE", "Webhook signature verification failed");
+    if (event.type !== "unknown") await handleEvents("polar", req.get("webhook-id"), polarEvents(event), event);
     res.status(200).json({ data: { received: true } });
   },
 );
