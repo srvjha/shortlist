@@ -24,7 +24,7 @@ const TRIAL_TAILORS = 5;
 
 const stepsFor: Record<QuotaKind, (typeof aiRuns.$inferSelect)["step"][]> = {
   tailor: ["rewrite"],
-  edit: ["chat_edit", "inline_edit", "fix_compile"],
+  edit: ["chat_edit", "inline_edit", "fix_compile", "project_link"],
   import: ["import"],
   draft: ["draft"],
   job: ["jd_parse"],

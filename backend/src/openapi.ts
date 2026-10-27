@@ -42,7 +42,13 @@ import {
   promoCodeParams,
   updatePromoCodeBody,
 } from "./modules/promo-codes/promo-codes.schemas.js";
-import { createDraftBody, createImportBody, importResponse } from "./modules/imports/imports.schemas.js";
+import {
+  createDraftBody,
+  createImportBody,
+  createProjectDraftBody,
+  importResponse,
+  projectDraftResponse,
+} from "./modules/imports/imports.schemas.js";
 import { usageResponse } from "./modules/usage/usage.routes.js";
 import {
   aiKeyListResponse,
@@ -389,6 +395,15 @@ const paths: ZodOpenApiPathsObject = {
       tag: "Import",
       body: createDraftBody,
       response: importResponse,
+      status: 201,
+    }),
+  },
+  "/v1/project-drafts": {
+    post: op({
+      summary: "Write a projects entry from a GitHub repo, a web page or pasted text with AI",
+      tag: "Import",
+      body: createProjectDraftBody,
+      response: projectDraftResponse,
       status: 201,
     }),
   },
