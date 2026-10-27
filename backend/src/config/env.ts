@@ -91,6 +91,8 @@ const envSchema = z.object({
   RAZORPAY_TEST_KEY_SECRET: optionalString,
   RAZORPAY_TEST_WEBHOOK_SECRET: optionalString,
   RAZORPAY_TEST_PRO_PLAN_ID: optionalString,
+  // Who takes payments in India. Moving India to Polar needs INR prices on the Polar products.
+  PAYMENTS_INDIA: z.preprocess(emptyAsUnset, z.enum(["razorpay", "polar"]).default("razorpay")),
   // Polar takes payments from outside India. Sandbox and production have separate tokens, products and webhooks.
   POLAR_SERVER: z.preprocess(emptyAsUnset, z.enum(["sandbox", "production"]).default("production")),
   POLAR_ACCESS_TOKEN: optionalString,

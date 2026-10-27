@@ -1,13 +1,16 @@
 import express, { Router } from "express";
 import { AppError } from "../../lib/errors.js";
+import { countryOf } from "../../lib/geo.js";
 import { sendData } from "../../lib/http.js";
 import { verifyWebhookSignature } from "../../lib/razorpay.js";
 import { currentUser, requireAuth } from "../../middleware/require-auth.js";
+import { clientIp, publicLimiter } from "../../middleware/rate-limit.js";
 import { validated } from "../../middleware/validate.js";
 import {
   checkoutResponse,
   createCheckoutBody,
   createRefundBody,
+  pricingResponse,
   refundQuoteResponse,
   refundResponse,
   subscriptionResponse,
@@ -19,11 +22,17 @@ import { handleEvents } from "./webhooks.js";
 
 export const billingRouter = Router();
 
+// Public: the prices for the visitor's country. Pages rendered on the frontend's server pass the visitor's IP.
+billingRouter.get("/pricing", publicLimiter, async (req, res) => {
+  sendData(res, pricingResponse, service.pricingFor(await countryOf(clientIp(req))));
+});
+
 billingRouter.post(
   "/checkouts",
   requireAuth,
   ...validated({ body: createCheckoutBody }, async (req, res) => {
-    sendData(res, checkoutResponse, await service.createCheckout(currentUser(req).id, req.body.plan), 201);
+    const country = await countryOf(clientIp(req));
+    sendData(res, checkoutResponse, await service.createCheckout(currentUser(req).id, req.body.plan, country), 201);
   }),
 );
 

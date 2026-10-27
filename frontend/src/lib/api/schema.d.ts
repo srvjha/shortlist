@@ -6533,6 +6533,63 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/pricing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Prices for the visitor's country */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                /** @enum {string} */
+                                region: "india" | "global";
+                                country: string | null;
+                                /** @enum {string} */
+                                provider: "razorpay" | "polar";
+                                /** @enum {string} */
+                                currency: "INR" | "USD";
+                                season_pass: number;
+                                pro: number;
+                            };
+                        };
+                    };
+                };
+                /** @description Error */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/checkouts": {
         parameters: {
             query?: never;
@@ -6542,7 +6599,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Start a Razorpay checkout */
+        /** Start a checkout with the payment provider for the visitor's country */
         post: {
             parameters: {
                 query?: never;
@@ -6779,7 +6836,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Refund a payment made in the last 6 hours, less Razorpay's fee, and end its plan */
+        /** Refund a payment made in the last 6 hours, less the payment provider's fee, and end its plan */
         post: {
             parameters: {
                 query?: never;

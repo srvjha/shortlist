@@ -49,6 +49,11 @@ export async function assertNotGuest(userId: string, executor: Pick<typeof db, "
     throw new ForbiddenError("Create an account first, so your plan isn't deleted with this guest account");
 }
 
+export function pricingFor(country: string | null) {
+  const { provider, ...route } = routeFor(country);
+  return { ...route, provider: provider.id };
+}
+
 export async function createCheckout(userId: string, plan: PaidPlan, country: string | null = null) {
   await assertNotGuest(userId);
   const route = routeFor(country);

@@ -1,3 +1,4 @@
+import { env } from "../../../config/env.js";
 import { polarProvider } from "./polar.js";
 import { razorpayProvider } from "./razorpay.js";
 
@@ -52,12 +53,18 @@ const providers: Record<ProviderId, PaymentProvider> = { razorpay: razorpayProvi
 
 export const providerOf = (id: ProviderId) => providers[id];
 
-// Prices in the currency's minor unit.
-const regions = {
+// Prices in the currency's minor unit. Polar's products must carry the same prices: Polar charges what the product
+// says, so keep these in step with the Polar dashboard.
+export const regions = {
   india: { currency: "INR", season_pass: 49_900, pro: 12_900 },
+  global: { currency: "USD", season_pass: 900, pro: 400 },
 } as const;
 
-// Which provider takes a payment from this visitor, and at what price.
-export function routeFor(_country: string | null) {
-  return { region: "india" as const, provider: providerOf("razorpay"), ...regions.india };
+// Which provider takes a payment from this visitor, and at what price. India and any country the IP lookup can't
+// tell pay in rupees (guessing wrong must never overcharge someone in India); everyone else pays in dollars through
+// Polar, once Polar is set up.
+export function routeFor(country: string | null) {
+  const region = country && country !== "IN" && polarProvider.configured() ? "global" : "india";
+  const provider = providerOf(region === "global" ? "polar" : env.PAYMENTS_INDIA);
+  return { region, country, provider, ...regions[region] } as const;
 }

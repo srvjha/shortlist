@@ -20996,9 +20996,96 @@
         }
       }
     },
+    "/v1/pricing": {
+      "get": {
+        "summary": "Prices for the visitor's country",
+        "tags": [
+          "Billing"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "region": {
+                          "type": "string",
+                          "enum": [
+                            "india",
+                            "global"
+                          ]
+                        },
+                        "country": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "provider": {
+                          "type": "string",
+                          "enum": [
+                            "razorpay",
+                            "polar"
+                          ]
+                        },
+                        "currency": {
+                          "type": "string",
+                          "enum": [
+                            "INR",
+                            "USD"
+                          ]
+                        },
+                        "season_pass": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "pro": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "required": [
+                        "region",
+                        "country",
+                        "provider",
+                        "currency",
+                        "season_pass",
+                        "pro"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/checkouts": {
       "post": {
-        "summary": "Start a Razorpay checkout",
+        "summary": "Start a checkout with the payment provider for the visitor's country",
         "tags": [
           "Billing"
         ],
@@ -21497,7 +21584,7 @@
     },
     "/v1/refunds": {
       "post": {
-        "summary": "Refund a payment made in the last 6 hours, less Razorpay's fee, and end its plan",
+        "summary": "Refund a payment made in the last 6 hours, less the payment provider's fee, and end its plan",
         "tags": [
           "Billing"
         ],

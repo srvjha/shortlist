@@ -2,6 +2,17 @@ import { z } from "zod";
 
 export const createCheckoutBody = z.object({ plan: z.enum(["season_pass", "pro"]) });
 
+// The prices for the visitor's country, in the currency's minor unit. With Razorpay, Pro renews monthly; with Polar,
+// both plans are one payment.
+export const pricingResponse = z.object({
+  region: z.enum(["india", "global"]),
+  country: z.string().nullable(),
+  provider: z.enum(["razorpay", "polar"]),
+  currency: z.enum(["INR", "USD"]),
+  season_pass: z.number().int(),
+  pro: z.number().int(),
+});
+
 const checkoutBase = {
   plan: z.enum(["season_pass", "pro"]),
   // In the currency's minor unit (paise, cents).

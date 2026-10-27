@@ -29,6 +29,7 @@ import {
   checkoutResponse,
   createCheckoutBody,
   createRefundBody,
+  pricingResponse,
   refundQuoteResponse,
   refundResponse,
   subscriptionResponse,
@@ -537,9 +538,17 @@ const paths: ZodOpenApiPathsObject = {
     }),
   },
 
+  "/v1/pricing": {
+    get: op({
+      summary: "Prices for the visitor's country",
+      tag: "Billing",
+      auth: false,
+      response: pricingResponse,
+    }),
+  },
   "/v1/checkouts": {
     post: op({
-      summary: "Start a Razorpay checkout",
+      summary: "Start a checkout with the payment provider for the visitor's country",
       tag: "Billing",
       body: createCheckoutBody,
       response: checkoutResponse,
@@ -563,7 +572,7 @@ const paths: ZodOpenApiPathsObject = {
   },
   "/v1/refunds": {
     post: op({
-      summary: "Refund a payment made in the last 6 hours, less Razorpay's fee, and end its plan",
+      summary: "Refund a payment made in the last 6 hours, less the payment provider's fee, and end its plan",
       tag: "Billing",
       body: createRefundBody,
       response: refundResponse,
