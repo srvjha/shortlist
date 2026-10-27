@@ -115,6 +115,8 @@ export async function getSubscription(userId: string) {
       status: subscriptions.status,
       currentPeriodEnd: subscriptions.currentPeriodEnd,
       cancelledAt: subscriptions.cancelledAt,
+      // Only a plan billed by a provider subscription renews; passes, Polar's Pro month and given plans run out.
+      renews: sql<boolean>`${subscriptions.providerSubscriptionId} is not null`,
     })
     .from(subscriptions)
     .where(and(eq(subscriptions.userId, userId), inArray(subscriptions.status, ["active", "cancelled", "past_due"])))

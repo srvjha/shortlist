@@ -1,11 +1,11 @@
 // Shared by the pricing page and the landing page.
-// Keep these numbers in step with planLimits in backend/src/modules/usage/quotas.ts.
+// Keep these numbers in step with planLimits in backend/src/modules/usage/quotas.ts. Paid plan prices depend on the
+// visitor's country and come from the API (see lib/pricing.ts).
 export const plans = [
   {
     id: 'free',
     name: 'Free',
     forWhom: 'Try the AI on your resume before you pay anything.',
-    price: '₹0',
     period: null,
     note: 'Free, forever. No card needed.',
     cta: 'Start free',
@@ -23,9 +23,7 @@ export const plans = [
     id: 'season_pass',
     name: 'Season Pass',
     forWhom: 'For a busy job search, when you apply to new roles every week.',
-    price: '₹499',
     period: '/ 6 months',
-    note: 'One payment, about ₹83 a month.',
     cta: 'Get the Season Pass',
     featured: true,
     badge: 'Best value',
@@ -43,9 +41,7 @@ export const plans = [
     id: 'pro',
     name: 'Pro',
     forWhom: 'For a longer job search, paid month by month.',
-    price: '₹129',
     period: '/ month',
-    note: 'Billed monthly. Cancel anytime.',
     cta: 'Choose Pro',
     listTitle: 'Everything in Free, plus:',
     features: [

@@ -42,6 +42,7 @@ export const subscriptionResponse = z.object({
       status: z.enum(["created", "active", "past_due", "cancelled", "expired"]),
       currentPeriodEnd: z.date().nullable(),
       cancelledAt: z.date().nullable(),
+      renews: z.boolean(),
     })
     .nullable(),
 });

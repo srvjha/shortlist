@@ -21311,6 +21311,9 @@
                                     "string",
                                     "null"
                                   ]
+                                },
+                                "renews": {
+                                  "type": "boolean"
                                 }
                               },
                               "required": [
@@ -21318,7 +21321,8 @@
                                 "plan",
                                 "status",
                                 "currentPeriodEnd",
-                                "cancelledAt"
+                                "cancelledAt",
+                                "renews"
                               ],
                               "additionalProperties": false
                             },
@@ -21422,6 +21426,9 @@
                                     "string",
                                     "null"
                                   ]
+                                },
+                                "renews": {
+                                  "type": "boolean"
                                 }
                               },
                               "required": [
@@ -21429,7 +21436,8 @@
                                 "plan",
                                 "status",
                                 "currentPeriodEnd",
-                                "cancelledAt"
+                                "cancelledAt",
+                                "renews"
                               ],
                               "additionalProperties": false
                             },
@@ -21777,6 +21785,9 @@
                                     "string",
                                     "null"
                                   ]
+                                },
+                                "renews": {
+                                  "type": "boolean"
                                 }
                               },
                               "required": [
@@ -21784,7 +21795,8 @@
                                 "plan",
                                 "status",
                                 "currentPeriodEnd",
-                                "cancelledAt"
+                                "cancelledAt",
+                                "renews"
                               ],
                               "additionalProperties": false
                             },

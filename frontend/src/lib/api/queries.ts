@@ -18,6 +18,7 @@ export const queryKeys = {
   jobs: ['jobs'] as const,
   job: (id: string) => ['job', id] as const,
   subscription: ['subscription'] as const,
+  pricing: ['pricing'] as const,
   refundQuote: ['subscription', 'refund-quote'] as const,
   analytics: (days: number) => ['analytics', days] as const,
   admin: ['admin'] as const,
@@ -161,6 +162,13 @@ export const suggestionsQuery = (resumeId: string) =>
 export const subscriptionQuery = queryOptions({
   queryKey: queryKeys.subscription,
   queryFn: () => unwrap(api.GET('/v1/subscription')),
+})
+
+// Prices for the visitor's country, read from their IP. They don't change within a visit.
+export const pricingQuery = queryOptions({
+  queryKey: queryKeys.pricing,
+  queryFn: () => unwrap(api.GET('/v1/pricing')),
+  staleTime: Infinity,
 })
 
 export const refundQuoteQuery = queryOptions({

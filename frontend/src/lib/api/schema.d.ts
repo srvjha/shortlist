@@ -6701,6 +6701,7 @@ export interface paths {
                                     status: "created" | "active" | "past_due" | "cancelled" | "expired";
                                     currentPeriodEnd: string | null;
                                     cancelledAt: string | null;
+                                    renews: boolean;
                                 } | null;
                             };
                         };
@@ -6748,6 +6749,7 @@ export interface paths {
                                     status: "created" | "active" | "past_due" | "cancelled" | "expired";
                                     currentPeriodEnd: string | null;
                                     cancelledAt: string | null;
+                                    renews: boolean;
                                 } | null;
                             };
                         };
@@ -6936,6 +6938,7 @@ export interface paths {
                                     status: "created" | "active" | "past_due" | "cancelled" | "expired";
                                     currentPeriodEnd: string | null;
                                     cancelledAt: string | null;
+                                    renews: boolean;
                                 } | null;
                             };
                         };

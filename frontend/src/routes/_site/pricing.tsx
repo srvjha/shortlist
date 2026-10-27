@@ -11,7 +11,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import type { Pricing } from '@/lib/api/types'
 import { plans } from '@/lib/plans'
+import { priceOf, usePricing } from '@/lib/pricing'
+import { fetchPricing } from '@/lib/public-api'
 import { site } from '@/lib/site'
 import { cn } from '@/lib/utils'
 
@@ -76,11 +79,18 @@ const comparison: { label: string; values: [string, string, string] }[] = [
     label: 'Contact details unlocked with a password',
     values: ['Not included', 'Included', 'Included'],
   },
-  {
-    label: 'Price',
-    values: ['Free', '₹499 once, for 6 months', '₹129 a month'],
-  },
 ]
+
+function priceRow(pricing: Pricing): (typeof comparison)[number] {
+  return {
+    label: 'Price',
+    values: [
+      'Free',
+      `${priceOf('season_pass', pricing)} once, for 6 months`,
+      `${priceOf('pro', pricing)} ${pricing.provider === 'razorpay' ? 'a month' : 'for a month, paid once'}`,
+    ],
+  }
+}
 
 const faqs = [
   {
@@ -89,7 +99,7 @@ const faqs = [
   },
   {
     q: 'What is the difference between Season Pass and Pro?',
-    a: 'Both unlock the paid features. Season Pass is one payment of ₹499 for 6 months with 40 tailored resumes a month, best for a busy job search. Pro is ₹129 a month with 60 tailored resumes a month, cancel anytime, best if you apply a lot or want to pay monthly.',
+    a: 'Both unlock the paid features. Season Pass is one payment for 6 months with 40 tailored resumes a month, best for a busy job search. Pro is paid month by month with 60 tailored resumes a month, best if you apply a lot or want to pay monthly.',
   },
   {
     q: 'What counts as a resume tailored with AI?',
@@ -105,7 +115,7 @@ const faqs = [
   },
   {
     q: 'Can I cancel Pro?',
-    a: 'Yes, from Settings. You keep Pro until the end of the month you have paid for.',
+    a: 'Yes, from Settings. You keep Pro until the end of the month you have paid for. Outside India, Pro is one payment for a month and never renews, so there is nothing to cancel.',
   },
   {
     q: 'Can I get a refund?',
@@ -164,10 +174,12 @@ export const Route = createFileRoute('/_site/pricing')({
       },
     ],
   }),
+  loader: () => fetchPricing(),
   component: PricingPage,
 })
 
 function PricingPage() {
+  const pricing = usePricing(Route.useLoaderData())
   return (
     <div className="mx-auto max-w-6xl px-5 pt-14 pb-10 lg:pt-20">
       <div className="mx-auto max-w-2xl text-center">
@@ -186,7 +198,7 @@ function PricingPage() {
         </p>
       </div>
 
-      <PricingCards headingLevel={2} className="mt-14" />
+      <PricingCards headingLevel={2} className="mt-14" pricing={pricing} />
 
       {/* Deliberately quieter than the plan cards: it works on any plan and isn't a plan itself. */}
       <section
@@ -245,7 +257,7 @@ function PricingPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {comparison.map((row) => (
+              {[...comparison, priceRow(pricing)].map((row) => (
                 <TableRow key={row.label}>
                   <TableCell className="font-medium whitespace-normal">
                     {row.label}

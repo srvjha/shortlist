@@ -8,7 +8,7 @@ import { site } from '@/lib/site'
 
 export type PaidPlan = 'season_pass' | 'pro'
 
-// Opens Razorpay for a plan from any page. `waiting` is true while the webhook activates the plan.
+// Opens the payment provider's checkout for a plan from any page. `waiting` is true while the webhook activates the plan.
 export function useCheckout({ enabled = true }: { enabled?: boolean } = {}) {
   const queryClient = useQueryClient()
   const { data: me } = useQuery({ ...meQuery, enabled })
@@ -18,6 +18,20 @@ export function useCheckout({ enabled = true }: { enabled?: boolean } = {}) {
     queryClient.invalidateQueries({ queryKey: queryKeys.subscription })
     queryClient.invalidateQueries({ queryKey: queryKeys.usage })
     queryClient.invalidateQueries({ queryKey: queryKeys.me })
+  }
+
+  // The plan switches when the provider's webhook reaches us, usually within seconds.
+  const waitForPlan = () => {
+    setWaiting(true)
+    toast.success('Payment received. Activating your plan…')
+    let tries = 0
+    const timer = setInterval(() => {
+      refresh()
+      if (++tries >= 10) {
+        clearInterval(timer)
+        setWaiting(false)
+      }
+    }, 2000)
   }
 
   const checkout = useMutation({
@@ -47,19 +61,7 @@ export function useCheckout({ enabled = true }: { enabled?: boolean } = {}) {
           }),
           prefill: { name: me?.name, email: me?.email },
           theme: { color: '#0b6e65' },
-          handler: () => {
-            // The plan switches when Razorpay's webhook reaches us, usually within seconds.
-            setWaiting(true)
-            toast.success('Payment received. Activating your plan…')
-            let tries = 0
-            const timer = setInterval(() => {
-              refresh()
-              if (++tries >= 10) {
-                clearInterval(timer)
-                setWaiting(false)
-              }
-            }, 2000)
-          },
+          handler: waitForPlan,
           modal: {
             ondismiss: () =>
               failed
@@ -80,5 +82,5 @@ export function useCheckout({ enabled = true }: { enabled?: boolean } = {}) {
     onError: (error) => toast.error(errorMessage(error)),
   })
 
-  return { checkout, waiting, refresh, me }
+  return { checkout, waiting, refresh, waitForPlan, me }
 }

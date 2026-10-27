@@ -55,6 +55,7 @@ import { fixInstruction } from '@/lib/ats'
 import { formatDate } from '@/lib/format'
 import { plans } from '@/lib/plans'
 import { panelStorage } from '@/lib/panel-storage'
+import { priceNote, priceOf, usePricing } from '@/lib/pricing'
 import { CoverageReport } from './coverage-report'
 import { SuggestionReview } from './suggestion-review'
 
@@ -753,6 +754,7 @@ const seasonPass = plans.find((plan) => plan.id === 'season_pass')!
 // Shown in place of the Tailor button once a Free account has no tailored resumes left.
 function TailorUpgrade() {
   const { checkout } = useCheckout()
+  const pricing = usePricing()
   return (
     <div className="flex flex-col gap-3 rounded-lg border border-primary/30 bg-primary/5 p-4">
       <div className="flex flex-col gap-1">
@@ -761,7 +763,8 @@ function TailorUpgrade() {
         </p>
         <p className="text-sm text-muted-foreground">
           The Season Pass gives you 40 tailored resumes a month and unlimited AI
-          edits, for {seasonPass.price} {seasonPass.period}. {seasonPass.note}
+          edits, for {priceOf('season_pass', pricing)} {seasonPass.period}.{' '}
+          {priceNote('season_pass', pricing)}
         </p>
       </div>
       <div className="flex flex-wrap gap-2">

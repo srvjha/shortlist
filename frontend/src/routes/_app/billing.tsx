@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { z } from 'zod'
 import { ConfirmDialog } from '@/components/app/confirm-dialog'
@@ -34,6 +34,7 @@ import {
   formatMoney,
   planLabels,
 } from '@/lib/format'
+import { priceNote, priceOf, usePricing } from '@/lib/pricing'
 import { site } from '@/lib/site'
 import { cn } from '@/lib/utils'
 
@@ -43,6 +44,8 @@ export const Route = createFileRoute('/_app/billing')({
   validateSearch: z.object({
     plan: z.enum(['season_pass', 'pro']).optional(),
     code: z.string().max(40).optional(),
+    // Polar sends the buyer back here after paying.
+    checkout: z.literal('done').optional(),
   }),
   head: () => ({ meta: [{ title: `Plans and billing | ${site.name}` }] }),
   loader: ({ context }) => {
@@ -54,7 +57,7 @@ export const Route = createFileRoute('/_app/billing')({
 })
 
 function BillingPage() {
-  const { plan, code } = Route.useSearch()
+  const { plan, code, checkout } = Route.useSearch()
   const { data: me } = useQuery(meQuery)
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-5 py-8 sm:px-8">
@@ -63,7 +66,12 @@ function BillingPage() {
         description="Your plan, what you've used this month, and upgrades."
       />
       {me ? (
-        <Billing me={me} highlight={plan} code={code} />
+        <Billing
+          me={me}
+          highlight={plan}
+          code={code}
+          paid={checkout === 'done'}
+        />
       ) : (
         <Skeleton className="h-80" />
       )}
@@ -75,14 +83,12 @@ const paidPlans = [
   {
     id: 'season_pass',
     name: 'Season Pass',
-    price: '₹499 for 6 months',
     body: 'One payment for 6 months. 40 AI-tailored resumes a month and unlimited AI edits.',
   },
   {
     id: 'pro',
     name: 'Pro',
-    price: '₹129 a month',
-    body: 'The same AI limits as the Season Pass, billed monthly. Cancel anytime.',
+    body: 'The same AI limits as the Season Pass, paid month by month.',
   },
 ] as const
 
@@ -118,14 +124,27 @@ function Billing({
   me,
   highlight,
   code,
+  paid,
 }: {
   me: Me
   highlight?: 'season_pass' | 'pro'
   code?: string
+  paid?: boolean
 }) {
   const { data: usage } = useQuery(usageQuery)
   const { data: subscription } = useQuery(subscriptionQuery)
-  const { checkout, waiting, refresh } = useCheckout()
+  const { checkout, waiting, refresh, waitForPlan } = useCheckout()
+  const navigate = Route.useNavigate()
+  const pricing = usePricing()
+  useEffect(() => {
+    if (!paid) return
+    waitForPlan()
+    // So a reload doesn't announce the payment again.
+    void navigate({
+      search: (prev) => ({ ...prev, checkout: undefined }),
+      replace: true,
+    })
+  }, [paid])
   const [confirmCancel, setConfirmCancel] = useState(false)
   const { data: refundQuote, error: refundQuoteError } =
     useQuery(refundQuoteQuery)
@@ -169,7 +188,7 @@ function Billing({
             {activeSub?.currentPeriodEnd
               ? activeSub.status === 'cancelled'
                 ? `Cancelled. Active until ${formatDate(activeSub.currentPeriodEnd)}.`
-                : activeSub.plan === 'pro'
+                : activeSub.renews
                   ? `Renews on ${formatDate(activeSub.currentPeriodEnd)}.`
                   : `Active until ${formatDate(activeSub.currentPeriodEnd)}.`
               : 'Usage resets on the 1st of every month.'}
@@ -212,13 +231,13 @@ function Billing({
             <Skeleton className="h-32" />
           )}
         </CardContent>
-        {((activeSub?.plan === 'pro' && activeSub.status === 'active') ||
+        {((activeSub?.renews && activeSub.status === 'active') ||
           quote ||
           refundBlocked ||
           refundQuoteError) && (
           <CardFooter className="flex flex-col items-start gap-3">
             <div className="flex flex-wrap gap-2">
-              {activeSub?.plan === 'pro' && activeSub.status === 'active' && (
+              {activeSub?.renews && activeSub.status === 'active' && (
                 <Button
                   variant="outline"
                   onClick={() => setConfirmCancel(true)}
@@ -295,10 +314,14 @@ function Billing({
                   {plan.name}
                   {plan.id === 'season_pass' && <Badge>Best value</Badge>}
                 </CardTitle>
-                <CardDescription>{plan.price}</CardDescription>
+                <CardDescription>
+                  {priceOf(plan.id, pricing)}{' '}
+                  {plan.id === 'season_pass' ? 'for 6 months' : 'a month'}
+                </CardDescription>
               </CardHeader>
               <CardContent className="text-sm text-muted-foreground">
                 {plan.body}
+                {plan.id === 'pro' && ` ${priceNote('pro', pricing)}`}
               </CardContent>
               <CardFooter>
                 <Button
