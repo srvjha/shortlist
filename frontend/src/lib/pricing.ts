@@ -39,5 +39,5 @@ export function priceNote(plan: PaidPlan, pricing: Pricing) {
 export function paymentLine(pricing: Pricing) {
   return pricing.provider === 'razorpay'
     ? 'Pay with UPI, cards or net banking through Razorpay.'
-    : 'Prices for your country, in US dollars. Pay by card through Polar, which adds any sales tax or VAT where you live.'
+    : 'Prices for your country, in US dollars. Cards from any country work. Payments go through Polar, which adds any sales tax or VAT where you live.'
 }
