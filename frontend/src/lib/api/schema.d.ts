@@ -6798,9 +6798,13 @@ export interface paths {
                                     /** Format: uuid */
                                     paymentId: string;
                                     plan: ("season_pass" | "pro") | null;
-                                    amountPaidPaise: number;
-                                    feePaise: number;
-                                    refundPaise: number;
+                                    /** @enum {string} */
+                                    provider: "razorpay" | "polar";
+                                    /** @enum {string} */
+                                    currency: "INR" | "USD";
+                                    amountPaid: number;
+                                    fee: number;
+                                    refund: number;
                                     refundableUntil: string;
                                 } | null;
                                 reason: string | null;
@@ -6863,8 +6867,10 @@ export interface paths {
                             data: {
                                 /** Format: uuid */
                                 paymentId: string;
-                                refundPaise: number;
-                                razorpayRefundId: string;
+                                refund: number;
+                                /** @enum {string} */
+                                currency: "INR" | "USD";
+                                providerRefundId: string;
                             };
                         };
                     };
@@ -7484,18 +7490,21 @@ export interface paths {
                                     status: "created" | "active" | "past_due" | "cancelled" | "expired";
                                     currentPeriodStart: string | null;
                                     currentPeriodEnd: string | null;
-                                    razorpaySubscriptionId: string | null;
+                                    providerSubscriptionId: string | null;
                                     complimentary: boolean;
                                     createdAt: string;
                                 }[];
                                 payments: {
                                     /** Format: uuid */
                                     id: string;
-                                    amountPaise: number;
+                                    amount: number;
+                                    currency: string;
                                     /** @enum {string} */
                                     status: "created" | "captured" | "failed" | "refunded";
                                     method: string | null;
-                                    razorpayPaymentId: string | null;
+                                    /** @enum {string} */
+                                    provider: "razorpay" | "polar";
+                                    providerPaymentId: string | null;
                                     createdAt: string;
                                 }[];
                                 sessions: {
@@ -7636,18 +7645,21 @@ export interface paths {
                                     status: "created" | "active" | "past_due" | "cancelled" | "expired";
                                     currentPeriodStart: string | null;
                                     currentPeriodEnd: string | null;
-                                    razorpaySubscriptionId: string | null;
+                                    providerSubscriptionId: string | null;
                                     complimentary: boolean;
                                     createdAt: string;
                                 }[];
                                 payments: {
                                     /** Format: uuid */
                                     id: string;
-                                    amountPaise: number;
+                                    amount: number;
+                                    currency: string;
                                     /** @enum {string} */
                                     status: "created" | "captured" | "failed" | "refunded";
                                     method: string | null;
-                                    razorpayPaymentId: string | null;
+                                    /** @enum {string} */
+                                    provider: "razorpay" | "polar";
+                                    providerPaymentId: string | null;
                                     createdAt: string;
                                 }[];
                                 sessions: {
@@ -7886,18 +7898,21 @@ export interface paths {
                                     status: "created" | "active" | "past_due" | "cancelled" | "expired";
                                     currentPeriodStart: string | null;
                                     currentPeriodEnd: string | null;
-                                    razorpaySubscriptionId: string | null;
+                                    providerSubscriptionId: string | null;
                                     complimentary: boolean;
                                     createdAt: string;
                                 }[];
                                 payments: {
                                     /** Format: uuid */
                                     id: string;
-                                    amountPaise: number;
+                                    amount: number;
+                                    currency: string;
                                     /** @enum {string} */
                                     status: "created" | "captured" | "failed" | "refunded";
                                     method: string | null;
-                                    razorpayPaymentId: string | null;
+                                    /** @enum {string} */
+                                    provider: "razorpay" | "polar";
+                                    providerPaymentId: string | null;
                                     createdAt: string;
                                 }[];
                                 sessions: {
@@ -8111,6 +8126,7 @@ export interface paths {
                                     paise: number;
                                     previousPaise: number;
                                     allTimePaise: number;
+                                    usdCents: number;
                                     payers: number;
                                     checkouts: number;
                                     checkoutsPaid: number;
@@ -8132,11 +8148,14 @@ export interface paths {
                                     /** Format: uuid */
                                     id: string;
                                     createdAt: string;
-                                    amountPaise: number;
+                                    amount: number;
+                                    currency: string;
                                     /** @enum {string} */
                                     status: "created" | "captured" | "failed" | "refunded";
                                     method: string | null;
-                                    razorpayPaymentId: string | null;
+                                    /** @enum {string} */
+                                    provider: "razorpay" | "polar";
+                                    providerPaymentId: string | null;
                                     plan: ("season_pass" | "pro") | null;
                                     /** Format: uuid */
                                     userId: string;

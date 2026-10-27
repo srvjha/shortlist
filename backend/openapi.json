@@ -21513,17 +21513,31 @@
                                     }
                                   ]
                                 },
-                                "amountPaidPaise": {
+                                "provider": {
+                                  "type": "string",
+                                  "enum": [
+                                    "razorpay",
+                                    "polar"
+                                  ]
+                                },
+                                "currency": {
+                                  "type": "string",
+                                  "enum": [
+                                    "INR",
+                                    "USD"
+                                  ]
+                                },
+                                "amountPaid": {
                                   "type": "integer",
                                   "minimum": -9007199254740991,
                                   "maximum": 9007199254740991
                                 },
-                                "feePaise": {
+                                "fee": {
                                   "type": "integer",
                                   "minimum": -9007199254740991,
                                   "maximum": 9007199254740991
                                 },
-                                "refundPaise": {
+                                "refund": {
                                   "type": "integer",
                                   "minimum": -9007199254740991,
                                   "maximum": 9007199254740991
@@ -21535,9 +21549,11 @@
                               "required": [
                                 "paymentId",
                                 "plan",
-                                "amountPaidPaise",
-                                "feePaise",
-                                "refundPaise",
+                                "provider",
+                                "currency",
+                                "amountPaid",
+                                "fee",
+                                "refund",
                                 "refundableUntil"
                               ],
                               "additionalProperties": false
@@ -21628,19 +21644,27 @@
                           "format": "uuid",
                           "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                         },
-                        "refundPaise": {
+                        "refund": {
                           "type": "integer",
                           "minimum": -9007199254740991,
                           "maximum": 9007199254740991
                         },
-                        "razorpayRefundId": {
+                        "currency": {
+                          "type": "string",
+                          "enum": [
+                            "INR",
+                            "USD"
+                          ]
+                        },
+                        "providerRefundId": {
                           "type": "string"
                         }
                       },
                       "required": [
                         "paymentId",
-                        "refundPaise",
-                        "razorpayRefundId"
+                        "refund",
+                        "currency",
+                        "providerRefundId"
                       ],
                       "additionalProperties": false
                     }
@@ -23491,7 +23515,7 @@
                                   "null"
                                 ]
                               },
-                              "razorpaySubscriptionId": {
+                              "providerSubscriptionId": {
                                 "type": [
                                   "string",
                                   "null"
@@ -23510,7 +23534,7 @@
                               "status",
                               "currentPeriodStart",
                               "currentPeriodEnd",
-                              "razorpaySubscriptionId",
+                              "providerSubscriptionId",
                               "complimentary",
                               "createdAt"
                             ],
@@ -23527,10 +23551,13 @@
                                 "format": "uuid",
                                 "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                               },
-                              "amountPaise": {
+                              "amount": {
                                 "type": "integer",
                                 "minimum": -9007199254740991,
                                 "maximum": 9007199254740991
+                              },
+                              "currency": {
+                                "type": "string"
                               },
                               "status": {
                                 "type": "string",
@@ -23547,7 +23574,14 @@
                                   "null"
                                 ]
                               },
-                              "razorpayPaymentId": {
+                              "provider": {
+                                "type": "string",
+                                "enum": [
+                                  "razorpay",
+                                  "polar"
+                                ]
+                              },
+                              "providerPaymentId": {
                                 "type": [
                                   "string",
                                   "null"
@@ -23559,10 +23593,12 @@
                             },
                             "required": [
                               "id",
-                              "amountPaise",
+                              "amount",
+                              "currency",
                               "status",
                               "method",
-                              "razorpayPaymentId",
+                              "provider",
+                              "providerPaymentId",
                               "createdAt"
                             ],
                             "additionalProperties": false
@@ -24101,7 +24137,7 @@
                                   "null"
                                 ]
                               },
-                              "razorpaySubscriptionId": {
+                              "providerSubscriptionId": {
                                 "type": [
                                   "string",
                                   "null"
@@ -24120,7 +24156,7 @@
                               "status",
                               "currentPeriodStart",
                               "currentPeriodEnd",
-                              "razorpaySubscriptionId",
+                              "providerSubscriptionId",
                               "complimentary",
                               "createdAt"
                             ],
@@ -24137,10 +24173,13 @@
                                 "format": "uuid",
                                 "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                               },
-                              "amountPaise": {
+                              "amount": {
                                 "type": "integer",
                                 "minimum": -9007199254740991,
                                 "maximum": 9007199254740991
+                              },
+                              "currency": {
+                                "type": "string"
                               },
                               "status": {
                                 "type": "string",
@@ -24157,7 +24196,14 @@
                                   "null"
                                 ]
                               },
-                              "razorpayPaymentId": {
+                              "provider": {
+                                "type": "string",
+                                "enum": [
+                                  "razorpay",
+                                  "polar"
+                                ]
+                              },
+                              "providerPaymentId": {
                                 "type": [
                                   "string",
                                   "null"
@@ -24169,10 +24215,12 @@
                             },
                             "required": [
                               "id",
-                              "amountPaise",
+                              "amount",
+                              "currency",
                               "status",
                               "method",
-                              "razorpayPaymentId",
+                              "provider",
+                              "providerPaymentId",
                               "createdAt"
                             ],
                             "additionalProperties": false
@@ -24803,7 +24851,7 @@
                                   "null"
                                 ]
                               },
-                              "razorpaySubscriptionId": {
+                              "providerSubscriptionId": {
                                 "type": [
                                   "string",
                                   "null"
@@ -24822,7 +24870,7 @@
                               "status",
                               "currentPeriodStart",
                               "currentPeriodEnd",
-                              "razorpaySubscriptionId",
+                              "providerSubscriptionId",
                               "complimentary",
                               "createdAt"
                             ],
@@ -24839,10 +24887,13 @@
                                 "format": "uuid",
                                 "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                               },
-                              "amountPaise": {
+                              "amount": {
                                 "type": "integer",
                                 "minimum": -9007199254740991,
                                 "maximum": 9007199254740991
+                              },
+                              "currency": {
+                                "type": "string"
                               },
                               "status": {
                                 "type": "string",
@@ -24859,7 +24910,14 @@
                                   "null"
                                 ]
                               },
-                              "razorpayPaymentId": {
+                              "provider": {
+                                "type": "string",
+                                "enum": [
+                                  "razorpay",
+                                  "polar"
+                                ]
+                              },
+                              "providerPaymentId": {
                                 "type": [
                                   "string",
                                   "null"
@@ -24871,10 +24929,12 @@
                             },
                             "required": [
                               "id",
-                              "amountPaise",
+                              "amount",
+                              "currency",
                               "status",
                               "method",
-                              "razorpayPaymentId",
+                              "provider",
+                              "providerPaymentId",
                               "createdAt"
                             ],
                             "additionalProperties": false
@@ -25415,6 +25475,11 @@
                               "minimum": -9007199254740991,
                               "maximum": 9007199254740991
                             },
+                            "usdCents": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
                             "payers": {
                               "type": "integer",
                               "minimum": -9007199254740991,
@@ -25435,6 +25500,7 @@
                             "paise",
                             "previousPaise",
                             "allTimePaise",
+                            "usdCents",
                             "payers",
                             "checkouts",
                             "checkoutsPaid"
@@ -25521,10 +25587,13 @@
                               "createdAt": {
                                 "type": "string"
                               },
-                              "amountPaise": {
+                              "amount": {
                                 "type": "integer",
                                 "minimum": -9007199254740991,
                                 "maximum": 9007199254740991
+                              },
+                              "currency": {
+                                "type": "string"
                               },
                               "status": {
                                 "type": "string",
@@ -25541,7 +25610,14 @@
                                   "null"
                                 ]
                               },
-                              "razorpayPaymentId": {
+                              "provider": {
+                                "type": "string",
+                                "enum": [
+                                  "razorpay",
+                                  "polar"
+                                ]
+                              },
+                              "providerPaymentId": {
                                 "type": [
                                   "string",
                                   "null"
@@ -25573,10 +25649,12 @@
                             "required": [
                               "id",
                               "createdAt",
-                              "amountPaise",
+                              "amount",
+                              "currency",
                               "status",
                               "method",
-                              "razorpayPaymentId",
+                              "provider",
+                              "providerPaymentId",
                               "plan",
                               "userId",
                               "email"

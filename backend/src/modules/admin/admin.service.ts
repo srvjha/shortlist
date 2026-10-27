@@ -138,7 +138,8 @@ export async function getOverview(days: number, timeZone: string) {
           ),
       })
       .from(payments)
-      .where(eq(payments.status, "captured")),
+      // Rupees only; dollars from Polar show on the revenue page.
+      .where(and(eq(payments.status, "captured"), eq(payments.currency, "INR"))),
     db
       .select({ views: filtered(current(linkViews.viewedAt)), previousViews: filtered(previous(linkViews.viewedAt)) })
       .from(linkViews),
@@ -390,7 +391,7 @@ export async function getUser(userId: string) {
         status: subscriptions.status,
         currentPeriodStart: subscriptions.currentPeriodStart,
         currentPeriodEnd: subscriptions.currentPeriodEnd,
-        razorpaySubscriptionId: subscriptions.providerSubscriptionId,
+        providerSubscriptionId: subscriptions.providerSubscriptionId,
         payments:
           sql<number>`(select count(*) from ${payments} where ${payments.subscriptionId} = ${outer("subscriptions", "id")})`.mapWith(
             Number,
@@ -403,10 +404,12 @@ export async function getUser(userId: string) {
     db
       .select({
         id: payments.id,
-        amountPaise: payments.amount,
+        amount: payments.amount,
+        currency: payments.currency,
         status: payments.status,
         method: payments.method,
-        razorpayPaymentId: payments.providerPaymentId,
+        provider: payments.provider,
+        providerPaymentId: payments.providerPaymentId,
         createdAt: payments.createdAt,
       })
       .from(payments)
@@ -446,8 +449,8 @@ export async function getUser(userId: string) {
     usage,
     subscriptions: userSubscriptions.map(({ payments: paymentCount, ...subscription }) => ({
       ...subscription,
-      // Given from the admin dashboard, with no Razorpay billing behind it; only these can be revoked here.
-      complimentary: !subscription.razorpaySubscriptionId && paymentCount === 0,
+      // Given from the admin dashboard, with no payment provider billing behind it; only these can be revoked here.
+      complimentary: !subscription.providerSubscriptionId && paymentCount === 0,
     })),
     payments: userPayments,
     sessions: userSessions,
@@ -494,14 +497,14 @@ export async function grantSubscription(adminId: string, userId: string, plan: "
 
 export async function revokeSubscription(adminId: string, userId: string, subscriptionId: string) {
   const [subscription] = await db
-    .select({ razorpaySubscriptionId: subscriptions.providerSubscriptionId })
+    .select({ providerSubscriptionId: subscriptions.providerSubscriptionId })
     .from(subscriptions)
     .where(and(eq(subscriptions.id, subscriptionId), eq(subscriptions.userId, userId)));
   if (!subscription) throw new NotFoundError("Subscription");
   const [paid] = await db.select({ count: count() }).from(payments).where(eq(payments.subscriptionId, subscriptionId));
-  // Ending a paid plan here would leave Razorpay billing the user; refunds and cancellations go through Razorpay.
-  if (subscription.razorpaySubscriptionId || (paid?.count ?? 0) > 0)
-    throw new ConflictError("Paid plans are cancelled or refunded in Razorpay, not here");
+  // Ending a paid plan here would leave the provider billing the user; refunds and cancellations go through it.
+  if (subscription.providerSubscriptionId || (paid?.count ?? 0) > 0)
+    throw new ConflictError("Paid plans are cancelled or refunded at the payment provider, not here");
   await db
     .update(subscriptions)
     .set({ status: "expired", currentPeriodEnd: new Date() })
@@ -609,7 +612,9 @@ export async function getAiUsage(days: number, timeZone: string) {
 
 export async function getRevenue(days: number, timeZone: string) {
   const { now, since, previousSince } = range(days);
-  const captured = eq(payments.status, "captured");
+  // The rupee totals leave out Polar's dollar payments, which are summed on their own.
+  const captured = and(eq(payments.status, "captured"), eq(payments.currency, "INR"))!;
+  const capturedUsd = and(eq(payments.status, "captured"), eq(payments.currency, "USD"));
 
   const [[totals], byDay, byPlan, recent, statuses] = await Promise.all([
     db
@@ -623,9 +628,15 @@ export async function getRevenue(days: number, timeZone: string) {
             Number,
           ),
         allTimePaise: sql<number>`coalesce(sum(${payments.amount}) filter (where ${captured}), 0)`.mapWith(Number),
-        payers: sql<number>`count(distinct ${payments.userId}) filter (where ${captured})`.mapWith(Number),
+        usdCents:
+          sql<number>`coalesce(sum(${payments.amount}) filter (where ${capturedUsd} and ${payments.updatedAt} >= ${since}), 0)`.mapWith(
+            Number,
+          ),
+        payers: sql<number>`count(distinct ${payments.userId}) filter (where ${payments.status} = 'captured')`.mapWith(
+          Number,
+        ),
         checkouts: filtered(sql`${payments.createdAt} >= ${since}`),
-        checkoutsPaid: filtered(sql`${payments.createdAt} >= ${since} and ${captured}`),
+        checkoutsPaid: filtered(sql`${payments.createdAt} >= ${since} and ${payments.status} = 'captured'`),
       })
       .from(payments),
     db
@@ -647,10 +658,12 @@ export async function getRevenue(days: number, timeZone: string) {
       .select({
         id: payments.id,
         createdAt: payments.createdAt,
-        amountPaise: payments.amount,
+        amount: payments.amount,
+        currency: payments.currency,
         status: payments.status,
         method: payments.method,
-        razorpayPaymentId: payments.providerPaymentId,
+        provider: payments.provider,
+        providerPaymentId: payments.providerPaymentId,
         plan: subscriptions.plan,
         userId: users.id,
         email: users.email,
@@ -669,7 +682,15 @@ export async function getRevenue(days: number, timeZone: string) {
 
   return {
     days,
-    totals: totals ?? { paise: 0, previousPaise: 0, allTimePaise: 0, payers: 0, checkouts: 0, checkoutsPaid: 0 },
+    totals: totals ?? {
+      paise: 0,
+      previousPaise: 0,
+      allTimePaise: 0,
+      usdCents: 0,
+      payers: 0,
+      checkouts: 0,
+      checkoutsPaid: 0,
+    },
     byDay: fillDays(dayKeys(days, timeZone, now), byDay, ["paise"]),
     activeSubscriptions: byPlan,
     statuses,

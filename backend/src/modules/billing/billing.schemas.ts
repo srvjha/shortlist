@@ -52,9 +52,12 @@ export const refundQuoteResponse = z.object({
     .object({
       paymentId: z.uuid(),
       plan: z.enum(["season_pass", "pro"]).nullable(),
-      amountPaidPaise: z.number().int(),
-      feePaise: z.number().int(),
-      refundPaise: z.number().int(),
+      provider: z.enum(["razorpay", "polar"]),
+      // In the currency's minor unit (paise, cents).
+      currency: z.enum(["INR", "USD"]),
+      amountPaid: z.number().int(),
+      fee: z.number().int(),
+      refund: z.number().int(),
       refundableUntil: z.date(),
     })
     .nullable(),
@@ -65,6 +68,7 @@ export const createRefundBody = z.object({ paymentId: z.uuid() });
 
 export const refundResponse = z.object({
   paymentId: z.uuid(),
-  refundPaise: z.number().int(),
-  razorpayRefundId: z.string(),
+  refund: z.number().int(),
+  currency: z.enum(["INR", "USD"]),
+  providerRefundId: z.string(),
 });

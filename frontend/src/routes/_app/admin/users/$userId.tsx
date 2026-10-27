@@ -52,7 +52,7 @@ import type { AdminUser } from '@/lib/api/types'
 import {
   formatDate,
   formatDateTime,
-  formatInr,
+  formatMoney,
   formatNumber,
   formatUsd,
   initials,
@@ -461,7 +461,7 @@ function UserReport({ data }: { data: AdminUser }) {
                   className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 py-3 text-sm"
                 >
                   <span className="font-medium tabular-nums">
-                    {formatInr(payment.amountPaise)}
+                    {formatMoney(payment.amount, payment.currency)}
                   </span>
                   <Badge
                     variant={
@@ -478,7 +478,7 @@ function UserReport({ data }: { data: AdminUser }) {
                     {payment.method ?? 'no method'}
                   </span>
                   <span className="font-mono text-xs text-muted-foreground">
-                    {payment.razorpayPaymentId ?? 'no payment id'}
+                    {payment.providerPaymentId ?? 'no payment id'}
                   </span>
                   <span className="text-muted-foreground">
                     {formatDateTime(payment.createdAt)}
@@ -605,8 +605,9 @@ function GrantPlanDialog({
           <DialogHeader>
             <DialogTitle>Give {name} a plan</DialogTitle>
             <DialogDescription>
-              Free of charge, with no payment in Razorpay. It ends on its own
-              when the time runs out, and you can end it early from this page.
+              Free of charge, with no payment through a provider. It ends on its
+              own when the time runs out, and you can end it early from this
+              page.
             </DialogDescription>
           </DialogHeader>
           <FieldGroup className="grid gap-4 sm:grid-cols-2">

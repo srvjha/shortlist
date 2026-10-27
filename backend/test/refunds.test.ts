@@ -59,6 +59,7 @@ const paid = { amount: 49_900, status: "captured", fee: 1_178, tax: 180, amount_
 const claimed = {
   id: "11111111-1111-4111-8111-111111111111",
   provider: "razorpay",
+  currency: "INR",
   providerPaymentId: "pay_1",
   subscriptionId: null,
   capturedAt: new Date(),
@@ -145,7 +146,7 @@ describe("requesting a refund", () => {
           }
         : paid;
     });
-    await expect(requestRefund("user_1", claimed.id)).resolves.toMatchObject({ razorpayRefundId: "rfnd_3" });
+    await expect(requestRefund("user_1", claimed.id)).resolves.toMatchObject({ providerRefundId: "rfnd_3" });
   });
 
   it("doesn't take an earlier goodwill refund for this one, and lets the user try again", async () => {
@@ -208,7 +209,7 @@ describe("requesting a refund", () => {
           ? { id: "rfnd_2", amount: 12_595 }
           : {},
     );
-    await expect(requestRefund("user_1", claimed.id)).resolves.toMatchObject({ refundPaise: 12_595 });
+    await expect(requestRefund("user_1", claimed.id)).resolves.toMatchObject({ refund: 12_595 });
     expect(razorpay).toHaveBeenCalledWith("POST", "/subscriptions/sub_1/cancel", { cancel_at_cycle_end: 0 });
   });
 });

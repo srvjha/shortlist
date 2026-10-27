@@ -4,7 +4,14 @@ import { payments, subscriptions, users } from "../../db/schema/index.js";
 import { AppError, ConflictError, ForbiddenError, NotFoundError } from "../../lib/errors.js";
 import { track } from "../../lib/analytics.js";
 import { runsSince } from "../usage/quotas.js";
-import { type Charge, type PaidPlan, type ProviderRefund, providerOf, routeFor } from "./providers/index.js";
+import {
+  type Charge,
+  type Currency,
+  type PaidPlan,
+  type ProviderRefund,
+  providerOf,
+  routeFor,
+} from "./providers/index.js";
 
 type Plan = (typeof users.$inferSelect)["plan"];
 
@@ -48,6 +55,8 @@ export async function assertNotGuest(userId: string, executor: Pick<typeof db, "
   if (user?.isAnonymous)
     throw new ForbiddenError("Create an account first, so your plan isn't deleted with this guest account");
 }
+
+const currencyOf = (currency: string): Currency => (currency === "USD" ? "USD" : "INR");
 
 export function pricingFor(country: string | null) {
   const { provider, ...route } = routeFor(country);
@@ -192,6 +201,7 @@ export async function getRefundQuote(userId: string, now = new Date()) {
       id: payments.id,
       provider: payments.provider,
       providerPaymentId: payments.providerPaymentId,
+      currency: payments.currency,
       capturedAt: payments.capturedAt,
       plan: subscriptions.plan,
     })
@@ -206,14 +216,16 @@ export async function getRefundQuote(userId: string, now = new Date()) {
   const charge = await providerOf(row.provider).charge(row.providerPaymentId!);
   // Part of it may already have been refunded by hand, as a goodwill credit; then there's no self-serve refund.
   if (charge.refunded) return { quote: null, reason: null };
-  const refundPaise = refundableAmount(charge);
+  const refund = refundableAmount(charge);
   return {
     quote: {
       paymentId: row.id,
       plan: row.plan,
-      amountPaidPaise: charge.amount,
-      feePaise: charge.amount - refundPaise,
-      refundPaise,
+      provider: row.provider,
+      currency: currencyOf(row.currency),
+      amountPaid: charge.amount,
+      fee: charge.amount - refund,
+      refund,
       refundableUntil: new Date(row.capturedAt!.getTime() + REFUND_WINDOW_MS),
     },
     reason: null,
@@ -282,6 +294,6 @@ export async function requestRefund(userId: string, paymentId: string, now = new
     }
     await recomputePlan(userId, tx);
   });
-  track(userId, "refund_requested", { amount_inr: refund.amount / 100 });
-  return { paymentId: row.id, refundPaise: refund.amount, razorpayRefundId: refund.id };
+  track(userId, "refund_requested", { [`amount_${row.currency.toLowerCase()}`]: refund.amount / 100 });
+  return { paymentId: row.id, refund: refund.amount, currency: currencyOf(row.currency), providerRefundId: refund.id };
 }

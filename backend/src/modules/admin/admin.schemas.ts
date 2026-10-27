@@ -125,7 +125,7 @@ export const adminUserResponse = z.object({
       status: z.enum(["created", "active", "past_due", "cancelled", "expired"]),
       currentPeriodStart: z.date().nullable(),
       currentPeriodEnd: z.date().nullable(),
-      razorpaySubscriptionId: z.string().nullable(),
+      providerSubscriptionId: z.string().nullable(),
       complimentary: z.boolean(),
       createdAt: z.date(),
     }),
@@ -133,10 +133,13 @@ export const adminUserResponse = z.object({
   payments: z.array(
     z.object({
       id: z.uuid(),
-      amountPaise: int,
+      // In the currency's minor unit (paise, cents).
+      amount: int,
+      currency: z.string(),
       status: z.enum(["created", "captured", "failed", "refunded"]),
       method: z.string().nullable(),
-      razorpayPaymentId: z.string().nullable(),
+      provider: z.enum(["razorpay", "polar"]),
+      providerPaymentId: z.string().nullable(),
       createdAt: z.date(),
     }),
   ),
@@ -196,6 +199,8 @@ export const adminRevenueResponse = z.object({
     paise: int,
     previousPaise: int,
     allTimePaise: int,
+    // Polar's dollar payments in the period, left out of the rupee totals.
+    usdCents: int,
     payers: int,
     checkouts: int,
     checkoutsPaid: int,
@@ -207,10 +212,13 @@ export const adminRevenueResponse = z.object({
     z.object({
       id: z.uuid(),
       createdAt: z.date(),
-      amountPaise: int,
+      // In the currency's minor unit (paise, cents).
+      amount: int,
+      currency: z.string(),
       status: z.enum(["created", "captured", "failed", "refunded"]),
       method: z.string().nullable(),
-      razorpayPaymentId: z.string().nullable(),
+      provider: z.enum(["razorpay", "polar"]),
+      providerPaymentId: z.string().nullable(),
       plan: z.enum(["season_pass", "pro"]).nullable(),
       userId: z.uuid(),
       email: z.string(),

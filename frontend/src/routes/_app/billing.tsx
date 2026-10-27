@@ -28,7 +28,12 @@ import {
   usageQuery,
 } from '@/lib/api/queries'
 import type { Me } from '@/lib/api/types'
-import { formatDate, formatDateTime, formatInr, planLabels } from '@/lib/format'
+import {
+  formatDate,
+  formatDateTime,
+  formatMoney,
+  planLabels,
+} from '@/lib/format'
 import { site } from '@/lib/site'
 import { cn } from '@/lib/utils'
 
@@ -134,7 +139,7 @@ function Billing({
     onSuccess: (result) => {
       refresh()
       toast.success(
-        `Refund of ${formatInr(result.refundPaise)} started. It reaches your account in 5 to 7 working days.`,
+        `Refund of ${formatMoney(result.refund, result.currency)} started. It reaches your account in 5 to 7 working days.`,
       )
     },
     onError: (error) => toast.error(errorMessage(error)),
@@ -236,9 +241,10 @@ function Billing({
             </div>
             {quote && (
               <p className="text-sm text-muted-foreground">
-                You can get {formatInr(quote.refundPaise)} back until{' '}
-                {formatDateTime(quote.refundableUntil)}, as long as you make no
-                more than 3 tailored and 3 AI-written resumes before then.
+                You can get {formatMoney(quote.refund, quote.currency)} back
+                until {formatDateTime(quote.refundableUntil)}, as long as you
+                make no more than 3 tailored and 3 AI-written resumes before
+                then.
               </p>
             )}
             {refundBlocked && (
@@ -265,9 +271,9 @@ function Billing({
           <ConfirmDialog
             open={confirmRefund}
             onOpenChange={setConfirmRefund}
-            title={`Refund ${formatInr(quote.refundPaise)}?`}
-            description={`You paid ${formatInr(quote.amountPaidPaise)}. Razorpay keeps ${formatInr(quote.feePaise)} as its payment fee (including GST), so ${formatInr(quote.refundPaise)} goes back to your original payment method in 5 to 7 working days. Your ${quote.plan ? planLabels[quote.plan] : 'plan'} ends now. Your resumes are not deleted.`}
-            confirmLabel={`Refund ${formatInr(quote.refundPaise)}`}
+            title={`Refund ${formatMoney(quote.refund, quote.currency)}?`}
+            description={`You paid ${formatMoney(quote.amountPaid, quote.currency)}${quote.provider === 'polar' ? ' before tax. Polar' : '. Razorpay'} keeps ${formatMoney(quote.fee, quote.currency)} as its payment fee${quote.provider === 'polar' ? ', and any tax you paid is returned with the rest' : ' (including GST)'}, so ${formatMoney(quote.refund, quote.currency)} goes back to your original payment method in 5 to 7 working days. Your ${quote.plan ? planLabels[quote.plan] : 'plan'} ends now. Your resumes are not deleted.`}
+            confirmLabel={`Refund ${formatMoney(quote.refund, quote.currency)}`}
             cancelLabel="Keep my plan"
             destructive
             onConfirm={() => refund.mutate(quote.paymentId)}
