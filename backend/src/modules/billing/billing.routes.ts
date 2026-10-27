@@ -1,4 +1,5 @@
-import express, { Router } from "express";
+import express, { type Request, Router } from "express";
+import { env } from "../../config/env.js";
 import { AppError } from "../../lib/errors.js";
 import { countryOf } from "../../lib/geo.js";
 import { sendData } from "../../lib/http.js";
@@ -22,16 +23,20 @@ import { handleEvents } from "./webhooks.js";
 
 export const billingRouter = Router();
 
+// Locally every request comes from localhost, so PAYMENTS_TEST_COUNTRY stands in for the visitor's country.
+const visitorCountry = (req: Request) =>
+  env.NODE_ENV !== "production" && env.PAYMENTS_TEST_COUNTRY ? env.PAYMENTS_TEST_COUNTRY : countryOf(clientIp(req));
+
 // Public: the prices for the visitor's country. Pages rendered on the frontend's server pass the visitor's IP.
 billingRouter.get("/pricing", publicLimiter, async (req, res) => {
-  sendData(res, pricingResponse, service.pricingFor(await countryOf(clientIp(req))));
+  sendData(res, pricingResponse, service.pricingFor(await visitorCountry(req)));
 });
 
 billingRouter.post(
   "/checkouts",
   requireAuth,
   ...validated({ body: createCheckoutBody }, async (req, res) => {
-    const country = await countryOf(clientIp(req));
+    const country = await visitorCountry(req);
     sendData(res, checkoutResponse, await service.createCheckout(currentUser(req).id, req.body.plan, country), 201);
   }),
 );
