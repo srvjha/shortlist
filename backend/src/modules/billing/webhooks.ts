@@ -1,4 +1,4 @@
-import { and, desc, eq, ne } from "drizzle-orm";
+import { and, desc, eq, isNull, ne } from "drizzle-orm";
 import { db } from "../../db/index.js";
 import { payments, subscriptions, webhookEvents } from "../../db/schema/index.js";
 import { logger } from "../../lib/logger.js";
@@ -8,7 +8,8 @@ import type { BillingEvent, ProviderId } from "./providers/index.js";
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
-const SEASON_PASS_MONTHS = 6;
+// How long a one-time payment buys: Season Pass anywhere, or a single Pro month on Polar.
+const MONTHS = { season_pass: 6, pro: 1 } as const;
 
 // Providers retry deliveries; each event id is processed once. Recorded in the same transaction as the
 // event's effects, so a failure rolls both back and the retry runs it again.
@@ -38,15 +39,18 @@ async function onPaid(tx: Tx, event: Extract<BillingEvent, { type: "paid" }>, ra
     })
     .where(eq(payments.id, row.id));
 
-  if (row.subscriptionId) {
-    // A new Season Pass extends the latest-ending current one.
+  const [bought] = row.subscriptionId
+    ? await tx.select({ plan: subscriptions.plan }).from(subscriptions).where(eq(subscriptions.id, row.subscriptionId))
+    : [];
+  if (row.subscriptionId && bought) {
+    // A new pass extends the latest-ending current one of the same plan.
     const [current] = await tx
       .select({ end: subscriptions.currentPeriodEnd })
       .from(subscriptions)
       .where(
         and(
           eq(subscriptions.userId, row.userId),
-          eq(subscriptions.plan, "season_pass"),
+          eq(subscriptions.plan, bought.plan),
           eq(subscriptions.status, "active"),
         ),
       )
@@ -54,7 +58,7 @@ async function onPaid(tx: Tx, event: Extract<BillingEvent, { type: "paid" }>, ra
       .limit(1);
     const start = current?.end && current.end > new Date() ? current.end : new Date();
     const end = new Date(start);
-    end.setMonth(end.getMonth() + SEASON_PASS_MONTHS);
+    end.setMonth(end.getMonth() + MONTHS[bought.plan]);
     await tx
       .update(subscriptions)
       .set({ status: "active", currentPeriodStart: start, currentPeriodEnd: end })
@@ -114,7 +118,7 @@ async function onSubscription(
   await recomputePlan(row.userId, tx);
 }
 
-// A full refund ends the Season Pass it paid for straight away; a partial one (a goodwill credit) changes nothing.
+// A full refund ends the one-time pass it paid for straight away; a partial one (a goodwill credit) changes nothing.
 // Self-serve refunds (requestRefund) are partial and end the plan themselves, so this is a no-op for them.
 // A recurring Pro is left alone: it is cancelled at the provider for a refund, and that event ends it.
 async function onRefund(tx: Tx, event: Extract<BillingEvent, { type: "refunded" }>) {
@@ -128,7 +132,7 @@ async function onRefund(tx: Tx, event: Extract<BillingEvent, { type: "refunded" 
   await tx
     .update(subscriptions)
     .set({ status: "expired", currentPeriodEnd: new Date() })
-    .where(and(eq(subscriptions.id, row.subscriptionId), eq(subscriptions.plan, "season_pass")));
+    .where(and(eq(subscriptions.id, row.subscriptionId), isNull(subscriptions.providerSubscriptionId)));
   await recomputePlan(row.userId, tx);
 }
 
