@@ -82,7 +82,7 @@ export async function updateMe(userId: string, changes: { name?: string | undefi
 // Deletes the account, the user's files and, through foreign key cascades, every row they own.
 export async function deleteMe(userId: string) {
   const activePro = await db
-    .select({ remoteId: subscriptions.razorpaySubscriptionId })
+    .select({ remoteId: subscriptions.providerSubscriptionId })
     .from(subscriptions)
     .where(and(eq(subscriptions.userId, userId), eq(subscriptions.plan, "pro"), eq(subscriptions.status, "active")));
   for (const { remoteId } of activePro) {

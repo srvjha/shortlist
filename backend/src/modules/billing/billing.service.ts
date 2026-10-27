@@ -66,12 +66,15 @@ export async function createCheckout(userId: string, plan: "season_pass" | "pro"
       notes: { userId, plan },
     });
     await db.transaction(async (tx) => {
-      const [subscription] = await tx.insert(subscriptions).values({ userId, plan, status: "created" }).returning();
+      const [subscription] = await tx
+        .insert(subscriptions)
+        .values({ userId, plan, status: "created", provider: "razorpay" })
+        .returning();
       await tx.insert(payments).values({
         userId,
         subscriptionId: subscription!.id,
-        razorpayOrderId: order.id,
-        amountPaise: prices.season_pass,
+        providerCheckoutId: order.id,
+        amount: prices.season_pass,
       });
     });
     return {
@@ -99,7 +102,9 @@ export async function createCheckout(userId: string, plan: "season_pass" | "pro"
     customer_notify: 1,
     notes: { userId, plan },
   });
-  await db.insert(subscriptions).values({ userId, plan, status: "created", razorpaySubscriptionId: remote.id });
+  await db
+    .insert(subscriptions)
+    .values({ userId, plan, status: "created", provider: "razorpay", providerSubscriptionId: remote.id });
   return {
     provider: "razorpay" as const,
     keyId,
@@ -139,12 +144,12 @@ export async function cancelSubscription(userId: string) {
         eq(subscriptions.userId, userId),
         eq(subscriptions.plan, "pro"),
         eq(subscriptions.status, "active"),
-        isNotNull(subscriptions.razorpaySubscriptionId),
+        isNotNull(subscriptions.providerSubscriptionId),
       ),
     )
     .limit(1);
-  if (!subscription?.razorpaySubscriptionId) throw new NotFoundError("Active Pro subscription");
-  await razorpay("POST", `/subscriptions/${subscription.razorpaySubscriptionId}/cancel`, { cancel_at_cycle_end: 1 });
+  if (!subscription?.providerSubscriptionId) throw new NotFoundError("Active Pro subscription");
+  await razorpay("POST", `/subscriptions/${subscription.providerSubscriptionId}/cancel`, { cancel_at_cycle_end: 1 });
   await db
     .update(subscriptions)
     .set({ status: "cancelled", cancelledAt: new Date() })
@@ -196,7 +201,7 @@ const refundable = (userId: string, now: Date) =>
     eq(payments.userId, userId),
     eq(payments.status, "captured"),
     isNull(payments.refundedAt),
-    isNotNull(payments.razorpayPaymentId),
+    isNotNull(payments.providerPaymentId),
     gt(payments.capturedAt, new Date(now.getTime() - REFUND_WINDOW_MS)),
   );
 
@@ -204,7 +209,7 @@ export async function getRefundQuote(userId: string, now = new Date()) {
   const [row] = await db
     .select({
       id: payments.id,
-      razorpayPaymentId: payments.razorpayPaymentId,
+      providerPaymentId: payments.providerPaymentId,
       capturedAt: payments.capturedAt,
       plan: subscriptions.plan,
     })
@@ -216,7 +221,7 @@ export async function getRefundQuote(userId: string, now = new Date()) {
   if (!row) return { quote: null, reason: null };
   const reason = await whyNotRefundable(userId, row.capturedAt!);
   if (reason) return { quote: null, reason };
-  const remote = await razorpay<RemotePayment>("GET", `/payments/${row.razorpayPaymentId}`);
+  const remote = await razorpay<RemotePayment>("GET", `/payments/${row.providerPaymentId}`);
   // Part of it may already have been refunded by hand, as a goodwill credit; then there's no self-serve refund.
   if (remote.amount_refunded) return { quote: null, reason: null };
   const refundPaise = refundablePaise(remote);
@@ -260,18 +265,18 @@ export async function requestRefund(userId: string, paymentId: string, now = new
   let sent = false;
   let refund: { id: string; amount: number };
   try {
-    const remote = await razorpay<RemotePayment>("GET", `/payments/${row.razorpayPaymentId}`);
+    const remote = await razorpay<RemotePayment>("GET", `/payments/${row.providerPaymentId}`);
     const amount = refundablePaise(remote);
     // Pro is cancelled first: refunding and then failing to cancel would leave Razorpay charging every month.
-    if (subscription?.plan === "pro" && subscription.razorpaySubscriptionId && !subscription.cancelledAt) {
-      await razorpay("POST", `/subscriptions/${subscription.razorpaySubscriptionId}/cancel`, {
+    if (subscription?.plan === "pro" && subscription.providerSubscriptionId && !subscription.cancelledAt) {
+      await razorpay("POST", `/subscriptions/${subscription.providerSubscriptionId}/cancel`, {
         cancel_at_cycle_end: 0,
       });
       subscription.cancelledAt = now;
       await db.update(subscriptions).set({ cancelledAt: now }).where(eq(subscriptions.id, subscription.id));
     }
     sent = true;
-    refund = await razorpay("POST", `/payments/${row.razorpayPaymentId}/refund`, {
+    refund = await razorpay("POST", `/payments/${row.providerPaymentId}/refund`, {
       amount,
       speed: "normal",
       notes: { userId, reason: note },
@@ -284,7 +289,7 @@ export async function requestRefund(userId: string, paymentId: string, now = new
           .then(() =>
             razorpay<{ items?: { id: string; amount: number; notes?: { reason?: string } }[] }>(
               "GET",
-              `/payments/${row.razorpayPaymentId}/refunds`,
+              `/payments/${row.providerPaymentId}/refunds`,
             ),
           )
           .catch(() => undefined)
@@ -300,7 +305,7 @@ export async function requestRefund(userId: string, paymentId: string, now = new
   await db.transaction(async (tx) => {
     await tx
       .update(payments)
-      .set({ status: "refunded", refundedPaise: refund.amount, razorpayRefundId: refund.id })
+      .set({ status: "refunded", refundedAmount: refund.amount, providerRefundId: refund.id })
       .where(eq(payments.id, row.id));
     if (subscription) {
       await tx

@@ -57,7 +57,7 @@ import { REFUND_WINDOW_MS, refundablePaise, requestRefund } from "../src/modules
 const paid = { amount: 49_900, status: "captured", fee: 1_178, tax: 180, amount_refunded: 0 };
 const claimed = {
   id: "11111111-1111-4111-8111-111111111111",
-  razorpayPaymentId: "pay_1",
+  providerPaymentId: "pay_1",
   subscriptionId: null,
   capturedAt: new Date(),
 };
@@ -152,7 +152,7 @@ describe("requesting a refund", () => {
 
   it("refunds nothing when the Pro subscription can't be cancelled", async () => {
     state.claims = [[{ ...claimed, subscriptionId: "sub_row" }]];
-    state.subscription = { id: "sub_row", plan: "pro", razorpaySubscriptionId: "sub_1", cancelledAt: null };
+    state.subscription = { id: "sub_row", plan: "pro", providerSubscriptionId: "sub_1", cancelledAt: null };
     razorpay.mockImplementation(async (method: string, path: string) => {
       if (path.endsWith("/cancel")) throw new Error("Razorpay down");
       return method === "GET" ? { ...paid, amount: 12_900, fee: 305 } : { id: "rfnd_x", amount: 12_595 };
@@ -178,7 +178,7 @@ describe("requesting a refund", () => {
 
   it("cancels a refunded Pro subscription in Razorpay straight away", async () => {
     state.claims = [[{ ...claimed, subscriptionId: "sub_row" }]];
-    state.subscription = { id: "sub_row", plan: "pro", razorpaySubscriptionId: "sub_1", cancelledAt: null };
+    state.subscription = { id: "sub_row", plan: "pro", providerSubscriptionId: "sub_1", cancelledAt: null };
     razorpay.mockImplementation(async (method: string, path: string) =>
       method === "GET"
         ? { ...paid, amount: 12_900, fee: 305 }

@@ -48,7 +48,7 @@ async function onPaymentCaptured(
   raw: unknown,
 ) {
   if (!payment.order_id) return null; // Subscription payments are handled by subscription.charged.
-  const [row] = await tx.select().from(payments).where(eq(payments.razorpayOrderId, payment.order_id)).limit(1);
+  const [row] = await tx.select().from(payments).where(eq(payments.providerCheckoutId, payment.order_id)).limit(1);
   if (!row || row.status === "captured") return null;
 
   await tx
@@ -56,7 +56,7 @@ async function onPaymentCaptured(
     .set({
       status: "captured",
       capturedAt: new Date(),
-      razorpayPaymentId: payment.id,
+      providerPaymentId: payment.id,
       method: payment.method ?? null,
       raw,
     })
@@ -85,7 +85,7 @@ async function onPaymentCaptured(
       .where(eq(subscriptions.id, row.subscriptionId));
   }
   await recomputePlan(row.userId, tx);
-  return () => track(row.userId, "payment_captured", { amount_inr: row.amountPaise / 100 });
+  return () => track(row.userId, "payment_captured", { amount_inr: row.amount / 100 });
 }
 
 async function onSubscriptionEvent(tx: Tx, event: RazorpayEvent, raw: unknown) {
@@ -94,7 +94,7 @@ async function onSubscriptionEvent(tx: Tx, event: RazorpayEvent, raw: unknown) {
   const [row] = await tx
     .select()
     .from(subscriptions)
-    .where(eq(subscriptions.razorpaySubscriptionId, remote.id))
+    .where(eq(subscriptions.providerSubscriptionId, remote.id))
     .limit(1);
   if (!row) {
     logger.warn({ subscriptionId: remote.id }, "Webhook for unknown subscription");
@@ -129,15 +129,15 @@ async function onSubscriptionEvent(tx: Tx, event: RazorpayEvent, raw: unknown) {
       .values({
         userId: row.userId,
         subscriptionId: row.id,
-        razorpayOrderId: payment.order_id ?? remote.id,
-        razorpayPaymentId: payment.id,
-        amountPaise: payment.amount ?? 0,
+        providerCheckoutId: payment.order_id ?? remote.id,
+        providerPaymentId: payment.id,
+        amount: payment.amount ?? 0,
         status: "captured",
         capturedAt: new Date(),
         method: payment.method ?? null,
         raw,
       })
-      .onConflictDoNothing({ target: payments.razorpayPaymentId });
+      .onConflictDoNothing({ target: payments.providerPaymentId });
   }
   await recomputePlan(row.userId, tx);
 }
@@ -148,10 +148,10 @@ async function onSubscriptionEvent(tx: Tx, event: RazorpayEvent, raw: unknown) {
 async function onRefund(tx: Tx, event: RazorpayEvent) {
   const refund = event.payload.refund?.entity;
   if (!refund?.payment_id) return;
-  const [row] = await tx.select().from(payments).where(eq(payments.razorpayPaymentId, refund.payment_id)).limit(1);
+  const [row] = await tx.select().from(payments).where(eq(payments.providerPaymentId, refund.payment_id)).limit(1);
   // Several partial refunds can add up to the full amount, which the payment's running total shows.
   const refunded = event.payload.payment?.entity.amount_refunded ?? refund.amount ?? 0;
-  if (!row || refunded < row.amountPaise) return;
+  if (!row || refunded < row.amount) return;
 
   await tx.update(payments).set({ status: "refunded" }).where(eq(payments.id, row.id));
   if (!row.subscriptionId) return;
@@ -184,7 +184,10 @@ async function applyEvent(tx: Tx, event: RazorpayEvent) {
           .set({ status: "failed", raw: event })
           // Retries share an order, and Razorpay may deliver an earlier failure after the capture.
           .where(
-            and(eq(payments.razorpayOrderId, event.payload.payment.entity.order_id), ne(payments.status, "captured")),
+            and(
+              eq(payments.providerCheckoutId, event.payload.payment.entity.order_id),
+              ne(payments.status, "captured"),
+            ),
           );
       }
       return null;

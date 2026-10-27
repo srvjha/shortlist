@@ -155,6 +155,13 @@
       "when": 1792688305694,
       "tag": "0021_ats_review_step",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1793088489517,
+      "tag": "0022_payment_providers",
+      "breakpoints": true
     }
   ]
 }

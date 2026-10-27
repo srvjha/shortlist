@@ -130,11 +130,11 @@ export async function getOverview(days: number, timeZone: string) {
     db
       .select({
         paise:
-          sql<number>`coalesce(sum(${payments.amountPaise}) filter (where ${current(payments.updatedAt)}), 0)`.mapWith(
+          sql<number>`coalesce(sum(${payments.amount}) filter (where ${current(payments.updatedAt)}), 0)`.mapWith(
             Number,
           ),
         previousPaise:
-          sql<number>`coalesce(sum(${payments.amountPaise}) filter (where ${previous(payments.updatedAt)}), 0)`.mapWith(
+          sql<number>`coalesce(sum(${payments.amount}) filter (where ${previous(payments.updatedAt)}), 0)`.mapWith(
             Number,
           ),
       })
@@ -391,7 +391,7 @@ export async function getUser(userId: string) {
         status: subscriptions.status,
         currentPeriodStart: subscriptions.currentPeriodStart,
         currentPeriodEnd: subscriptions.currentPeriodEnd,
-        razorpaySubscriptionId: subscriptions.razorpaySubscriptionId,
+        razorpaySubscriptionId: subscriptions.providerSubscriptionId,
         payments:
           sql<number>`(select count(*) from ${payments} where ${payments.subscriptionId} = ${outer("subscriptions", "id")})`.mapWith(
             Number,
@@ -404,10 +404,10 @@ export async function getUser(userId: string) {
     db
       .select({
         id: payments.id,
-        amountPaise: payments.amountPaise,
+        amountPaise: payments.amount,
         status: payments.status,
         method: payments.method,
-        razorpayPaymentId: payments.razorpayPaymentId,
+        razorpayPaymentId: payments.providerPaymentId,
         createdAt: payments.createdAt,
       })
       .from(payments)
@@ -495,7 +495,7 @@ export async function grantSubscription(adminId: string, userId: string, plan: "
 
 export async function revokeSubscription(adminId: string, userId: string, subscriptionId: string) {
   const [subscription] = await db
-    .select({ razorpaySubscriptionId: subscriptions.razorpaySubscriptionId })
+    .select({ razorpaySubscriptionId: subscriptions.providerSubscriptionId })
     .from(subscriptions)
     .where(and(eq(subscriptions.id, subscriptionId), eq(subscriptions.userId, userId)));
   if (!subscription) throw new NotFoundError("Subscription");
@@ -616,21 +616,21 @@ export async function getRevenue(days: number, timeZone: string) {
     db
       .select({
         paise:
-          sql<number>`coalesce(sum(${payments.amountPaise}) filter (where ${captured} and ${payments.updatedAt} >= ${since}), 0)`.mapWith(
+          sql<number>`coalesce(sum(${payments.amount}) filter (where ${captured} and ${payments.updatedAt} >= ${since}), 0)`.mapWith(
             Number,
           ),
         previousPaise:
-          sql<number>`coalesce(sum(${payments.amountPaise}) filter (where ${captured} and ${payments.updatedAt} >= ${previousSince} and ${payments.updatedAt} < ${since}), 0)`.mapWith(
+          sql<number>`coalesce(sum(${payments.amount}) filter (where ${captured} and ${payments.updatedAt} >= ${previousSince} and ${payments.updatedAt} < ${since}), 0)`.mapWith(
             Number,
           ),
-        allTimePaise: sql<number>`coalesce(sum(${payments.amountPaise}) filter (where ${captured}), 0)`.mapWith(Number),
+        allTimePaise: sql<number>`coalesce(sum(${payments.amount}) filter (where ${captured}), 0)`.mapWith(Number),
         payers: sql<number>`count(distinct ${payments.userId}) filter (where ${captured})`.mapWith(Number),
         checkouts: filtered(sql`${payments.createdAt} >= ${since}`),
         checkoutsPaid: filtered(sql`${payments.createdAt} >= ${since} and ${captured}`),
       })
       .from(payments),
     db
-      .select({ day: dayOf(payments.updatedAt, timeZone), paise: sum(payments.amountPaise).mapWith(Number) })
+      .select({ day: dayOf(payments.updatedAt, timeZone), paise: sum(payments.amount).mapWith(Number) })
       .from(payments)
       .where(and(captured, gte(payments.updatedAt, since)))
       .groupBy(sql`1`),
@@ -648,10 +648,10 @@ export async function getRevenue(days: number, timeZone: string) {
       .select({
         id: payments.id,
         createdAt: payments.createdAt,
-        amountPaise: payments.amountPaise,
+        amountPaise: payments.amount,
         status: payments.status,
         method: payments.method,
-        razorpayPaymentId: payments.razorpayPaymentId,
+        razorpayPaymentId: payments.providerPaymentId,
         plan: subscriptions.plan,
         userId: users.id,
         email: users.email,
