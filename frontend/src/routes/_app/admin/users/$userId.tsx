@@ -382,7 +382,14 @@ function UserReport({ data }: { data: AdminUser }) {
                 <TableBody>
                   {data.ai.bySteps.map((row) => (
                     <TableRow key={row.step}>
-                      <TableCell>{stepLabel(row.step)}</TableCell>
+                      <TableCell className="whitespace-normal">
+                        {stepLabel(row.step)}
+                        {row.lastError && (
+                          <span className="mt-1 block font-mono text-xs break-words text-destructive">
+                            Last error: {row.lastError}
+                          </span>
+                        )}
+                      </TableCell>
                       <TableCell className="text-right tabular-nums">
                         {row.runs}
                       </TableCell>
