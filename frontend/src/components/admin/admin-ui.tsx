@@ -677,6 +677,7 @@ const stepLabels: Record<string, string> = {
   draft: 'Write from notes',
   ats_match: 'ATS job match',
   ats_review: 'ATS AI review',
+  project_link: 'Project from a link',
 }
 
 export const stepLabel = (step: string) => stepLabels[step] ?? step

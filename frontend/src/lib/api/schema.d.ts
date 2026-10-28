@@ -1254,7 +1254,7 @@ export interface paths {
                                     id: string;
                                     createdAt: string;
                                     /** @enum {string} */
-                                    step: "import" | "jd_parse" | "plan" | "rewrite" | "verify" | "inline_edit" | "chat_edit" | "fix_compile" | "draft" | "ats_match" | "ats_review";
+                                    step: "import" | "jd_parse" | "plan" | "rewrite" | "verify" | "inline_edit" | "chat_edit" | "fix_compile" | "draft" | "ats_match" | "ats_review" | "project_link";
                                     /** @enum {string} */
                                     status: "pending" | "succeeded" | "failed";
                                     model: string;
@@ -4861,6 +4861,78 @@ export interface paths {
                                 }[];
                                 /** @enum {string} */
                                 linkStyle?: "icon-and-link" | "icon-and-name" | "link";
+                            };
+                        };
+                    };
+                };
+                /** @description Error */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/project-drafts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Write a projects entry from a GitHub repo, a web page or pasted text with AI */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /** Format: uri */
+                        url: string;
+                        notes?: string;
+                    } | {
+                        text: string;
+                        notes?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description OK */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                project: {
+                                    id: string;
+                                    name: string;
+                                    url?: string;
+                                    technologies: string[];
+                                    bullets: {
+                                        id: string;
+                                        text: string;
+                                        flags: string[];
+                                    }[];
+                                };
+                                /** Format: uuid */
+                                aiRunId: string;
                             };
                         };
                     };

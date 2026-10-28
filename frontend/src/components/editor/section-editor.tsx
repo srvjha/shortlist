@@ -5,6 +5,7 @@ import {
   EyeIcon,
   EyeOffIcon,
   MoreHorizontalIcon,
+  LinkIcon,
   PlusIcon,
   Trash2Icon,
   XIcon,
@@ -48,6 +49,7 @@ import type {
 } from './content-helpers'
 import { EndDateField, ListField, MonthField, TextField } from './fields'
 import { LinksEditor } from './links-field'
+import { ProjectFromLink } from './project-from-link'
 
 // Space after an entry on the PDF, in points; Tighter pulls the next item closer than the template does.
 const spaceOptions = [
@@ -309,6 +311,7 @@ function EntriesEditor({
   const [openId, setOpenId] = useState<string | null>(
     entries.length === 1 ? entries[0].id : null,
   )
+  const [fromLink, setFromLink] = useState(false)
   const setEntries = (next: unknown[]) =>
     onChange({ ...section, entries: next } as ResumeSection)
 
@@ -427,7 +430,7 @@ function EntriesEditor({
           </div>
         )
       })}
-      <div className="p-1.5">
+      <div className="flex flex-wrap gap-1 p-1.5">
         <Button
           type="button"
           variant="ghost"
@@ -448,6 +451,28 @@ function EntriesEditor({
                 ? 'project'
                 : 'item'}
         </Button>
+        {section.type === 'projects' && (
+          <>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setFromLink(true)}
+            >
+              <LinkIcon data-icon="inline-start" />
+              Add from a link
+            </Button>
+            <ProjectFromLink
+              open={fromLink}
+              onOpenChange={setFromLink}
+              entries={section.entries}
+              onPlace={(next, added) => {
+                setEntries(next)
+                setOpenId(added.id)
+              }}
+            />
+          </>
+        )}
       </div>
     </div>
   )

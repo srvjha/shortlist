@@ -1,12 +1,12 @@
 import { createHash } from "node:crypto";
 import { and, desc, eq, isNotNull } from "drizzle-orm";
-import { env } from "../../config/env.js";
 import { db } from "../../db/index.js";
 import { jobs } from "../../db/schema/index.js";
 import { generateStructured } from "../../lib/ai/generate.js";
 import { AppError, NotFoundError } from "../../lib/errors.js";
 import { parsedJobSchema } from "./jobs.schemas.js";
 import { track } from "../../lib/analytics.js";
+import { readWebPage } from "../../lib/web-page.js";
 
 const system = `You extract structured requirements from job descriptions.
 Copy requirements faithfully; don't add skills that aren't mentioned. Keep items short (1-5 words each).
@@ -17,11 +17,7 @@ function hashText(text: string) {
 }
 
 async function fetchJobText(url: string) {
-  const response = await fetch(`https://r.jina.ai/${url}`, {
-    headers: { Accept: "text/plain", ...(env.JINA_API_KEY && { Authorization: `Bearer ${env.JINA_API_KEY}` }) },
-    signal: AbortSignal.timeout(20_000),
-  }).catch(() => null);
-  const text = response?.ok ? (await response.text()).trim() : "";
+  const text = await readWebPage(url);
   if (text.length < 200) {
     throw new AppError(
       422,
@@ -29,7 +25,7 @@ async function fetchJobText(url: string) {
       "Couldn't read that job page. Paste the job description text instead.",
     );
   }
-  return text.slice(0, 30_000);
+  return text;
 }
 
 export async function createJob(userId: string, input: { rawText: string } | { sourceUrl: string }) {

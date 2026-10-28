@@ -57,6 +57,8 @@ const envSchema = z.object({
 
   // Optional; raises Jina Reader's rate limit when fetching job posts from URLs.
   JINA_API_KEY: optionalString,
+  // Optional; raises GitHub's API limit for reading repos from 60 to 5,000 requests an hour.
+  GITHUB_TOKEN: optionalString,
 
   // Product analytics and API metrics. Empty: nothing is sent.
   POSTHOG_KEY: optionalString,
