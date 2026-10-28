@@ -1,1 +1,1 @@
-ALTER TYPE "public"."ai_step" ADD VALUE 'project_link';
+ALTER TYPE "public"."ai_step" ADD VALUE IF NOT EXISTS 'project_link';
