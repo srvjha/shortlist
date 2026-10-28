@@ -290,7 +290,8 @@ async function apiReport(days: number, timeZone: string) {
        FROM (${weighted("{days}")}) GROUP BY route ORDER BY requests DESC LIMIT 100`,
       values,
     ),
-    recentRequests(""),
+    // Sign-in checks run on every page load and would fill the list.
+    recentRequests("AND toString(properties.route) != '/api/auth/*splat'"),
     recentRequests("AND toInt(properties.status) >= 500"),
     recentRequests("AND toFloat(properties.duration_ms) >= {slow}"),
     // Sent by captureError in lib/analytics.ts: unhandled API errors and failed AI calls on our key.
