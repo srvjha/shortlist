@@ -6,8 +6,10 @@ import { trackServer } from "../lib/analytics.js";
 // baseUrl when a route passes an error on, so the /v1 mount is restored from the original URL then.
 export function routePattern(req: Request) {
   if (!req.route) return "unmatched";
-  const base = req.baseUrl || (req.originalUrl.startsWith("/v1/") ? "/v1" : "");
-  return `${base}${String(req.route.path)}`;
+  const path = String(req.route.path);
+  // Webhook routes are mounted at the root with /v1 in their own path.
+  const base = req.baseUrl || (req.originalUrl.startsWith("/v1/") && !path.startsWith("/v1/") ? "/v1" : "");
+  return `${base}${path}`;
 }
 
 // Steps inside a request (compile, cache lookup, AI) add their time here, so a slow request shows where it went.

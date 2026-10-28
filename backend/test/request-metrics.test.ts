@@ -32,3 +32,12 @@ describe("request step timings", () => {
     expect(sent[0]!.compile_ms).toBeGreaterThanOrEqual(19);
   });
 });
+
+describe("routePattern", async () => {
+  const { routePattern } = await import("../src/middleware/request-metrics.js");
+  it("adds the /v1 mount once, even for routes that carry it in their own path", () => {
+    const req = (path: string, originalUrl: string) => ({ route: { path }, baseUrl: "", originalUrl }) as never;
+    expect(routePattern(req("/resumes/:resumeId", "/v1/resumes/1"))).toBe("/v1/resumes/:resumeId");
+    expect(routePattern(req("/v1/webhooks/polar", "/v1/webhooks/polar"))).toBe("/v1/webhooks/polar");
+  });
+});
