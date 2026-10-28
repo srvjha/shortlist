@@ -18,7 +18,7 @@ import {
   users,
   webhookEvents,
 } from "../../db/schema/index.js";
-import { track } from "../../lib/analytics.js";
+import { hideKeys, track } from "../../lib/analytics.js";
 import { ConflictError, NotFoundError } from "../../lib/errors.js";
 import { storage } from "../../lib/storage.js";
 import { dayKeys } from "../analytics/analytics.service.js";
@@ -55,9 +55,6 @@ function fillDays<K extends string>(
 
 // Drizzle leaves columns unqualified in a select without joins, so inside a correlated subquery a bare
 // "id" binds to the inner table. The outer row's column is always named in full.
-// Provider errors can quote part of the API key, e.g. "Incorrect API key provided: sk-proj-****pI0A".
-export const hideKeys = (error: string | null) => error?.replace(/\bsk-[\w*-]+/g, "sk-…") ?? null;
-
 const outer = (table: string, column: string) => sql.raw(`"${table}"."${column}"`);
 
 const providersOf = sql<

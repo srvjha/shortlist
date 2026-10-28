@@ -25,7 +25,7 @@ app.set("trust proxy", 1);
 
 app.use(helmet());
 app.use(cors({ origin: env.FRONTEND_URL, credentials: true }));
-app.use(pinoHttp({ logger }));
+app.use(pinoHttp({ logger, autoLogging: { ignore: (req) => req.url?.startsWith("/health") ?? false } }));
 app.use(requestMetrics);
 
 // Better Auth reads the raw request body, so it is mounted before express.json().

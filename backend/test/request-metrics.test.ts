@@ -16,6 +16,7 @@ describe("request step timings", () => {
       route: { path: "/previews" },
       baseUrl: "/v1",
       originalUrl: "/v1/previews",
+      user: { id: "user_1" },
     };
     await new Promise<void>((resolve) =>
       requestMetrics(req as never, res as never, async () => {
@@ -27,7 +28,7 @@ describe("request step timings", () => {
       }),
     );
     res.emit("finish");
-    expect(sent[0]).toMatchObject({ route: "/v1/previews", ai_ms: 12, compile_cached: false });
+    expect(sent[0]).toMatchObject({ route: "/v1/previews", ai_ms: 12, compile_cached: false, user_id: "user_1" });
     expect(sent[0]!.compile_ms).toBeGreaterThanOrEqual(19);
   });
 });

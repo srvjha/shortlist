@@ -1,3 +1,4 @@
+import { captureError } from "../analytics.js";
 import { recordStep } from "../../middleware/request-metrics.js";
 import { APICallError, type LanguageModelUsage, NoObjectGeneratedError, generateObject } from "ai";
 import { eq } from "drizzle-orm";
@@ -103,6 +104,7 @@ export async function generateStructured<S extends z.ZodType>(
 
     return { data: result.object as z.infer<S>, runId: run!.id };
   } catch (err) {
+    recordStep("ai_ms", Date.now() - started);
     // Errors from a user's key are logged by status only: provider messages can echo parts of the key.
     if (userKey) {
       logger.warn(
@@ -117,6 +119,7 @@ export async function generateStructured<S extends z.ZodType>(
         { err: { name, message, stack }, status, step: input.step, model: base.model },
         "AI generation failed",
       );
+      captureError(err, { step: input.step, model: base.model, status: status ?? null, user_id: input.userId });
     }
     // The model ran and answered, but not in the schema's shape; its tokens are still spent.
     const spent = NoObjectGeneratedError.isInstance(err) && err.usage ? tokenUsage(err.usage) : undefined;
