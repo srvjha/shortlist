@@ -115,7 +115,9 @@ export const adminUserResponse = z.object({
     byokRuns: int,
     costUsdMicros: int,
     lastRunAt: z.date().nullable(),
-    bySteps: z.array(z.object({ step: z.string(), runs: int, failed: int, costUsdMicros: int })),
+    bySteps: z.array(
+      z.object({ step: z.string(), runs: int, failed: int, lastError: z.string().nullable(), costUsdMicros: int }),
+    ),
   }),
   usage: usageResponse,
   subscriptions: z.array(
@@ -191,6 +193,13 @@ export const adminAiResponse = z.object({
     }),
   ),
   topUsers: z.array(z.object({ userId: z.uuid(), email: z.string(), name: z.string(), runs: int, costUsdMicros: int })),
+  health: z.object({
+    lastSuccessAt: z.date().nullable(),
+    failedSince: z.date().nullable(),
+    failedRuns: int,
+    failedUsers: int,
+    lastError: z.string().nullable(),
+  }),
 });
 
 export const adminRevenueResponse = z.object({

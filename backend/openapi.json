@@ -23322,6 +23322,12 @@
                                     "minimum": -9007199254740991,
                                     "maximum": 9007199254740991
                                   },
+                                  "lastError": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ]
+                                  },
                                   "costUsdMicros": {
                                     "type": "integer",
                                     "minimum": -9007199254740991,
@@ -23332,6 +23338,7 @@
                                   "step",
                                   "runs",
                                   "failed",
+                                  "lastError",
                                   "costUsdMicros"
                                 ],
                                 "additionalProperties": false
@@ -23944,6 +23951,12 @@
                                     "minimum": -9007199254740991,
                                     "maximum": 9007199254740991
                                   },
+                                  "lastError": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ]
+                                  },
                                   "costUsdMicros": {
                                     "type": "integer",
                                     "minimum": -9007199254740991,
@@ -23954,6 +23967,7 @@
                                   "step",
                                   "runs",
                                   "failed",
+                                  "lastError",
                                   "costUsdMicros"
                                 ],
                                 "additionalProperties": false
@@ -24658,6 +24672,12 @@
                                     "minimum": -9007199254740991,
                                     "maximum": 9007199254740991
                                   },
+                                  "lastError": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ]
+                                  },
                                   "costUsdMicros": {
                                     "type": "integer",
                                     "minimum": -9007199254740991,
@@ -24668,6 +24688,7 @@
                                   "step",
                                   "runs",
                                   "failed",
+                                  "lastError",
                                   "costUsdMicros"
                                 ],
                                 "additionalProperties": false
@@ -25384,6 +25405,47 @@
                             ],
                             "additionalProperties": false
                           }
+                        },
+                        "health": {
+                          "type": "object",
+                          "properties": {
+                            "lastSuccessAt": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "failedSince": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "failedRuns": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "failedUsers": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "lastError": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "lastSuccessAt",
+                            "failedSince",
+                            "failedRuns",
+                            "failedUsers",
+                            "lastError"
+                          ],
+                          "additionalProperties": false
                         }
                       },
                       "required": [
@@ -25393,7 +25455,8 @@
                         "byModels",
                         "byDay",
                         "failures",
-                        "topUsers"
+                        "topUsers",
+                        "health"
                       ],
                       "additionalProperties": false
                     }

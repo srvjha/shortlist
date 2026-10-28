@@ -16,3 +16,14 @@ describe("isAdmin", () => {
     expect(isAdmin({ email: "", emailVerified: true })).toBe(false);
   });
 });
+
+describe("hideKeys", () => {
+  it("blanks API keys quoted in provider errors and keeps the rest", async () => {
+    const { hideKeys } = await import("../src/modules/admin/admin.service.js");
+    expect(hideKeys("Incorrect API key provided: sk-proj-abc****pI0A. You can find your API key at x.")).toBe(
+      "Incorrect API key provided: sk-…. You can find your API key at x.",
+    );
+    expect(hideKeys("rate limited")).toBe("rate limited");
+    expect(hideKeys(null)).toBeNull();
+  });
+});

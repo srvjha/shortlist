@@ -7453,6 +7453,7 @@ export interface paths {
                                         step: string;
                                         runs: number;
                                         failed: number;
+                                        lastError: string | null;
                                         costUsdMicros: number;
                                     }[];
                                 };
@@ -7608,6 +7609,7 @@ export interface paths {
                                         step: string;
                                         runs: number;
                                         failed: number;
+                                        lastError: string | null;
                                         costUsdMicros: number;
                                     }[];
                                 };
@@ -7861,6 +7863,7 @@ export interface paths {
                                         step: string;
                                         runs: number;
                                         failed: number;
+                                        lastError: string | null;
                                         costUsdMicros: number;
                                     }[];
                                 };
@@ -8073,6 +8076,13 @@ export interface paths {
                                     runs: number;
                                     costUsdMicros: number;
                                 }[];
+                                health: {
+                                    lastSuccessAt: string | null;
+                                    failedSince: string | null;
+                                    failedRuns: number;
+                                    failedUsers: number;
+                                    lastError: string | null;
+                                };
                             };
                         };
                     };

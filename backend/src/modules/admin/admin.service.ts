@@ -55,6 +55,9 @@ function fillDays<K extends string>(
 
 // Drizzle leaves columns unqualified in a select without joins, so inside a correlated subquery a bare
 // "id" binds to the inner table. The outer row's column is always named in full.
+// Provider errors can quote part of the API key, e.g. "Incorrect API key provided: sk-proj-****pI0A".
+export const hideKeys = (error: string | null) => error?.replace(/\bsk-[\w*-]+/g, "sk-…") ?? null;
+
 const outer = (table: string, column: string) => sql.raw(`"${table}"."${column}"`);
 
 const providersOf = sql<
@@ -369,6 +372,9 @@ export async function getUser(userId: string) {
         step: aiRuns.step,
         runs: count(),
         failed: filtered(sql`${aiRuns.status} = 'failed'`),
+        lastError: sql<
+          string | null
+        >`(array_agg(${aiRuns.error} order by ${aiRuns.createdAt} desc) filter (where ${aiRuns.status} = 'failed'))[1]`,
         costUsdMicros: sql<number>`coalesce(sum(${aiRuns.costUsdMicros}), 0)`.mapWith(Number),
       })
       .from(aiRuns)
@@ -444,7 +450,7 @@ export async function getUser(userId: string) {
       byokRuns: aiTotals?.byok ?? 0,
       costUsdMicros: aiTotals?.costUsdMicros ?? 0,
       lastRunAt: aiTotals?.lastRunAt ? new Date(aiTotals.lastRunAt) : null,
-      bySteps: aiByStep,
+      bySteps: aiByStep.map((row) => ({ ...row, lastError: hideKeys(row.lastError) })),
     },
     usage,
     subscriptions: userSubscriptions.map(({ payments: paymentCount, ...subscription }) => ({
@@ -518,7 +524,11 @@ export async function getAiUsage(days: number, timeZone: string) {
   const inRange = gte(aiRuns.createdAt, since);
   const cost = sql<number>`coalesce(sum(${aiRuns.costUsdMicros}), 0)`.mapWith(Number);
 
-  const [[totals], bySteps, byModels, byDay, failures, topUsers] = await Promise.all([
+  // Runs on our key that failed since the last one that worked: one bad key or an empty balance fails them all.
+  const ours = and(eq(aiRuns.byok, false), eq(aiRuns.status, "succeeded"));
+  const sinceLastSuccess = sql`${aiRuns.createdAt} > coalesce((select max(${aiRuns.createdAt}) from ${aiRuns} where ${ours}), '-infinity')`;
+
+  const [[totals], bySteps, byModels, byDay, failures, topUsers, [lastSuccess], [failing]] = await Promise.all([
     db
       .select({
         runs: count(),
@@ -588,6 +598,19 @@ export async function getAiUsage(days: number, timeZone: string) {
       .groupBy(users.id)
       .orderBy(desc(cost))
       .limit(10),
+    db
+      .select({ at: sql<Date | null>`max(${aiRuns.createdAt})` })
+      .from(aiRuns)
+      .where(ours),
+    db
+      .select({
+        runs: count(),
+        users: countDistinct(aiRuns.userId),
+        since: sql<Date | null>`min(${aiRuns.createdAt})`,
+        lastError: sql<string | null>`(array_agg(${aiRuns.error} order by ${aiRuns.createdAt} desc))[1]`,
+      })
+      .from(aiRuns)
+      .where(and(eq(aiRuns.byok, false), eq(aiRuns.status, "failed"), sinceLastSuccess)),
   ]);
 
   return {
@@ -605,8 +628,15 @@ export async function getAiUsage(days: number, timeZone: string) {
     bySteps: bySteps.map((row) => ({ ...row, p50Ms: Math.round(row.p50Ms), p95Ms: Math.round(row.p95Ms) })),
     byModels,
     byDay: fillDays(dayKeys(days, timeZone, now), byDay, ["runs", "costUsdMicros"]),
-    failures,
+    failures: failures.map((failure) => ({ ...failure, error: hideKeys(failure.error) })),
     topUsers,
+    health: {
+      lastSuccessAt: lastSuccess?.at ? new Date(lastSuccess.at) : null,
+      failedSince: failing?.since ? new Date(failing.since) : null,
+      failedRuns: failing?.runs ?? 0,
+      failedUsers: failing?.users ?? 0,
+      lastError: hideKeys(failing?.lastError ?? null),
+    },
   };
 }
 
