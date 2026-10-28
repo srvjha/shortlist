@@ -8367,13 +8367,6 @@ export interface paths {
                                         count: number;
                                         people: number;
                                     }[];
-                                    api: {
-                                        route: string;
-                                        requests: number;
-                                        p50Ms: number;
-                                        p95Ms: number;
-                                        errors: number;
-                                    }[];
                                     compiles: {
                                         requests: number;
                                         cacheHitRate: number;
@@ -8390,6 +8383,135 @@ export interface paths {
                                         durationSeconds: number;
                                         clicks: number;
                                         startUrl: string | null;
+                                        url: string;
+                                    }[];
+                                } | null;
+                            };
+                        };
+                    };
+                };
+                /** @description Error */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/api": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** API speed, requests and errors from PostHog */
+        get: {
+            parameters: {
+                query?: {
+                    days?: "7" | "30" | "90";
+                    timeZone?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                configured: boolean;
+                                dashboardUrl: string;
+                                error: string | null;
+                                data: {
+                                    slowMs: number;
+                                    totals: {
+                                        requests: number;
+                                        serverErrors: number;
+                                        clientErrors: number;
+                                        p50Ms: number;
+                                        p95Ms: number;
+                                        previousRequests: number;
+                                        previousServerErrors: number;
+                                        previousP95Ms: number;
+                                    };
+                                    byDay: {
+                                        day: string;
+                                        requests: number;
+                                        serverErrors: number;
+                                        p95Ms: number;
+                                    }[];
+                                    routes: {
+                                        route: string;
+                                        requests: number;
+                                        p50Ms: number;
+                                        p95Ms: number;
+                                        maxMs: number;
+                                        serverErrors: number;
+                                        clientErrors: number;
+                                        avgMs: number;
+                                        avgAiMs: number;
+                                        avgCompileMs: number;
+                                    }[];
+                                    recent: {
+                                        all: {
+                                            at: string;
+                                            method: string;
+                                            route: string;
+                                            status: number;
+                                            durationMs: number;
+                                            aiMs: number | null;
+                                            compileMs: number | null;
+                                            userId: string | null;
+                                            email: string | null;
+                                        }[];
+                                        errors: {
+                                            at: string;
+                                            method: string;
+                                            route: string;
+                                            status: number;
+                                            durationMs: number;
+                                            aiMs: number | null;
+                                            compileMs: number | null;
+                                            userId: string | null;
+                                            email: string | null;
+                                        }[];
+                                        slow: {
+                                            at: string;
+                                            method: string;
+                                            route: string;
+                                            status: number;
+                                            durationMs: number;
+                                            aiMs: number | null;
+                                            compileMs: number | null;
+                                            userId: string | null;
+                                            email: string | null;
+                                        }[];
+                                    };
+                                    errors: {
+                                        message: string;
+                                        count: number;
+                                        users: number;
+                                        where: string;
+                                        firstAt: string;
+                                        lastAt: string;
                                         url: string;
                                     }[];
                                 } | null;

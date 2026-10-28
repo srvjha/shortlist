@@ -1,4 +1,19 @@
-import { and, asc, count, countDistinct, desc, eq, gte, ilike, isNotNull, isNull, or, sql, sum } from "drizzle-orm";
+import {
+  and,
+  asc,
+  count,
+  countDistinct,
+  desc,
+  eq,
+  gte,
+  ilike,
+  inArray,
+  isNotNull,
+  isNull,
+  or,
+  sql,
+  sum,
+} from "drizzle-orm";
 import type { PgColumn } from "drizzle-orm/pg-core";
 import { env } from "../../config/env.js";
 import { db, pool } from "../../db/index.js";
@@ -24,6 +39,7 @@ import { storage } from "../../lib/storage.js";
 import { dayKeys } from "../analytics/analytics.service.js";
 import { grantPlan, recomputePlan } from "../billing/billing.service.js";
 import { getUsage } from "../usage/quotas.js";
+import type { getApiReport } from "./posthog.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -514,6 +530,25 @@ export async function revokeSubscription(adminId: string, userId: string, subscr
     .where(eq(subscriptions.id, subscriptionId));
   await recomputePlan(userId);
   track(adminId, "admin_plan_revoked", { target_user_id: userId });
+}
+
+type ApiReport = Awaited<ReturnType<typeof getApiReport>>;
+
+// PostHog events carry user ids only; the emails come from our database.
+export async function withEmails(report: ApiReport) {
+  if (!report.data) return report;
+  const { recent } = report.data;
+  const ids = [...new Set([...recent.all, ...recent.errors, ...recent.slow].flatMap((row) => row.userId ?? []))];
+  const found = ids.length
+    ? await db.select({ id: users.id, email: users.email }).from(users).where(inArray(users.id, ids))
+    : [];
+  const emails = new Map(found.map((user) => [user.id, user.email]));
+  const add = (rows: typeof recent.all) =>
+    rows.map((row) => ({ ...row, email: (row.userId && emails.get(row.userId)) ?? null }));
+  return {
+    ...report,
+    data: { ...report.data, recent: { all: add(recent.all), errors: add(recent.errors), slow: add(recent.slow) } },
+  };
 }
 
 export async function getAiUsage(days: number, timeZone: string) {

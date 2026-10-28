@@ -29,7 +29,11 @@ export const hideKeys = (text: string | null) => text?.replace(/\bsk-[\w*-]+/g, 
 export function captureError(err: unknown, properties: Properties) {
   const { name, message, stack } = err instanceof Error ? err : new Error(String(err));
   const copy = Object.assign(new Error(hideKeys(message) ?? ""), { name, stack: hideKeys(stack ?? null) ?? undefined });
-  client?.captureException(copy, "shortlist-api", { ...properties, $process_person_profile: false });
+  client?.captureException(copy, "shortlist-api", {
+    ...properties,
+    error_message: copy.message,
+    $process_person_profile: false,
+  });
 }
 
 export async function flushAnalytics() {

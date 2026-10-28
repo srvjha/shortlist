@@ -26367,45 +26367,6 @@
                                     "additionalProperties": false
                                   }
                                 },
-                                "api": {
-                                  "type": "array",
-                                  "items": {
-                                    "type": "object",
-                                    "properties": {
-                                      "route": {
-                                        "type": "string"
-                                      },
-                                      "requests": {
-                                        "type": "integer",
-                                        "minimum": -9007199254740991,
-                                        "maximum": 9007199254740991
-                                      },
-                                      "p50Ms": {
-                                        "type": "integer",
-                                        "minimum": -9007199254740991,
-                                        "maximum": 9007199254740991
-                                      },
-                                      "p95Ms": {
-                                        "type": "integer",
-                                        "minimum": -9007199254740991,
-                                        "maximum": 9007199254740991
-                                      },
-                                      "errors": {
-                                        "type": "integer",
-                                        "minimum": -9007199254740991,
-                                        "maximum": 9007199254740991
-                                      }
-                                    },
-                                    "required": [
-                                      "route",
-                                      "requests",
-                                      "p50Ms",
-                                      "p95Ms",
-                                      "errors"
-                                    ],
-                                    "additionalProperties": false
-                                  }
-                                },
                                 "compiles": {
                                   "type": "object",
                                   "properties": {
@@ -26511,9 +26472,559 @@
                                 "devices",
                                 "browsers",
                                 "events",
-                                "api",
                                 "compiles",
                                 "recordings"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "configured",
+                        "dashboardUrl",
+                        "error",
+                        "data"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/api": {
+      "get": {
+        "summary": "API speed, requests and errors from PostHog",
+        "tags": [
+          "Admin"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "days",
+            "schema": {
+              "default": "30",
+              "type": "string",
+              "enum": [
+                "7",
+                "30",
+                "90"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "timeZone",
+            "schema": {
+              "default": "Asia/Kolkata",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "configured": {
+                          "type": "boolean"
+                        },
+                        "dashboardUrl": {
+                          "type": "string"
+                        },
+                        "error": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "data": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "slowMs": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991
+                                },
+                                "totals": {
+                                  "type": "object",
+                                  "properties": {
+                                    "requests": {
+                                      "type": "integer",
+                                      "minimum": -9007199254740991,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "serverErrors": {
+                                      "type": "integer",
+                                      "minimum": -9007199254740991,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "clientErrors": {
+                                      "type": "integer",
+                                      "minimum": -9007199254740991,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "p50Ms": {
+                                      "type": "integer",
+                                      "minimum": -9007199254740991,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "p95Ms": {
+                                      "type": "integer",
+                                      "minimum": -9007199254740991,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "previousRequests": {
+                                      "type": "integer",
+                                      "minimum": -9007199254740991,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "previousServerErrors": {
+                                      "type": "integer",
+                                      "minimum": -9007199254740991,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "previousP95Ms": {
+                                      "type": "integer",
+                                      "minimum": -9007199254740991,
+                                      "maximum": 9007199254740991
+                                    }
+                                  },
+                                  "required": [
+                                    "requests",
+                                    "serverErrors",
+                                    "clientErrors",
+                                    "p50Ms",
+                                    "p95Ms",
+                                    "previousRequests",
+                                    "previousServerErrors",
+                                    "previousP95Ms"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                "byDay": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "day": {
+                                        "type": "string"
+                                      },
+                                      "requests": {
+                                        "type": "integer",
+                                        "minimum": -9007199254740991,
+                                        "maximum": 9007199254740991
+                                      },
+                                      "serverErrors": {
+                                        "type": "integer",
+                                        "minimum": -9007199254740991,
+                                        "maximum": 9007199254740991
+                                      },
+                                      "p95Ms": {
+                                        "type": "integer",
+                                        "minimum": -9007199254740991,
+                                        "maximum": 9007199254740991
+                                      }
+                                    },
+                                    "required": [
+                                      "day",
+                                      "requests",
+                                      "serverErrors",
+                                      "p95Ms"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "routes": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "route": {
+                                        "type": "string"
+                                      },
+                                      "requests": {
+                                        "type": "integer",
+                                        "minimum": -9007199254740991,
+                                        "maximum": 9007199254740991
+                                      },
+                                      "p50Ms": {
+                                        "type": "integer",
+                                        "minimum": -9007199254740991,
+                                        "maximum": 9007199254740991
+                                      },
+                                      "p95Ms": {
+                                        "type": "integer",
+                                        "minimum": -9007199254740991,
+                                        "maximum": 9007199254740991
+                                      },
+                                      "maxMs": {
+                                        "type": "integer",
+                                        "minimum": -9007199254740991,
+                                        "maximum": 9007199254740991
+                                      },
+                                      "serverErrors": {
+                                        "type": "integer",
+                                        "minimum": -9007199254740991,
+                                        "maximum": 9007199254740991
+                                      },
+                                      "clientErrors": {
+                                        "type": "integer",
+                                        "minimum": -9007199254740991,
+                                        "maximum": 9007199254740991
+                                      },
+                                      "avgMs": {
+                                        "type": "integer",
+                                        "minimum": -9007199254740991,
+                                        "maximum": 9007199254740991
+                                      },
+                                      "avgAiMs": {
+                                        "type": "integer",
+                                        "minimum": -9007199254740991,
+                                        "maximum": 9007199254740991
+                                      },
+                                      "avgCompileMs": {
+                                        "type": "integer",
+                                        "minimum": -9007199254740991,
+                                        "maximum": 9007199254740991
+                                      }
+                                    },
+                                    "required": [
+                                      "route",
+                                      "requests",
+                                      "p50Ms",
+                                      "p95Ms",
+                                      "maxMs",
+                                      "serverErrors",
+                                      "clientErrors",
+                                      "avgMs",
+                                      "avgAiMs",
+                                      "avgCompileMs"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "recent": {
+                                  "type": "object",
+                                  "properties": {
+                                    "all": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "object",
+                                        "properties": {
+                                          "at": {
+                                            "type": "string"
+                                          },
+                                          "method": {
+                                            "type": "string"
+                                          },
+                                          "route": {
+                                            "type": "string"
+                                          },
+                                          "status": {
+                                            "type": "integer",
+                                            "minimum": -9007199254740991,
+                                            "maximum": 9007199254740991
+                                          },
+                                          "durationMs": {
+                                            "type": "integer",
+                                            "minimum": -9007199254740991,
+                                            "maximum": 9007199254740991
+                                          },
+                                          "aiMs": {
+                                            "anyOf": [
+                                              {
+                                                "type": "integer",
+                                                "minimum": -9007199254740991,
+                                                "maximum": 9007199254740991
+                                              },
+                                              {
+                                                "type": "null"
+                                              }
+                                            ]
+                                          },
+                                          "compileMs": {
+                                            "anyOf": [
+                                              {
+                                                "type": "integer",
+                                                "minimum": -9007199254740991,
+                                                "maximum": 9007199254740991
+                                              },
+                                              {
+                                                "type": "null"
+                                              }
+                                            ]
+                                          },
+                                          "userId": {
+                                            "type": [
+                                              "string",
+                                              "null"
+                                            ]
+                                          },
+                                          "email": {
+                                            "type": [
+                                              "string",
+                                              "null"
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "at",
+                                          "method",
+                                          "route",
+                                          "status",
+                                          "durationMs",
+                                          "aiMs",
+                                          "compileMs",
+                                          "userId",
+                                          "email"
+                                        ],
+                                        "additionalProperties": false
+                                      }
+                                    },
+                                    "errors": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "object",
+                                        "properties": {
+                                          "at": {
+                                            "type": "string"
+                                          },
+                                          "method": {
+                                            "type": "string"
+                                          },
+                                          "route": {
+                                            "type": "string"
+                                          },
+                                          "status": {
+                                            "type": "integer",
+                                            "minimum": -9007199254740991,
+                                            "maximum": 9007199254740991
+                                          },
+                                          "durationMs": {
+                                            "type": "integer",
+                                            "minimum": -9007199254740991,
+                                            "maximum": 9007199254740991
+                                          },
+                                          "aiMs": {
+                                            "anyOf": [
+                                              {
+                                                "type": "integer",
+                                                "minimum": -9007199254740991,
+                                                "maximum": 9007199254740991
+                                              },
+                                              {
+                                                "type": "null"
+                                              }
+                                            ]
+                                          },
+                                          "compileMs": {
+                                            "anyOf": [
+                                              {
+                                                "type": "integer",
+                                                "minimum": -9007199254740991,
+                                                "maximum": 9007199254740991
+                                              },
+                                              {
+                                                "type": "null"
+                                              }
+                                            ]
+                                          },
+                                          "userId": {
+                                            "type": [
+                                              "string",
+                                              "null"
+                                            ]
+                                          },
+                                          "email": {
+                                            "type": [
+                                              "string",
+                                              "null"
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "at",
+                                          "method",
+                                          "route",
+                                          "status",
+                                          "durationMs",
+                                          "aiMs",
+                                          "compileMs",
+                                          "userId",
+                                          "email"
+                                        ],
+                                        "additionalProperties": false
+                                      }
+                                    },
+                                    "slow": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "object",
+                                        "properties": {
+                                          "at": {
+                                            "type": "string"
+                                          },
+                                          "method": {
+                                            "type": "string"
+                                          },
+                                          "route": {
+                                            "type": "string"
+                                          },
+                                          "status": {
+                                            "type": "integer",
+                                            "minimum": -9007199254740991,
+                                            "maximum": 9007199254740991
+                                          },
+                                          "durationMs": {
+                                            "type": "integer",
+                                            "minimum": -9007199254740991,
+                                            "maximum": 9007199254740991
+                                          },
+                                          "aiMs": {
+                                            "anyOf": [
+                                              {
+                                                "type": "integer",
+                                                "minimum": -9007199254740991,
+                                                "maximum": 9007199254740991
+                                              },
+                                              {
+                                                "type": "null"
+                                              }
+                                            ]
+                                          },
+                                          "compileMs": {
+                                            "anyOf": [
+                                              {
+                                                "type": "integer",
+                                                "minimum": -9007199254740991,
+                                                "maximum": 9007199254740991
+                                              },
+                                              {
+                                                "type": "null"
+                                              }
+                                            ]
+                                          },
+                                          "userId": {
+                                            "type": [
+                                              "string",
+                                              "null"
+                                            ]
+                                          },
+                                          "email": {
+                                            "type": [
+                                              "string",
+                                              "null"
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "at",
+                                          "method",
+                                          "route",
+                                          "status",
+                                          "durationMs",
+                                          "aiMs",
+                                          "compileMs",
+                                          "userId",
+                                          "email"
+                                        ],
+                                        "additionalProperties": false
+                                      }
+                                    }
+                                  },
+                                  "required": [
+                                    "all",
+                                    "errors",
+                                    "slow"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                "errors": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "message": {
+                                        "type": "string"
+                                      },
+                                      "count": {
+                                        "type": "integer",
+                                        "minimum": -9007199254740991,
+                                        "maximum": 9007199254740991
+                                      },
+                                      "users": {
+                                        "type": "integer",
+                                        "minimum": -9007199254740991,
+                                        "maximum": 9007199254740991
+                                      },
+                                      "where": {
+                                        "type": "string"
+                                      },
+                                      "firstAt": {
+                                        "type": "string"
+                                      },
+                                      "lastAt": {
+                                        "type": "string"
+                                      },
+                                      "url": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "message",
+                                      "count",
+                                      "users",
+                                      "where",
+                                      "firstAt",
+                                      "lastAt",
+                                      "url"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                }
+                              },
+                              "required": [
+                                "slowMs",
+                                "totals",
+                                "byDay",
+                                "routes",
+                                "recent",
+                                "errors"
                               ],
                               "additionalProperties": false
                             },

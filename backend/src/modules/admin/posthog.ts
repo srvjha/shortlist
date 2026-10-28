@@ -75,7 +75,6 @@ async function traffic(days: number, timeZone: string) {
     devices,
     browsers,
     events,
-    api,
     recordings,
     compiles,
     previews,
@@ -107,23 +106,6 @@ async function traffic(days: number, timeZone: string) {
        FROM events
        WHERE timestamp >= now() - toIntervalDay({days}) AND NOT startsWith(event, '$') AND event != 'api_request'
        GROUP BY event ORDER BY total DESC LIMIT 20`,
-      values,
-    ),
-    // api_request is sampled (see request-metrics.ts): slow and failed requests are always kept, fast ones 1 in 10.
-    // Each event is repeated 1 / sample_rate times so counts and percentiles reflect real traffic (HogQL has no
-    // weighted quantile); unweighted, the p95 read 30 times too high.
-    hogql(
-      `SELECT route, count() AS requests, quantile(0.5)(duration), quantile(0.95)(duration), countIf(status >= 500)
-       FROM (
-         SELECT
-           concat(toString(properties.method), ' ', toString(properties.route)) AS route,
-           toFloat(properties.duration_ms) AS duration,
-           toInt(properties.status) AS status,
-           arrayJoin(range(toInt(round(1 / toFloat(properties.sample_rate))))) AS copy
-         FROM events
-         WHERE event = 'api_request' AND timestamp >= now() - toIntervalDay({days})
-       )
-       GROUP BY route ORDER BY requests DESC LIMIT 15`,
       values,
     ),
     posthog<{
@@ -211,13 +193,6 @@ async function traffic(days: number, timeZone: string) {
     devices,
     browsers,
     events: events.map(([event, total, people]) => ({ event: String(event), count: num(total), people: num(people) })),
-    api: api.map(([route, requests, p50, p95, errors]) => ({
-      route: String(route),
-      requests: num(requests),
-      p50Ms: Math.round(num(p50)),
-      p95Ms: Math.round(num(p95)),
-      errors: num(errors),
-    })),
     compiles: (([total, cached, p50, p95, lookup] = []) => ({
       requests: num(total),
       cacheHitRate: num(total) ? num(cached) / num(total) : 0,
@@ -239,27 +214,151 @@ async function traffic(days: number, timeZone: string) {
   };
 }
 
-type Traffic = Awaited<ReturnType<typeof traffic>>;
-
 // ponytail: per-process cache, fine for one API instance; PostHog rate-limits the query API, and each
-// page load runs ten queries. Move to a shared cache if the API is ever scaled out.
-const cache = new Map<string, { expires: number; data: Promise<Traffic> }>();
-const TTL_MS = 5 * 60 * 1000;
+// page load runs several queries. Move to a shared cache if the API is ever scaled out.
+const cache = new Map<string, { expires: number; data: Promise<unknown> }>();
 
-export async function getTraffic(days: number, timeZone: string) {
+async function report<T>(key: string, ttlMs: number, load: () => Promise<T>) {
   const dashboardUrl = `${env.POSTHOG_APP_HOST}/project/${env.POSTHOG_PROJECT_ID ?? ""}`;
   if (!configured()) return { configured: false as const, dashboardUrl, error: null, data: null };
 
-  const key = `${days}:${timeZone}`;
   let entry = cache.get(key);
   if (!entry || entry.expires < Date.now()) {
-    entry = { expires: Date.now() + TTL_MS, data: traffic(days, timeZone) };
+    entry = { expires: Date.now() + ttlMs, data: load() };
     cache.set(key, entry);
   }
   try {
-    return { configured: true as const, dashboardUrl, error: null, data: await entry.data };
+    return { configured: true as const, dashboardUrl, error: null, data: (await entry.data) as T };
   } catch (err) {
     cache.delete(key);
     return { configured: true as const, dashboardUrl, error: (err as Error).message, data: null };
   }
+}
+
+export const getTraffic = (days: number, timeZone: string) =>
+  report(`traffic:${days}:${timeZone}`, 5 * 60 * 1000, () => traffic(days, timeZone));
+
+// A minute, so recent requests and errors stay close to live.
+export const getApiReport = (days: number, timeZone: string) =>
+  report(`api:${days}:${timeZone}`, 60 * 1000, () => apiReport(days, timeZone));
+
+const SLOW_MS = 1000;
+
+async function apiReport(days: number, timeZone: string) {
+  const values = { days, timeZone, slow: SLOW_MS };
+  // Requests from before 2026-10-28 were sampled (fast successes 1 in 10). Each event is repeated
+  // 1 / sample_rate times so counts and percentiles reflect real traffic (HogQL has no weighted quantile).
+  const weighted = (range: string) => `
+    SELECT timestamp,
+      concat(toString(properties.method), ' ', toString(properties.route)) AS route,
+      toFloat(properties.duration_ms) AS duration,
+      toInt(properties.status) AS status,
+      coalesce(toFloat(properties.ai_ms), 0) AS ai,
+      coalesce(toFloat(properties.compile_ms), 0) AS compile,
+      arrayJoin(range(toInt(round(1 / toFloat(properties.sample_rate))))) AS copy
+    FROM events
+    WHERE event = 'api_request' AND timestamp >= now() - toIntervalDay(${range})`;
+  const recentRequests = (where: string) =>
+    hogql(
+      `SELECT timestamp, toString(properties.method), toString(properties.route), toInt(properties.status),
+         toFloat(properties.duration_ms), toFloat(properties.ai_ms), toFloat(properties.compile_ms),
+         toString(properties.user_id)
+       FROM events
+       WHERE event = 'api_request' AND timestamp >= now() - toIntervalDay({days}) ${where}
+       ORDER BY timestamp DESC LIMIT 50`,
+      values,
+    );
+
+  const [totals, byDay, routes, recent, errorRequests, slowRequests, errors] = await Promise.all([
+    hogql(
+      `SELECT
+         countIf(current), countIf(current AND status >= 500), countIf(current AND status >= 400 AND status < 500),
+         quantileIf(0.5)(duration, current), quantileIf(0.95)(duration, current),
+         countIf(NOT current), countIf(NOT current AND status >= 500), quantileIf(0.95)(duration, NOT current)
+       FROM (SELECT *, timestamp >= now() - toIntervalDay({days}) AS current FROM (${weighted("{days} * 2")}))`,
+      values,
+    ),
+    hogql(
+      `SELECT toString(toDate(toTimeZone(timestamp, {timeZone}))) AS day, count(), countIf(status >= 500),
+         quantile(0.95)(duration)
+       FROM (${weighted("{days}")}) GROUP BY day ORDER BY day`,
+      values,
+    ),
+    hogql(
+      `SELECT route, count() AS requests, quantile(0.5)(duration), quantile(0.95)(duration), max(duration),
+         countIf(status >= 500), countIf(status >= 400 AND status < 500), avg(duration), avg(ai), avg(compile)
+       FROM (${weighted("{days}")}) GROUP BY route ORDER BY requests DESC LIMIT 100`,
+      values,
+    ),
+    recentRequests(""),
+    recentRequests("AND toInt(properties.status) >= 500"),
+    recentRequests("AND toFloat(properties.duration_ms) >= {slow}"),
+    // Sent by captureError in lib/analytics.ts: unhandled API errors and failed AI calls on our key.
+    hogql(
+      `SELECT toString(properties.error_message) AS message, count(), count(DISTINCT properties.user_id),
+         arrayStringConcat(groupUniqArray(coalesce(toString(properties.route), toString(properties.step))), ', '),
+         min(timestamp), max(timestamp), argMax(toString(properties.$exception_issue_id), timestamp)
+       FROM events
+       WHERE event = '$exception' AND timestamp >= now() - toIntervalDay({days})
+       GROUP BY message ORDER BY max(timestamp) DESC LIMIT 20`,
+      values,
+    ),
+  ]);
+
+  const requestRows = (results: unknown[][]) =>
+    results.map(([at, method, route, status, duration, ai, compile, userId]) => ({
+      at: new Date(String(at)),
+      method: String(method),
+      route: String(route),
+      status: num(status),
+      durationMs: Math.round(num(duration)),
+      aiMs: ai === null ? null : Math.round(num(ai)),
+      compileMs: compile === null ? null : Math.round(num(compile)),
+      userId: userId === null || userId === "" ? null : String(userId),
+    }));
+
+  const [current = []] = totals;
+  const found = new Map(byDay.map(([day, ...rest]) => [String(day), rest]));
+  return {
+    slowMs: SLOW_MS,
+    totals: {
+      requests: num(current[0]),
+      serverErrors: num(current[1]),
+      clientErrors: num(current[2]),
+      p50Ms: Math.round(num(current[3])),
+      p95Ms: Math.round(num(current[4])),
+      previousRequests: num(current[5]),
+      previousServerErrors: num(current[6]),
+      previousP95Ms: Math.round(num(current[7])),
+    },
+    // PostHog returns only days with requests; the chart needs every day in the range.
+    byDay: dayKeys(days, timeZone, new Date()).map((day) => {
+      const [requests, serverErrors, p95] = found.get(day) ?? [];
+      return { day, requests: num(requests), serverErrors: num(serverErrors), p95Ms: Math.round(num(p95)) };
+    }),
+    routes: routes.map(([route, requests, p50, p95, max, serverErrors, clientErrors, avg, ai, compile]) => ({
+      route: String(route),
+      requests: num(requests),
+      p50Ms: Math.round(num(p50)),
+      p95Ms: Math.round(num(p95)),
+      maxMs: Math.round(num(max)),
+      serverErrors: num(serverErrors),
+      clientErrors: num(clientErrors),
+      avgMs: Math.round(num(avg)),
+      avgAiMs: Math.round(num(ai)),
+      avgCompileMs: Math.round(num(compile)),
+    })),
+    recent: { all: requestRows(recent), errors: requestRows(errorRequests), slow: requestRows(slowRequests) },
+    errors: errors.map(([message, count, users, where, first, last, issueId]) => ({
+      message: str(message, "No message"),
+      count: num(count),
+      users: num(users),
+      where: str(where, ""),
+      firstAt: new Date(String(first)),
+      lastAt: new Date(String(last)),
+      url: issueId
+        ? `${env.POSTHOG_APP_HOST}/project/${env.POSTHOG_PROJECT_ID}/error_tracking/${String(issueId)}`
+        : `${env.POSTHOG_APP_HOST}/project/${env.POSTHOG_PROJECT_ID}/error_tracking`,
+    })),
+  };
 }

@@ -10,6 +10,7 @@ import {
   adminSubscriptionParams,
   adminSystemResponse,
   adminTrafficResponse,
+  adminApiResponse,
   adminUserListResponse,
   adminUserParams,
   adminUserResponse,
@@ -694,6 +695,14 @@ const paths: ZodOpenApiPathsObject = {
       tag: "Admin",
       query: adminRangeQuery,
       response: adminTrafficResponse,
+    }),
+  },
+  "/v1/admin/api": {
+    get: op({
+      summary: "API speed, requests and errors from PostHog",
+      tag: "Admin",
+      query: adminRangeQuery,
+      response: adminApiResponse,
     }),
   },
   "/v1/admin/system": {
