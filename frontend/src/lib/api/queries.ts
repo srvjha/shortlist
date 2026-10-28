@@ -270,6 +270,21 @@ export const adminContentQuery = (days: AdminRange) =>
       ),
   })
 
+export const adminApiQuery = (days: AdminRange) =>
+  queryOptions({
+    queryKey: queryKeys.adminReport('api', days),
+    queryFn: () =>
+      unwrap(
+        api.GET('/v1/admin/api', {
+          params: {
+            query: { days: String(days) as never, timeZone: timeZone() },
+          },
+        }),
+      ),
+    // The API caches this report for a minute.
+    staleTime: 60_000,
+  })
+
 export const adminTrafficQuery = (days: AdminRange) =>
   queryOptions({
     queryKey: queryKeys.adminReport('traffic', days),

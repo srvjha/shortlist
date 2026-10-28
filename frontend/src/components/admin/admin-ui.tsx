@@ -1,5 +1,5 @@
 import type { UseQueryResult } from '@tanstack/react-query'
-import { CheckIcon, CopyIcon } from 'lucide-react'
+import { CheckIcon, CopyIcon, ExternalLinkIcon } from 'lucide-react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useId, useState } from 'react'
 import { toast } from 'sonner'
@@ -14,6 +14,7 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Spinner } from '@/components/ui/spinner'
 import { errorMessage } from '@/lib/api/client'
 import { formatNumber, percent, planLabels } from '@/lib/format'
 import { templateCatalog } from '@/lib/templates'
@@ -139,6 +140,100 @@ export function Section({
   )
 }
 
+type PostHogResult<T> = {
+  configured: boolean
+  dashboardUrl: string
+  error: string | null
+  data: T | null
+}
+
+// An admin report read from PostHog: shows setup steps until it's connected, and PostHog's own errors.
+export function PostHogView<T>({
+  query,
+  note,
+  children,
+}: {
+  query: UseQueryResult<PostHogResult<T>>
+  note: string
+  children: (data: T) => React.ReactNode
+}) {
+  return (
+    <QueryView query={query}>
+      {(result) => (
+        <div className="flex flex-col gap-10">
+          {result.configured && (
+            <div className="-mt-4 flex flex-wrap items-center justify-between gap-3">
+              <p className="text-sm text-muted-foreground">{note}</p>
+              <Button variant="outline" size="sm" asChild>
+                <a href={result.dashboardUrl} target="_blank" rel="noreferrer">
+                  Open PostHog
+                  <ExternalLinkIcon data-icon="inline-end" aria-hidden />
+                </a>
+              </Button>
+            </div>
+          )}
+          {!result.configured ? (
+            <PostHogNotConfigured />
+          ) : result.error || !result.data ? (
+            <Alert variant="destructive">
+              <AlertTitle>
+                {busy(result.error)
+                  ? 'PostHog is busy right now'
+                  : "PostHog didn't answer"}
+              </AlertTitle>
+              <AlertDescription>
+                {busy(result.error)
+                  ? 'It limits how many reports run at once. Wait a moment and try again.'
+                  : `${result.error ?? 'No data came back.'} Check that the personal API key has the query:read and session_recording:read scopes.`}
+              </AlertDescription>
+              <AlertAction>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={query.isFetching}
+                  onClick={() => query.refetch()}
+                >
+                  {query.isFetching && <Spinner data-icon="inline-start" />}
+                  Try again
+                </Button>
+              </AlertAction>
+            </Alert>
+          ) : (
+            children(result.data)
+          )}
+        </div>
+      )}
+    </QueryView>
+  )
+}
+
+// 429 and 503 mean PostHog is overloaded for a moment, not that anything is set up wrong.
+const busy = (error: string | null) =>
+  Boolean(error && /PostHog (429|503)/.test(error))
+
+function PostHogNotConfigured() {
+  return (
+    <div className="flex flex-col gap-3 rounded-lg border border-dashed p-6">
+      <h2 className="font-sans text-base font-semibold">Connect PostHog</h2>
+      <p className="max-w-prose text-sm text-muted-foreground">
+        Events are already being sent to PostHog. To read them back here, add
+        these to the API's environment and restart it:
+      </p>
+      <ol className="flex list-decimal flex-col gap-1.5 pl-5 text-sm">
+        <li>
+          <span className="font-mono">POSTHOG_PERSONAL_API_KEY</span>: PostHog,
+          Settings, Personal API keys, with the scopes query:read and
+          session_recording:read.
+        </li>
+        <li>
+          <span className="font-mono">POSTHOG_PROJECT_ID</span>: the number
+          after /project/ in your PostHog URL.
+        </li>
+      </ol>
+    </div>
+  )
+}
+
 // Each step as a share of the first, so drop-off between steps is visible. Later steps fade, as the stages are ordered.
 export function Funnel({
   steps,
@@ -209,12 +304,15 @@ export function TrendChart({
   color,
   unit,
   format = formatNumber,
+  summed = true,
 }: {
   data: { day: string; value: number }[]
   color: string
   // Singular and plural name of what is counted.
   unit: [string, string]
   format?: (value: number) => string
+  // False for values that don't add up across days, like a daily p95.
+  summed?: boolean
 }) {
   const id = useId()
   const [active, setActive] = useState<number | null>(null)
@@ -245,7 +343,7 @@ export function TrendChart({
         <div
           role="img"
           tabIndex={0}
-          aria-label={`${unit[1]} per day, ${data.length} days, ${format(total)} in total. Use the arrow keys to read each day.`}
+          aria-label={`${unit[1]} per day, ${data.length} days${summed ? `, ${format(total)} in total` : ''}. Use the arrow keys to read each day.`}
           className="relative h-52 flex-1 touch-pan-y rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 focus-visible:ring-offset-card"
           onPointerMove={(event) => {
             const rect = event.currentTarget.getBoundingClientRect()
