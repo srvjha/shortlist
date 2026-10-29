@@ -3,7 +3,7 @@ import { CheckIcon } from 'lucide-react'
 import { FaqList } from '@/components/site/faq-list'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { site } from '@/lib/site'
+import { breadcrumbs, site } from '@/lib/site'
 import { templatePages } from '@/lib/template-pages'
 import { categoryName, templateCatalog } from '@/lib/templates'
 
@@ -31,6 +31,17 @@ export const Route = createFileRoute('/_site/templates/$templateId')({
         { property: 'og:url', content: url },
       ],
       links: [{ rel: 'canonical', href: url }],
+      scripts: [
+        {
+          type: 'application/ld+json',
+          children: JSON.stringify(
+            breadcrumbs([
+              ['Resume templates', `${site.url}/templates`],
+              [page.heading, url],
+            ]),
+          ),
+        },
+      ],
     }
   },
   component: TemplatePage,

@@ -10,3 +10,12 @@ export const site = {
   contactEmail: 'support@shortlist.co.in',
   x: 'https://x.com/J_srv001',
 }
+
+// schema.org BreadcrumbList for a page under the home page, from [name, url] pairs.
+export const breadcrumbs = (trail: [string, string][]) => ({
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [[site.name, `${site.url}/`], ...trail].map(
+    ([name, item], i) => ({ '@type': 'ListItem', position: i + 1, name, item }),
+  ),
+})
