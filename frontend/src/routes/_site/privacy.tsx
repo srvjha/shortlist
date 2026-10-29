@@ -4,7 +4,11 @@ import { site } from '@/lib/site'
 
 export const Route = createFileRoute('/_site/privacy')({
   head: () => ({
-    meta: [{ title: `Privacy | ${site.name}` }],
+    meta: [
+      { title: `Privacy | ${site.name}` },
+      { property: 'og:title', content: `Privacy | ${site.name}` },
+      { property: 'og:url', content: `${site.url}/privacy` },
+    ],
     links: [{ rel: 'canonical', href: `${site.url}/privacy` }],
   }),
   component: () => (

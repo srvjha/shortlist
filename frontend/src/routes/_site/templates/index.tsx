@@ -25,6 +25,7 @@ import {
 
 // Two rows of the three-column desktop grid.
 const batch = 6
+const title = `Free ATS-Friendly Resume Templates for Freshers | ${site.name}`
 
 export const Route = createFileRoute('/_site/templates/')({
   validateSearch: z.object({
@@ -35,9 +36,9 @@ export const Route = createFileRoute('/_site/templates/')({
   }),
   head: () => ({
     meta: [
-      {
-        title: `Free ATS-Friendly Resume Templates for Freshers | ${site.name}`,
-      },
+      { title },
+      { property: 'og:title', content: title },
+      { property: 'og:url', content: `${site.url}/templates` },
       {
         name: 'description',
         content:

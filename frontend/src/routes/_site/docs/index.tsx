@@ -3,13 +3,16 @@ import { ArrowRightIcon } from 'lucide-react'
 import { docGroups, docs } from '@/lib/docs'
 import { site } from '@/lib/site'
 
+const title = `Docs: How the AI Resume Builder Works | ${site.name}`
 const description = `How ${site.name} works: writing and importing resumes, templates, tailoring with AI, the ATS checker, share links, plans and your data.`
 
 export const Route = createFileRoute('/_site/docs/')({
   head: () => ({
     meta: [
-      { title: `Docs | ${site.name}` },
+      { title },
       { name: 'description', content: description },
+      { property: 'og:title', content: title },
+      { property: 'og:url', content: `${site.url}/docs` },
     ],
     links: [{ rel: 'canonical', href: `${site.url}/docs` }],
   }),

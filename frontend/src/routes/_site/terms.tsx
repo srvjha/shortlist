@@ -4,7 +4,11 @@ import { site } from '@/lib/site'
 
 export const Route = createFileRoute('/_site/terms')({
   head: () => ({
-    meta: [{ title: `Terms | ${site.name}` }],
+    meta: [
+      { title: `Terms | ${site.name}` },
+      { property: 'og:title', content: `Terms | ${site.name}` },
+      { property: 'og:url', content: `${site.url}/terms` },
+    ],
     links: [{ rel: 'canonical', href: `${site.url}/terms` }],
   }),
   component: () => (

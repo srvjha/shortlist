@@ -12,12 +12,16 @@ export const Route = createFileRoute('/_site/docs/$slug')({
   head: ({ params }) => {
     const doc = findDoc(params.slug)
     if (!doc) return {}
+    const title = `${doc.title} | ${site.name} docs`
+    const url = `${site.url}/docs/${doc.slug}`
     return {
       meta: [
-        { title: `${doc.title} | ${site.name} docs` },
+        { title },
         { name: 'description', content: doc.summary },
+        { property: 'og:title', content: title },
+        { property: 'og:url', content: url },
       ],
-      links: [{ rel: 'canonical', href: `${site.url}/docs/${doc.slug}` }],
+      links: [{ rel: 'canonical', href: url }],
     }
   },
   component: DocArticle,

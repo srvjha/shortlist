@@ -134,6 +134,8 @@ const faqs = [
 // Product and Offer data so search engines and AI assistants can read the prices.
 // A web app, not a Product: Google reads Product as goods in a shop and then asks for shipping, returns,
 // images and reviews, none of which apply here.
+const title = `Pricing: AI Resume Builder, Free to Start | ${site.name}`
+
 const structuredData = {
   '@context': 'https://schema.org',
   '@type': 'WebApplication',
@@ -157,9 +159,9 @@ const structuredData = {
 export const Route = createFileRoute('/_site/pricing')({
   head: () => ({
     meta: [
-      {
-        title: `Pricing: AI Resume Builder, Free to Start | ${site.name}`,
-      },
+      { title },
+      { property: 'og:title', content: title },
+      { property: 'og:url', content: `${site.url}/pricing` },
       {
         name: 'description',
         content:
