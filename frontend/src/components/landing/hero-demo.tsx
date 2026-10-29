@@ -82,8 +82,10 @@ export function Hero() {
         className="isolate mx-auto max-w-6xl font-serif text-[2.4rem] leading-[1.04] font-semibold tracking-[-0.035em] sm:text-6xl lg:text-7xl"
       >
         {/* Phones drop "Your resume," so the line and the job each fit on one line. */}
-        <span className="max-sm:hidden">Your resume, tailored to every</span>
-        <span className="sm:hidden">Tailored to every</span>
+        <span className="max-sm:hidden">Your resume, </span>
+        <span className="inline-block max-sm:first-letter:uppercase">
+          tailored to every
+        </span>
         <br />
         <span className="whitespace-nowrap">
           <JobTitle word={titles[title]} /> job
