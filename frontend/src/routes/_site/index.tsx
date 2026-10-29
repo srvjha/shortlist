@@ -49,7 +49,16 @@ export const Route = createFileRoute('/_site/')({
       { name: 'twitter:title', content: title },
       { name: 'twitter:description', content: description },
     ],
-    links: [{ rel: 'canonical', href: `${site.url}/` }],
+    links: [
+      { rel: 'canonical', href: `${site.url}/` },
+      // The hero video's poster is the largest paint on phones.
+      {
+        rel: 'preload',
+        as: 'image',
+        href: '/video/how-it-works.jpg',
+        fetchPriority: 'high',
+      },
+    ],
     scripts: [
       {
         type: 'application/ld+json',

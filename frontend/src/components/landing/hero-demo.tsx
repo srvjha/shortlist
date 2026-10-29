@@ -145,8 +145,12 @@ function HowItWorksVideo() {
   useEffect(() => {
     const element = video.current
     if (!element || reduceMotion || stopped) return
-    if (onScreen) element.play().catch(() => {})
-    else element.pause()
+    if (!onScreen) return element.pause()
+    // The poster is the page's largest paint, so the recording only starts downloading once the page has loaded.
+    const play = () => element.play().catch(() => {})
+    if (document.readyState === 'complete') return void play()
+    window.addEventListener('load', play, { once: true })
+    return () => window.removeEventListener('load', play)
   }, [onScreen, reduceMotion, stopped])
 
   // timeupdate only fires a few times a second, so the step bars follow the frames while playing.
@@ -203,7 +207,7 @@ function HowItWorksVideo() {
               muted
               loop
               playsInline
-              preload="metadata"
+              preload="none"
               aria-describedby="how-it-works-video"
               onClick={toggle}
               onPlay={() => setPlaying(true)}
