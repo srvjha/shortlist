@@ -27,6 +27,11 @@ export const Route = createFileRoute('/_site/privacy')({
           Your resumes, their version history, and job descriptions you add.
         </li>
         <li>
+          Feedback you send about an AI suggestion: whether it helped, your
+          comment, and whether we may email you about it. We only email you
+          about feedback if you tick that box.
+        </li>
+        <li>
           Files you upload to import a resume. These are deleted after 30 days.
         </li>
         <li>
