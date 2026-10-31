@@ -106,6 +106,7 @@ import {
 } from "./modules/share-links/share-links.schemas.js";
 import {
   createSuggestionBody,
+  suggestionFeedbackBody,
   suggestionListResponse,
   suggestionParams,
   suggestionResponse,
@@ -454,6 +455,15 @@ const paths: ZodOpenApiPathsObject = {
       tag: "Suggestions",
       params: suggestionParams,
       response: suggestionResponse,
+    }),
+  },
+  "/v1/resumes/{resumeId}/suggestions/{suggestionId}/feedback": {
+    put: op({
+      summary: "Rate an AI suggestion after applying it",
+      tag: "Suggestions",
+      params: suggestionParams,
+      body: suggestionFeedbackBody,
+      noContent: true,
     }),
   },
 

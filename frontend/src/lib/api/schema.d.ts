@@ -5643,6 +5643,61 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/resumes/{resumeId}/suggestions/{suggestionId}/feedback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Rate an AI suggestion after applying it */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    resumeId: string;
+                    suggestionId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        helpful: boolean;
+                        comment?: string;
+                        /** @default false */
+                        contactOk?: boolean;
+                    };
+                };
+            };
+            responses: {
+                /** @description No content */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Error */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/resumes/{resumeId}/coverage": {
         parameters: {
             query?: never;
@@ -8147,6 +8202,18 @@ export interface paths {
                                     name: string;
                                     runs: number;
                                     costUsdMicros: number;
+                                }[];
+                                feedback: {
+                                    /** Format: uuid */
+                                    id: string;
+                                    at: string;
+                                    step: string;
+                                    helpful: boolean;
+                                    comment: string | null;
+                                    contactOk: boolean;
+                                    /** Format: uuid */
+                                    userId: string;
+                                    email: string;
                                 }[];
                                 health: {
                                     lastSuccessAt: string | null;
