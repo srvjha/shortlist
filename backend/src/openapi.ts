@@ -111,6 +111,7 @@ import {
   suggestionParams,
   suggestionResponse,
 } from "./modules/suggestions/suggestions.schemas.js";
+import { createReportBody, reportResponse } from "./modules/reports/reports.schemas.js";
 import { templateListResponse } from "./modules/templates/templates.schemas.js";
 import { uploadParams, uploadResponse } from "./modules/uploads/uploads.schemas.js";
 import { meResponse, updateMeBody, usernameParams, usernameResponse } from "./modules/users/users.schemas.js";
@@ -464,6 +465,16 @@ const paths: ZodOpenApiPathsObject = {
       params: suggestionParams,
       body: suggestionFeedbackBody,
       noContent: true,
+    }),
+  },
+
+  "/v1/reports": {
+    post: op({
+      summary: "Report a problem. Signed-out visitors must include an email.",
+      tag: "Reports",
+      body: createReportBody,
+      response: reportResponse,
+      status: 201,
     }),
   },
 
