@@ -193,6 +193,19 @@ export const adminAiResponse = z.object({
     }),
   ),
   topUsers: z.array(z.object({ userId: z.uuid(), email: z.string(), name: z.string(), runs: int, costUsdMicros: int })),
+  // Answers to "Did this help?" after applying a suggestion, newest first.
+  feedback: z.array(
+    z.object({
+      id: z.uuid(),
+      at: z.date(),
+      step: z.string(),
+      helpful: z.boolean(),
+      comment: z.string().nullable(),
+      contactOk: z.boolean(),
+      userId: z.uuid(),
+      email: z.string(),
+    }),
+  ),
   health: z.object({
     lastSuccessAt: z.date().nullable(),
     failedSince: z.date().nullable(),
