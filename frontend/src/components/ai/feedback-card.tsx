@@ -1,13 +1,13 @@
 import { useMutation } from '@tanstack/react-query'
 import { ThumbsDownIcon, ThumbsUpIcon } from 'lucide-react'
 import { useState } from 'react'
-import { toast } from 'sonner'
+import { toast } from '@/lib/toast'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { Spinner } from '@/components/ui/spinner'
 import { Textarea } from '@/components/ui/textarea'
-import { api, errorMessage, unwrap } from '@/lib/api/client'
+import { api, errorMessage, expectOk } from '@/lib/api/client'
 import type { Suggestion } from '@/lib/api/types'
 
 // Shown once a suggestion is applied. The rating is saved on the first click,
@@ -30,7 +30,7 @@ export function FeedbackCard({
       comment?: string
       contactOk: boolean
     }) =>
-      unwrap(
+      expectOk(
         api.PUT('/v1/resumes/{resumeId}/suggestions/{suggestionId}/feedback', {
           params: { path: { resumeId, suggestionId: suggestion.id } },
           body,
