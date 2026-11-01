@@ -32,6 +32,11 @@ export const Route = createFileRoute('/_site/privacy')({
           about feedback if you tick that box.
         </li>
         <li>
+          Problem reports you send: what you wrote, your email, the page you
+          were on, your browser and the error you saw. They are emailed to us
+          through Resend.
+        </li>
+        <li>
           Files you upload to import a resume. These are deleted after 30 days.
         </li>
         <li>
