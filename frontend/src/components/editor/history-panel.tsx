@@ -8,7 +8,7 @@ import {
   SparklesIcon,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { toast } from 'sonner'
+import { toast } from '@/lib/toast'
 import { ContentDiff, LineDiff } from '@/components/diff'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
