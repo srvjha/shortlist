@@ -1,5 +1,6 @@
 import createClient from 'openapi-fetch'
 import { apiUrl } from '@/lib/env'
+import { rememberApiError } from '@/lib/report'
 import type { paths } from './schema'
 
 export const api = createClient<paths>({
@@ -31,8 +32,10 @@ async function send<T>(request: Promise<T>) {
   try {
     return await request
   } catch (error) {
-    if (error instanceof TypeError)
+    if (error instanceof TypeError) {
+      rememberApiError({ message: UNREACHABLE, code: 'UNREACHABLE', status: 0 })
       throw new ApiError(0, 'UNREACHABLE', UNREACHABLE)
+    }
     throw error
   }
 }
@@ -45,12 +48,19 @@ export function toApiError(
   const body = (error ?? {}) as ErrorBody
   // A gateway answers for the API while it's down, without our error body.
   const gateway = [502, 503, 504].includes(response.status)
-  return new ApiError(
+  const apiError = new ApiError(
     response.status,
     body.error?.code ?? (gateway ? 'UNREACHABLE' : 'UNKNOWN'),
     body.error?.message ?? (gateway ? UNREACHABLE : fallback),
     body.error?.details,
   )
+  rememberApiError({
+    message: apiError.message,
+    code: apiError.code,
+    status: apiError.status,
+    path: response.url ? new URL(response.url).pathname : undefined,
+  })
+  return apiError
 }
 
 // Turns openapi-fetch's { data, error } into the payload or a thrown ApiError.
