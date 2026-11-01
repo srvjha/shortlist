@@ -12,7 +12,8 @@ export async function createReport(
   input: z.output<typeof createReportBody>,
   userAgent: string | undefined,
 ) {
-  const email = user?.email ?? input.email;
+  // Guests have a made-up account email, so one they type wins.
+  const email = input.email ?? user?.email;
   if (!email) throw new AppError(400, "EMAIL_REQUIRED", "Add your email so we can reply.");
   const [report] = await db
     .insert(reports)
