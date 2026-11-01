@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { toast } from 'sonner'
+import { toast } from '@/lib/toast'
 import { api, errorMessage, unwrap } from '@/lib/api/client'
 import { meQuery, queryKeys } from '@/lib/api/queries'
 import { openRazorpayCheckout } from '@/lib/razorpay'
@@ -8,7 +8,7 @@ import { site } from '@/lib/site'
 
 export type PaidPlan = 'season_pass' | 'pro'
 
-// Opens Razorpay for a plan from any page. `waiting` is true while the webhook activates the plan.
+// Opens the payment provider's checkout for a plan from any page. `waiting` is true while the webhook activates the plan.
 export function useCheckout({ enabled = true }: { enabled?: boolean } = {}) {
   const queryClient = useQueryClient()
   const { data: me } = useQuery({ ...meQuery, enabled })
@@ -20,11 +20,30 @@ export function useCheckout({ enabled = true }: { enabled?: boolean } = {}) {
     queryClient.invalidateQueries({ queryKey: queryKeys.me })
   }
 
+  // The plan switches when the provider's webhook reaches us, usually within seconds.
+  const waitForPlan = () => {
+    setWaiting(true)
+    toast.success('Payment received. Activating your plan…')
+    let tries = 0
+    const timer = setInterval(() => {
+      refresh()
+      if (++tries >= 10) {
+        clearInterval(timer)
+        setWaiting(false)
+      }
+    }, 2000)
+  }
+
   const checkout = useMutation({
     mutationFn: async (plan: PaidPlan) => {
       const session = await unwrap(
         api.POST('/v1/checkouts', { body: { plan } }),
       )
+      // Polar takes the payment on its own page, then sends the buyer back to /billing.
+      if (session.provider === 'polar') {
+        window.location.assign(session.url)
+        return
+      }
       let failed = false
       const tryAgain = {
         label: 'Try again',
@@ -42,19 +61,7 @@ export function useCheckout({ enabled = true }: { enabled?: boolean } = {}) {
           }),
           prefill: { name: me?.name, email: me?.email },
           theme: { color: '#0b6e65' },
-          handler: () => {
-            // The plan switches when Razorpay's webhook reaches us, usually within seconds.
-            setWaiting(true)
-            toast.success('Payment received. Activating your plan…')
-            let tries = 0
-            const timer = setInterval(() => {
-              refresh()
-              if (++tries >= 10) {
-                clearInterval(timer)
-                setWaiting(false)
-              }
-            }, 2000)
-          },
+          handler: waitForPlan,
           modal: {
             ondismiss: () =>
               failed
@@ -75,5 +82,5 @@ export function useCheckout({ enabled = true }: { enabled?: boolean } = {}) {
     onError: (error) => toast.error(errorMessage(error)),
   })
 
-  return { checkout, waiting, refresh, me }
+  return { checkout, waiting, refresh, waitForPlan, me }
 }

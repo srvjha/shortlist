@@ -15,6 +15,26 @@ export const createDraftBody = z.object({
   notes: z.string().trim().min(40).max(20_000),
 });
 
+// A GitHub repo or any public page, or pasted text for a private repo. Notes say what the user did on the project.
+const projectNotes = { notes: z.string().trim().max(2000).optional() };
+export const createProjectDraftBody = z.union([
+  z.object({ url: z.url({ protocol: /^https?$/ }).max(500), ...projectNotes }),
+  z.object({ text: z.string().trim().min(40).max(20_000), ...projectNotes }),
+]);
+
+export const projectDraftResponse = z.object({
+  // A projects-section entry for the client to review, then add or swap in for an existing one.
+  project: z.object({
+    id: z.string(),
+    name: z.string(),
+    url: z.string().optional(),
+    technologies: z.array(z.string()),
+    // flags: terms the source and notes never mention, for the user to check.
+    bullets: z.array(z.object({ id: z.string(), text: z.string(), flags: z.array(z.string()) })),
+  }),
+  aiRunId: z.uuid(),
+});
+
 export const importResponse = z.object({
   content: resumeContentSchema,
   aiRunId: z.uuid(),

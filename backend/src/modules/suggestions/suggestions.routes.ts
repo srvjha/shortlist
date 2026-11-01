@@ -8,6 +8,7 @@ import {
   createSuggestionBody,
   suggestionListResponse,
   suggestionParams,
+  suggestionFeedbackBody,
   suggestionResponse,
 } from "./suggestions.schemas.js";
 import * as service from "./suggestions.service.js";
@@ -38,5 +39,15 @@ suggestionsRouter.get(
   ...validated({ params: suggestionParams }, async (req, res) => {
     const { resumeId, suggestionId } = req.params;
     sendData(res, suggestionResponse, await service.getSuggestion(currentUser(req).id, resumeId, suggestionId));
+  }),
+);
+
+suggestionsRouter.put(
+  "/resumes/:resumeId/suggestions/:suggestionId/feedback",
+  requireAuth,
+  ...validated({ params: suggestionParams, body: suggestionFeedbackBody }, async (req, res) => {
+    const { resumeId, suggestionId } = req.params;
+    await service.saveFeedback(currentUser(req).id, resumeId, suggestionId, req.body);
+    res.status(204).end();
   }),
 );

@@ -10,7 +10,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useDefaultLayout, useGroupRef } from 'react-resizable-panels'
-import { toast } from 'sonner'
+import { toast } from '@/lib/toast'
 import { z } from 'zod'
 import { AiPanel } from '@/components/ai/ai-panel'
 import type { AiPanelMode } from '@/components/ai/ai-panel'

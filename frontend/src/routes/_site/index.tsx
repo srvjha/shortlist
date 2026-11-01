@@ -8,6 +8,7 @@ import {
   PlanPicker,
   TemplateFinder,
 } from '@/components/landing/sections'
+import { fetchPricing } from '@/lib/public-api'
 import { site } from '@/lib/site'
 
 const title = `Free AI Resume Builder, Tailored to Every Job | ${site.name}`
@@ -48,7 +49,16 @@ export const Route = createFileRoute('/_site/')({
       { name: 'twitter:title', content: title },
       { name: 'twitter:description', content: description },
     ],
-    links: [{ rel: 'canonical', href: `${site.url}/` }],
+    links: [
+      { rel: 'canonical', href: `${site.url}/` },
+      // The hero video's poster is the largest paint on phones.
+      {
+        rel: 'preload',
+        as: 'image',
+        href: '/video/how-it-works.jpg',
+        fetchPriority: 'high',
+      },
+    ],
     scripts: [
       {
         type: 'application/ld+json',
@@ -56,17 +66,19 @@ export const Route = createFileRoute('/_site/')({
       },
     ],
   }),
+  loader: () => fetchPricing(),
   component: LandingPage,
 })
 
 function LandingPage() {
+  const pricing = Route.useLoaderData()
   return (
     <>
       <Hero />
       <JobAndShare />
       <TemplateFinder />
       <Bento />
-      <PlanPicker />
+      <PlanPicker pricing={pricing} />
       <Faq />
       <FinalCta />
     </>

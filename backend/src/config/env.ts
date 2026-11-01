@@ -57,6 +57,8 @@ const envSchema = z.object({
 
   // Optional; raises Jina Reader's rate limit when fetching job posts from URLs.
   JINA_API_KEY: optionalString,
+  // Optional; raises GitHub's API limit for reading repos from 60 to 5,000 requests an hour.
+  GITHUB_TOKEN: optionalString,
 
   // Product analytics and API metrics. Empty: nothing is sent.
   POSTHOG_KEY: optionalString,
@@ -65,6 +67,10 @@ const envSchema = z.object({
   POSTHOG_PERSONAL_API_KEY: optionalString,
   POSTHOG_PROJECT_ID: optionalString,
   POSTHOG_APP_HOST: z.preprocess(emptyAsUnset, z.url().default("https://us.posthog.com")),
+
+  // Email through Resend's API. Empty: nothing is emailed (problem reports are still saved).
+  RESEND_API_KEY: optionalString,
+  EMAIL_FROM: z.preprocess(emptyAsUnset, z.string().default("Shortlist <onboarding@resend.dev>")),
 
   // Comma-separated emails that can open the admin dashboard. They must be verified by the sign-in provider.
   ADMIN_EMAILS: z.preprocess(
@@ -91,6 +97,23 @@ const envSchema = z.object({
   RAZORPAY_TEST_KEY_SECRET: optionalString,
   RAZORPAY_TEST_WEBHOOK_SECRET: optionalString,
   RAZORPAY_TEST_PRO_PLAN_ID: optionalString,
+  // Who takes payments in India. Moving India to Polar needs INR prices on the Polar products.
+  PAYMENTS_INDIA: z.preprocess(emptyAsUnset, z.enum(["razorpay", "polar"]).default("razorpay")),
+  // Development only: pretend every visitor is in this country (like US), to test the other provider locally.
+  PAYMENTS_TEST_COUNTRY: z.preprocess(
+    emptyAsUnset,
+    z
+      .string()
+      .regex(/^[A-Z]{2}$/)
+      .optional(),
+  ),
+  // Polar takes payments from outside India. Sandbox and production have separate tokens, products and webhooks.
+  POLAR_SERVER: z.preprocess(emptyAsUnset, z.enum(["sandbox", "production"]).default("production")),
+  POLAR_ACCESS_TOKEN: optionalString,
+  POLAR_WEBHOOK_SECRET: optionalString,
+  // One-time products in Polar, each with a USD price.
+  POLAR_SEASON_PASS_PRODUCT_ID: optionalString,
+  POLAR_PRO_PRODUCT_ID: optionalString,
 });
 
 const parsed = envSchema

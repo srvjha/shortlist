@@ -1,6 +1,8 @@
 import type { NextFunction, Request, Response } from "express";
 import multer from "multer";
+import { captureError } from "../lib/analytics.js";
 import { AppError } from "../lib/errors.js";
+import { routePattern } from "./request-metrics.js";
 
 function hasType(err: unknown): err is { type: string } {
   return typeof err === "object" && err !== null && "type" in err;
@@ -49,6 +51,7 @@ export function errorHandler(err: unknown, req: Request, res: Response, _next: N
   }
 
   req.log.error({ err }, "Unhandled error");
+  captureError(err, { method: req.method, route: routePattern(req), user_id: req.user?.id ?? null });
   res.status(500).json({
     error: { code: "INTERNAL_ERROR", message: "Something went wrong" },
   });

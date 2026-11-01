@@ -155,6 +155,34 @@
       "when": 1792688305694,
       "tag": "0021_ats_review_step",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1793088489517,
+      "tag": "0022_payment_providers",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1793205285869,
+      "tag": "0023_project_link_step",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1793477641141,
+      "tag": "0024_ai_feedback",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1793477905437,
+      "tag": "0025_reports",
+      "breakpoints": true
     }
   ]
 }

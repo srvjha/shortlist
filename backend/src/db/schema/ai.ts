@@ -28,6 +28,7 @@ export const aiStep = pgEnum("ai_step", [
   "draft",
   "ats_match",
   "ats_review",
+  "project_link",
 ]);
 
 // pending: reserved against the quota while the model is still working.
@@ -61,6 +62,12 @@ export const aiRuns = pgTable(
     error: text(),
     // Run on the user's own API key; doesn't count toward plan limits.
     byok: boolean().notNull().default(false),
+    // The user's answer to "Did this help?" after applying a suggestion.
+    helpful: boolean(),
+    feedback: text(),
+    // The user agreed to be emailed about their feedback.
+    feedbackContactOk: boolean(),
+    feedbackAt: timestamp({ withTimezone: true }),
     createdAt: createdAt(),
   },
   (t) => [

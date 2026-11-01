@@ -2,6 +2,8 @@ import { boolean, index, integer, jsonb, pgEnum, pgTable, text, timestamp, uuid 
 import { users } from "./auth.js";
 import { createdAt, timestamps } from "./columns.js";
 
+export const paymentProvider = pgEnum("payment_provider", ["razorpay", "polar"]);
+
 export const subscriptionPlan = pgEnum("subscription_plan", ["season_pass", "pro"]);
 
 export const subscriptionStatus = pgEnum("subscription_status", [
@@ -12,8 +14,8 @@ export const subscriptionStatus = pgEnum("subscription_status", [
   "expired",
 ]);
 
-// A paid plan. Season Pass is a one-time payment covering 6 months;
-// Pro is a monthly Razorpay subscription.
+// A paid plan. Season Pass is a one-time payment covering 6 months. Pro is a monthly Razorpay subscription in India
+// and a one-time month on Polar. Plans given by an admin or a promo code have no provider.
 export const subscriptions = pgTable(
   "subscriptions",
   {
@@ -23,7 +25,8 @@ export const subscriptions = pgTable(
       .references(() => users.id, { onDelete: "cascade" }),
     plan: subscriptionPlan().notNull(),
     status: subscriptionStatus().notNull().default("created"),
-    razorpaySubscriptionId: text().unique(),
+    provider: paymentProvider(),
+    providerSubscriptionId: text().unique(),
     currentPeriodStart: timestamp({ withTimezone: true }),
     currentPeriodEnd: timestamp({ withTimezone: true }),
     cancelledAt: timestamp({ withTimezone: true }),
@@ -34,7 +37,8 @@ export const subscriptions = pgTable(
 
 export const paymentStatus = pgEnum("payment_status", ["created", "captured", "failed", "refunded"]);
 
-// Each Razorpay transaction, for receipts, refunds and support.
+// Each payment through a provider, for receipts, refunds and support. Amounts are in the currency's minor unit
+// (paise, cents).
 export const payments = pgTable(
   "payments",
   {
@@ -45,27 +49,29 @@ export const payments = pgTable(
     subscriptionId: uuid().references(() => subscriptions.id, {
       onDelete: "set null",
     }),
-    razorpayOrderId: text().notNull(),
-    razorpayPaymentId: text().unique(),
-    amountPaise: integer().notNull(),
+    provider: paymentProvider().notNull().default("razorpay"),
+    // Razorpay's order id, or Polar's checkout id.
+    providerCheckoutId: text().notNull(),
+    providerPaymentId: text().unique(),
+    amount: integer().notNull(),
     currency: text().notNull().default("INR"),
     status: paymentStatus().notNull().default("created"),
     method: text(), // upi, card, netbanking, ...
     capturedAt: timestamp({ withTimezone: true }),
-    // Set when a self-serve refund is claimed, before Razorpay is called, so a second request can't refund again.
+    // Set when a self-serve refund is claimed, before the provider is called, so a second request can't refund again.
     refundedAt: timestamp({ withTimezone: true }),
-    refundedPaise: integer(),
-    razorpayRefundId: text().unique(),
-    // Latest webhook payload from Razorpay, kept for debugging.
+    refundedAmount: integer(),
+    providerRefundId: text().unique(),
+    // Latest webhook payload from the provider, kept for debugging.
     raw: jsonb(),
     ...timestamps,
   },
-  (t) => [index().on(t.userId), index().on(t.razorpayOrderId), index().on(t.subscriptionId)],
+  (t) => [index().on(t.userId), index().on(t.providerCheckoutId), index().on(t.subscriptionId)],
 );
 
 // Webhook deliveries already handled; providers retry, so each event id is processed once.
 export const webhookEvents = pgTable("webhook_events", {
-  id: text().primaryKey(), // "razorpay:<event id>"
+  id: text().primaryKey(), // "<provider>:<event id>"
   receivedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
 });
 

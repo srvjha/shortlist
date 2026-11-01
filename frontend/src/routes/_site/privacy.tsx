@@ -4,7 +4,11 @@ import { site } from '@/lib/site'
 
 export const Route = createFileRoute('/_site/privacy')({
   head: () => ({
-    meta: [{ title: `Privacy | ${site.name}` }],
+    meta: [
+      { title: `Privacy | ${site.name}` },
+      { property: 'og:title', content: `Privacy | ${site.name}` },
+      { property: 'og:url', content: `${site.url}/privacy` },
+    ],
     links: [{ rel: 'canonical', href: `${site.url}/privacy` }],
   }),
   component: () => (
@@ -23,6 +27,16 @@ export const Route = createFileRoute('/_site/privacy')({
           Your resumes, their version history, and job descriptions you add.
         </li>
         <li>
+          Feedback you send about an AI suggestion: whether it helped, your
+          comment, and whether we may email you about it. We only email you
+          about feedback if you tick that box.
+        </li>
+        <li>
+          Problem reports you send: what you wrote, your email, the page you
+          were on, your browser and the error you saw. They are emailed to us
+          through Resend.
+        </li>
+        <li>
           Files you upload to import a resume. These are deleted after 30 days.
         </li>
         <li>
@@ -31,8 +45,18 @@ export const Route = createFileRoute('/_site/privacy')({
           referring site. We never store IP addresses.
         </li>
         <li>
-          Payment records from Razorpay. We never see or store your card or UPI
-          details.
+          Payment records from Razorpay, or from Polar for payments made outside
+          India. We never see or store your card or UPI details.
+        </li>
+        <li>
+          The country your IP address is in, looked up when you view prices or
+          pay, so we can show your country's prices and send you to the right
+          payment provider. The IP address itself is not stored. IP Geolocation
+          by{' '}
+          <a href="https://db-ip.com" target="_blank" rel="noopener noreferrer">
+            DB-IP
+          </a>
+          .
         </li>
       </ul>
       <h2>How AI features use your data</h2>

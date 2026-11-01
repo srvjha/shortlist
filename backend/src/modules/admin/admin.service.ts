@@ -1,4 +1,19 @@
-import { and, asc, count, countDistinct, desc, eq, gte, ilike, isNotNull, isNull, or, sql, sum } from "drizzle-orm";
+import {
+  and,
+  asc,
+  count,
+  countDistinct,
+  desc,
+  eq,
+  gte,
+  ilike,
+  inArray,
+  isNotNull,
+  isNull,
+  or,
+  sql,
+  sum,
+} from "drizzle-orm";
 import type { PgColumn } from "drizzle-orm/pg-core";
 import { env } from "../../config/env.js";
 import { db, pool } from "../../db/index.js";
@@ -18,12 +33,13 @@ import {
   users,
   webhookEvents,
 } from "../../db/schema/index.js";
-import { track } from "../../lib/analytics.js";
+import { hideKeys, track } from "../../lib/analytics.js";
 import { ConflictError, NotFoundError } from "../../lib/errors.js";
 import { storage } from "../../lib/storage.js";
 import { dayKeys } from "../analytics/analytics.service.js";
 import { grantPlan, recomputePlan } from "../billing/billing.service.js";
 import { getUsage } from "../usage/quotas.js";
+import type { getApiReport } from "./posthog.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -129,17 +145,17 @@ export async function getOverview(days: number, timeZone: string) {
       .from(aiRuns),
     db
       .select({
-        paise:
-          sql<number>`coalesce(sum(${payments.amountPaise}) filter (where ${current(payments.updatedAt)}), 0)`.mapWith(
-            Number,
-          ),
+        paise: sql<number>`coalesce(sum(${payments.amount}) filter (where ${current(payments.updatedAt)}), 0)`.mapWith(
+          Number,
+        ),
         previousPaise:
-          sql<number>`coalesce(sum(${payments.amountPaise}) filter (where ${previous(payments.updatedAt)}), 0)`.mapWith(
+          sql<number>`coalesce(sum(${payments.amount}) filter (where ${previous(payments.updatedAt)}), 0)`.mapWith(
             Number,
           ),
       })
       .from(payments)
-      .where(eq(payments.status, "captured")),
+      // Rupees only; dollars from Polar show on the revenue page.
+      .where(and(eq(payments.status, "captured"), eq(payments.currency, "INR"))),
     db
       .select({ views: filtered(current(linkViews.viewedAt)), previousViews: filtered(previous(linkViews.viewedAt)) })
       .from(linkViews),
@@ -369,6 +385,9 @@ export async function getUser(userId: string) {
         step: aiRuns.step,
         runs: count(),
         failed: filtered(sql`${aiRuns.status} = 'failed'`),
+        lastError: sql<
+          string | null
+        >`(array_agg(${aiRuns.error} order by ${aiRuns.createdAt} desc) filter (where ${aiRuns.status} = 'failed'))[1]`,
         costUsdMicros: sql<number>`coalesce(sum(${aiRuns.costUsdMicros}), 0)`.mapWith(Number),
       })
       .from(aiRuns)
@@ -391,7 +410,7 @@ export async function getUser(userId: string) {
         status: subscriptions.status,
         currentPeriodStart: subscriptions.currentPeriodStart,
         currentPeriodEnd: subscriptions.currentPeriodEnd,
-        razorpaySubscriptionId: subscriptions.razorpaySubscriptionId,
+        providerSubscriptionId: subscriptions.providerSubscriptionId,
         payments:
           sql<number>`(select count(*) from ${payments} where ${payments.subscriptionId} = ${outer("subscriptions", "id")})`.mapWith(
             Number,
@@ -404,10 +423,12 @@ export async function getUser(userId: string) {
     db
       .select({
         id: payments.id,
-        amountPaise: payments.amountPaise,
+        amount: payments.amount,
+        currency: payments.currency,
         status: payments.status,
         method: payments.method,
-        razorpayPaymentId: payments.razorpayPaymentId,
+        provider: payments.provider,
+        providerPaymentId: payments.providerPaymentId,
         createdAt: payments.createdAt,
       })
       .from(payments)
@@ -442,13 +463,13 @@ export async function getUser(userId: string) {
       byokRuns: aiTotals?.byok ?? 0,
       costUsdMicros: aiTotals?.costUsdMicros ?? 0,
       lastRunAt: aiTotals?.lastRunAt ? new Date(aiTotals.lastRunAt) : null,
-      bySteps: aiByStep,
+      bySteps: aiByStep.map((row) => ({ ...row, lastError: hideKeys(row.lastError) })),
     },
     usage,
     subscriptions: userSubscriptions.map(({ payments: paymentCount, ...subscription }) => ({
       ...subscription,
-      // Given from the admin dashboard, with no Razorpay billing behind it; only these can be revoked here.
-      complimentary: !subscription.razorpaySubscriptionId && paymentCount === 0,
+      // Given from the admin dashboard, with no payment provider billing behind it; only these can be revoked here.
+      complimentary: !subscription.providerSubscriptionId && paymentCount === 0,
     })),
     payments: userPayments,
     sessions: userSessions,
@@ -495,14 +516,14 @@ export async function grantSubscription(adminId: string, userId: string, plan: "
 
 export async function revokeSubscription(adminId: string, userId: string, subscriptionId: string) {
   const [subscription] = await db
-    .select({ razorpaySubscriptionId: subscriptions.razorpaySubscriptionId })
+    .select({ providerSubscriptionId: subscriptions.providerSubscriptionId })
     .from(subscriptions)
     .where(and(eq(subscriptions.id, subscriptionId), eq(subscriptions.userId, userId)));
   if (!subscription) throw new NotFoundError("Subscription");
   const [paid] = await db.select({ count: count() }).from(payments).where(eq(payments.subscriptionId, subscriptionId));
-  // Ending a paid plan here would leave Razorpay billing the user; refunds and cancellations go through Razorpay.
-  if (subscription.razorpaySubscriptionId || (paid?.count ?? 0) > 0)
-    throw new ConflictError("Paid plans are cancelled or refunded in Razorpay, not here");
+  // Ending a paid plan here would leave the provider billing the user; refunds and cancellations go through it.
+  if (subscription.providerSubscriptionId || (paid?.count ?? 0) > 0)
+    throw new ConflictError("Paid plans are cancelled or refunded at the payment provider, not here");
   await db
     .update(subscriptions)
     .set({ status: "expired", currentPeriodEnd: new Date() })
@@ -511,82 +532,135 @@ export async function revokeSubscription(adminId: string, userId: string, subscr
   track(adminId, "admin_plan_revoked", { target_user_id: userId });
 }
 
+type ApiReport = Awaited<ReturnType<typeof getApiReport>>;
+
+// PostHog events carry user ids only; the emails come from our database.
+export async function withEmails(report: ApiReport) {
+  if (!report.data) return report;
+  const { recent } = report.data;
+  const ids = [...new Set([...recent.all, ...recent.errors, ...recent.slow].flatMap((row) => row.userId ?? []))];
+  const found = ids.length
+    ? await db.select({ id: users.id, email: users.email }).from(users).where(inArray(users.id, ids))
+    : [];
+  const emails = new Map(found.map((user) => [user.id, user.email]));
+  const add = (rows: typeof recent.all) =>
+    rows.map((row) => ({ ...row, email: (row.userId && emails.get(row.userId)) ?? null }));
+  return {
+    ...report,
+    data: { ...report.data, recent: { all: add(recent.all), errors: add(recent.errors), slow: add(recent.slow) } },
+  };
+}
+
 export async function getAiUsage(days: number, timeZone: string) {
   const { now, since } = range(days);
   const inRange = gte(aiRuns.createdAt, since);
   const cost = sql<number>`coalesce(sum(${aiRuns.costUsdMicros}), 0)`.mapWith(Number);
 
-  const [[totals], bySteps, byModels, byDay, failures, topUsers] = await Promise.all([
-    db
-      .select({
-        runs: count(),
-        failed: filtered(sql`${aiRuns.status} = 'failed'`),
-        byok: filtered(sql`${aiRuns.byok}`),
-        costUsdMicros: cost,
-        inputTokens: sql<number>`coalesce(sum(${aiRuns.inputTokens}), 0)`.mapWith(Number),
-        cachedInputTokens: sql<number>`coalesce(sum(${aiRuns.cachedInputTokens}), 0)`.mapWith(Number),
-        outputTokens: sql<number>`coalesce(sum(${aiRuns.outputTokens}), 0)`.mapWith(Number),
-        users: countDistinct(aiRuns.userId),
-      })
-      .from(aiRuns)
-      .where(inRange),
-    db
-      .select({
-        step: aiRuns.step,
-        runs: count(),
-        failed: filtered(sql`${aiRuns.status} = 'failed'`),
-        costUsdMicros: cost,
-        p50Ms: sql<number>`coalesce(percentile_cont(0.5) within group (order by ${aiRuns.latencyMs}), 0)`.mapWith(
-          Number,
-        ),
-        p95Ms: sql<number>`coalesce(percentile_cont(0.95) within group (order by ${aiRuns.latencyMs}), 0)`.mapWith(
-          Number,
-        ),
-      })
-      .from(aiRuns)
-      .where(inRange)
-      .groupBy(aiRuns.step)
-      .orderBy(desc(count())),
-    db
-      .select({
-        model: aiRuns.model,
-        runs: count(),
-        costUsdMicros: cost,
-        tokens: sql<number>`coalesce(sum(${aiRuns.inputTokens} + ${aiRuns.outputTokens}), 0)`.mapWith(Number),
-      })
-      .from(aiRuns)
-      .where(inRange)
-      .groupBy(aiRuns.model)
-      .orderBy(desc(cost)),
-    db
-      .select({ day: dayOf(aiRuns.createdAt, timeZone), runs: count(), costUsdMicros: cost })
-      .from(aiRuns)
-      .where(inRange)
-      .groupBy(sql`1`),
-    db
-      .select({
-        id: aiRuns.id,
-        createdAt: aiRuns.createdAt,
-        step: aiRuns.step,
-        model: aiRuns.model,
-        error: aiRuns.error,
-        userId: users.id,
-        email: users.email,
-      })
-      .from(aiRuns)
-      .innerJoin(users, eq(users.id, aiRuns.userId))
-      .where(and(inRange, eq(aiRuns.status, "failed")))
-      .orderBy(desc(aiRuns.createdAt))
-      .limit(20),
-    db
-      .select({ userId: users.id, email: users.email, name: users.name, runs: count(), costUsdMicros: cost })
-      .from(aiRuns)
-      .innerJoin(users, eq(users.id, aiRuns.userId))
-      .where(inRange)
-      .groupBy(users.id)
-      .orderBy(desc(cost))
-      .limit(10),
-  ]);
+  // Runs on our key that failed since the last one that worked: one bad key or an empty balance fails them all.
+  const ours = and(eq(aiRuns.byok, false), eq(aiRuns.status, "succeeded"));
+  const sinceLastSuccess = sql`${aiRuns.createdAt} > coalesce((select max(${aiRuns.createdAt}) from ${aiRuns} where ${ours}), '-infinity')`;
+
+  const [[totals], bySteps, byModels, byDay, failures, topUsers, feedback, [lastSuccess], [failing]] =
+    await Promise.all([
+      db
+        .select({
+          runs: count(),
+          failed: filtered(sql`${aiRuns.status} = 'failed'`),
+          byok: filtered(sql`${aiRuns.byok}`),
+          costUsdMicros: cost,
+          inputTokens: sql<number>`coalesce(sum(${aiRuns.inputTokens}), 0)`.mapWith(Number),
+          cachedInputTokens: sql<number>`coalesce(sum(${aiRuns.cachedInputTokens}), 0)`.mapWith(Number),
+          outputTokens: sql<number>`coalesce(sum(${aiRuns.outputTokens}), 0)`.mapWith(Number),
+          users: countDistinct(aiRuns.userId),
+        })
+        .from(aiRuns)
+        .where(inRange),
+      db
+        .select({
+          step: aiRuns.step,
+          runs: count(),
+          failed: filtered(sql`${aiRuns.status} = 'failed'`),
+          costUsdMicros: cost,
+          p50Ms: sql<number>`coalesce(percentile_cont(0.5) within group (order by ${aiRuns.latencyMs}), 0)`.mapWith(
+            Number,
+          ),
+          p95Ms: sql<number>`coalesce(percentile_cont(0.95) within group (order by ${aiRuns.latencyMs}), 0)`.mapWith(
+            Number,
+          ),
+        })
+        .from(aiRuns)
+        .where(inRange)
+        .groupBy(aiRuns.step)
+        .orderBy(desc(count())),
+      db
+        .select({
+          model: aiRuns.model,
+          runs: count(),
+          costUsdMicros: cost,
+          tokens: sql<number>`coalesce(sum(${aiRuns.inputTokens} + ${aiRuns.outputTokens}), 0)`.mapWith(Number),
+        })
+        .from(aiRuns)
+        .where(inRange)
+        .groupBy(aiRuns.model)
+        .orderBy(desc(cost)),
+      db
+        .select({ day: dayOf(aiRuns.createdAt, timeZone), runs: count(), costUsdMicros: cost })
+        .from(aiRuns)
+        .where(inRange)
+        .groupBy(sql`1`),
+      db
+        .select({
+          id: aiRuns.id,
+          createdAt: aiRuns.createdAt,
+          step: aiRuns.step,
+          model: aiRuns.model,
+          error: aiRuns.error,
+          userId: users.id,
+          email: users.email,
+        })
+        .from(aiRuns)
+        .innerJoin(users, eq(users.id, aiRuns.userId))
+        .where(and(inRange, eq(aiRuns.status, "failed")))
+        .orderBy(desc(aiRuns.createdAt))
+        .limit(20),
+      db
+        .select({ userId: users.id, email: users.email, name: users.name, runs: count(), costUsdMicros: cost })
+        .from(aiRuns)
+        .innerJoin(users, eq(users.id, aiRuns.userId))
+        .where(inRange)
+        .groupBy(users.id)
+        .orderBy(desc(cost))
+        .limit(10),
+      db
+        .select({
+          id: aiRuns.id,
+          at: aiRuns.feedbackAt,
+          step: aiRuns.step,
+          helpful: aiRuns.helpful,
+          comment: aiRuns.feedback,
+          contactOk: aiRuns.feedbackContactOk,
+          userId: users.id,
+          email: users.email,
+        })
+        .from(aiRuns)
+        .innerJoin(users, eq(users.id, aiRuns.userId))
+        .where(and(gte(aiRuns.feedbackAt, since), isNotNull(aiRuns.helpful)))
+        .orderBy(desc(aiRuns.feedbackAt))
+        .limit(50),
+      db
+        .select({ at: sql<Date | null>`max(${aiRuns.createdAt})` })
+        .from(aiRuns)
+        .where(ours),
+      db
+        .select({
+          runs: count(),
+          users: countDistinct(aiRuns.userId),
+          since: sql<Date | null>`min(${aiRuns.createdAt})`,
+          lastError: sql<string | null>`(array_agg(${aiRuns.error} order by ${aiRuns.createdAt} desc))[1]`,
+        })
+        .from(aiRuns)
+        .where(and(eq(aiRuns.byok, false), eq(aiRuns.status, "failed"), sinceLastSuccess)),
+    ]);
 
   return {
     days,
@@ -603,34 +677,55 @@ export async function getAiUsage(days: number, timeZone: string) {
     bySteps: bySteps.map((row) => ({ ...row, p50Ms: Math.round(row.p50Ms), p95Ms: Math.round(row.p95Ms) })),
     byModels,
     byDay: fillDays(dayKeys(days, timeZone, now), byDay, ["runs", "costUsdMicros"]),
-    failures,
+    failures: failures.map((failure) => ({ ...failure, error: hideKeys(failure.error) })),
     topUsers,
+    feedback: feedback.map((row) => ({
+      ...row,
+      at: row.at!,
+      helpful: row.helpful!,
+      contactOk: row.contactOk ?? false,
+    })),
+    health: {
+      lastSuccessAt: lastSuccess?.at ? new Date(lastSuccess.at) : null,
+      failedSince: failing?.since ? new Date(failing.since) : null,
+      failedRuns: failing?.runs ?? 0,
+      failedUsers: failing?.users ?? 0,
+      lastError: hideKeys(failing?.lastError ?? null),
+    },
   };
 }
 
 export async function getRevenue(days: number, timeZone: string) {
   const { now, since, previousSince } = range(days);
-  const captured = eq(payments.status, "captured");
+  // The rupee totals leave out Polar's dollar payments, which are summed on their own.
+  const captured = and(eq(payments.status, "captured"), eq(payments.currency, "INR"))!;
+  const capturedUsd = and(eq(payments.status, "captured"), eq(payments.currency, "USD"));
 
   const [[totals], byDay, byPlan, recent, statuses] = await Promise.all([
     db
       .select({
         paise:
-          sql<number>`coalesce(sum(${payments.amountPaise}) filter (where ${captured} and ${payments.updatedAt} >= ${since}), 0)`.mapWith(
+          sql<number>`coalesce(sum(${payments.amount}) filter (where ${captured} and ${payments.updatedAt} >= ${since}), 0)`.mapWith(
             Number,
           ),
         previousPaise:
-          sql<number>`coalesce(sum(${payments.amountPaise}) filter (where ${captured} and ${payments.updatedAt} >= ${previousSince} and ${payments.updatedAt} < ${since}), 0)`.mapWith(
+          sql<number>`coalesce(sum(${payments.amount}) filter (where ${captured} and ${payments.updatedAt} >= ${previousSince} and ${payments.updatedAt} < ${since}), 0)`.mapWith(
             Number,
           ),
-        allTimePaise: sql<number>`coalesce(sum(${payments.amountPaise}) filter (where ${captured}), 0)`.mapWith(Number),
-        payers: sql<number>`count(distinct ${payments.userId}) filter (where ${captured})`.mapWith(Number),
+        allTimePaise: sql<number>`coalesce(sum(${payments.amount}) filter (where ${captured}), 0)`.mapWith(Number),
+        usdCents:
+          sql<number>`coalesce(sum(${payments.amount}) filter (where ${capturedUsd} and ${payments.updatedAt} >= ${since}), 0)`.mapWith(
+            Number,
+          ),
+        payers: sql<number>`count(distinct ${payments.userId}) filter (where ${payments.status} = 'captured')`.mapWith(
+          Number,
+        ),
         checkouts: filtered(sql`${payments.createdAt} >= ${since}`),
-        checkoutsPaid: filtered(sql`${payments.createdAt} >= ${since} and ${captured}`),
+        checkoutsPaid: filtered(sql`${payments.createdAt} >= ${since} and ${payments.status} = 'captured'`),
       })
       .from(payments),
     db
-      .select({ day: dayOf(payments.updatedAt, timeZone), paise: sum(payments.amountPaise).mapWith(Number) })
+      .select({ day: dayOf(payments.updatedAt, timeZone), paise: sum(payments.amount).mapWith(Number) })
       .from(payments)
       .where(and(captured, gte(payments.updatedAt, since)))
       .groupBy(sql`1`),
@@ -648,10 +743,12 @@ export async function getRevenue(days: number, timeZone: string) {
       .select({
         id: payments.id,
         createdAt: payments.createdAt,
-        amountPaise: payments.amountPaise,
+        amount: payments.amount,
+        currency: payments.currency,
         status: payments.status,
         method: payments.method,
-        razorpayPaymentId: payments.razorpayPaymentId,
+        provider: payments.provider,
+        providerPaymentId: payments.providerPaymentId,
         plan: subscriptions.plan,
         userId: users.id,
         email: users.email,
@@ -670,7 +767,15 @@ export async function getRevenue(days: number, timeZone: string) {
 
   return {
     days,
-    totals: totals ?? { paise: 0, previousPaise: 0, allTimePaise: 0, payers: 0, checkouts: 0, checkoutsPaid: 0 },
+    totals: totals ?? {
+      paise: 0,
+      previousPaise: 0,
+      allTimePaise: 0,
+      usdCents: 0,
+      payers: 0,
+      checkouts: 0,
+      checkoutsPaid: 0,
+    },
     byDay: fillDays(dayKeys(days, timeZone, now), byDay, ["paise"]),
     activeSubscriptions: byPlan,
     statuses,

@@ -3556,7 +3556,8 @@
                                   "fix_compile",
                                   "draft",
                                   "ats_match",
-                                  "ats_review"
+                                  "ats_review",
+                                  "project_link"
                                 ]
                               },
                               "status": {
@@ -16515,6 +16516,159 @@
         }
       }
     },
+    "/v1/project-drafts": {
+      "post": {
+        "summary": "Write a projects entry from a GitHub repo, a web page or pasted text with AI",
+        "tags": [
+          "Import"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "url": {
+                        "type": "string",
+                        "maxLength": 500,
+                        "format": "uri"
+                      },
+                      "notes": {
+                        "type": "string",
+                        "maxLength": 2000
+                      }
+                    },
+                    "required": [
+                      "url"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "text": {
+                        "type": "string",
+                        "minLength": 40,
+                        "maxLength": 20000
+                      },
+                      "notes": {
+                        "type": "string",
+                        "maxLength": 2000
+                      }
+                    },
+                    "required": [
+                      "text"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "project": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "url": {
+                              "type": "string"
+                            },
+                            "technologies": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "bullets": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string"
+                                  },
+                                  "text": {
+                                    "type": "string"
+                                  },
+                                  "flags": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "text",
+                                  "flags"
+                                ],
+                                "additionalProperties": false
+                              }
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name",
+                            "technologies",
+                            "bullets"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "aiRunId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        }
+                      },
+                      "required": [
+                        "project",
+                        "aiRunId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/imports": {
       "post": {
         "summary": "Extract resume content from an upload or text",
@@ -18532,6 +18686,190 @@
                         "byok",
                         "costUsdMicros",
                         "createdAt"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/resumes/{resumeId}/suggestions/{suggestionId}/feedback": {
+      "put": {
+        "summary": "Rate an AI suggestion after applying it",
+        "tags": [
+          "Suggestions"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "resumeId",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "suggestionId",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "helpful": {
+                    "type": "boolean"
+                  },
+                  "comment": {
+                    "type": "string",
+                    "maxLength": 2000
+                  },
+                  "contactOk": {
+                    "default": false,
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "helpful"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "No content"
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/reports": {
+      "post": {
+        "summary": "Report a problem. Signed-out visitors must include an email.",
+        "tags": [
+          "Reports"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "description": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 4000
+                  },
+                  "email": {
+                    "type": "string",
+                    "maxLength": 320,
+                    "format": "email",
+                    "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+                  },
+                  "page": {
+                    "type": "string",
+                    "maxLength": 500
+                  },
+                  "error": {
+                    "type": "object",
+                    "properties": {
+                      "message": {
+                        "type": "string",
+                        "maxLength": 1000
+                      },
+                      "code": {
+                        "type": "string",
+                        "maxLength": 100
+                      },
+                      "status": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      "path": {
+                        "type": "string",
+                        "maxLength": 500
+                      }
+                    },
+                    "required": [
+                      "message"
+                    ]
+                  }
+                },
+                "required": [
+                  "description"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        }
+                      },
+                      "required": [
+                        "id"
                       ],
                       "additionalProperties": false
                     }
@@ -20996,9 +21334,96 @@
         }
       }
     },
+    "/v1/pricing": {
+      "get": {
+        "summary": "Prices for the visitor's country",
+        "tags": [
+          "Billing"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "region": {
+                          "type": "string",
+                          "enum": [
+                            "india",
+                            "global"
+                          ]
+                        },
+                        "country": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "provider": {
+                          "type": "string",
+                          "enum": [
+                            "razorpay",
+                            "polar"
+                          ]
+                        },
+                        "currency": {
+                          "type": "string",
+                          "enum": [
+                            "INR",
+                            "USD"
+                          ]
+                        },
+                        "season_pass": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "pro": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "required": [
+                        "region",
+                        "country",
+                        "provider",
+                        "currency",
+                        "season_pass",
+                        "pro"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/checkouts": {
       "post": {
-        "summary": "Start a Razorpay checkout",
+        "summary": "Start a checkout with the payment provider for the visitor's country",
         "tags": [
           "Billing"
         ],
@@ -21037,54 +21462,102 @@
                   "type": "object",
                   "properties": {
                     "data": {
-                      "type": "object",
-                      "properties": {
-                        "provider": {
-                          "type": "string",
-                          "const": "razorpay"
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "plan": {
+                              "type": "string",
+                              "enum": [
+                                "season_pass",
+                                "pro"
+                              ]
+                            },
+                            "amount": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "currency": {
+                              "type": "string",
+                              "enum": [
+                                "INR",
+                                "USD"
+                              ]
+                            },
+                            "provider": {
+                              "type": "string",
+                              "const": "razorpay"
+                            },
+                            "keyId": {
+                              "type": "string"
+                            },
+                            "orderId": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "razorpaySubscriptionId": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "plan",
+                            "amount",
+                            "currency",
+                            "provider",
+                            "keyId",
+                            "orderId",
+                            "razorpaySubscriptionId"
+                          ],
+                          "additionalProperties": false
                         },
-                        "keyId": {
-                          "type": "string"
-                        },
-                        "plan": {
-                          "type": "string",
-                          "enum": [
-                            "season_pass",
-                            "pro"
-                          ]
-                        },
-                        "orderId": {
-                          "type": [
-                            "string",
-                            "null"
-                          ]
-                        },
-                        "razorpaySubscriptionId": {
-                          "type": [
-                            "string",
-                            "null"
-                          ]
-                        },
-                        "amountPaise": {
-                          "type": "integer",
-                          "minimum": -9007199254740991,
-                          "maximum": 9007199254740991
-                        },
-                        "currency": {
-                          "type": "string",
-                          "const": "INR"
+                        {
+                          "type": "object",
+                          "properties": {
+                            "plan": {
+                              "type": "string",
+                              "enum": [
+                                "season_pass",
+                                "pro"
+                              ]
+                            },
+                            "amount": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "currency": {
+                              "type": "string",
+                              "enum": [
+                                "INR",
+                                "USD"
+                              ]
+                            },
+                            "provider": {
+                              "type": "string",
+                              "const": "polar"
+                            },
+                            "url": {
+                              "type": "string",
+                              "format": "uri"
+                            }
+                          },
+                          "required": [
+                            "plan",
+                            "amount",
+                            "currency",
+                            "provider",
+                            "url"
+                          ],
+                          "additionalProperties": false
                         }
-                      },
-                      "required": [
-                        "provider",
-                        "keyId",
-                        "plan",
-                        "orderId",
-                        "razorpaySubscriptionId",
-                        "amountPaise",
-                        "currency"
                       ],
-                      "additionalProperties": false
+                      "type": "object"
                     }
                   },
                   "required": [
@@ -21176,6 +21649,9 @@
                                     "string",
                                     "null"
                                   ]
+                                },
+                                "renews": {
+                                  "type": "boolean"
                                 }
                               },
                               "required": [
@@ -21183,7 +21659,8 @@
                                 "plan",
                                 "status",
                                 "currentPeriodEnd",
-                                "cancelledAt"
+                                "cancelledAt",
+                                "renews"
                               ],
                               "additionalProperties": false
                             },
@@ -21287,6 +21764,9 @@
                                     "string",
                                     "null"
                                   ]
+                                },
+                                "renews": {
+                                  "type": "boolean"
                                 }
                               },
                               "required": [
@@ -21294,7 +21774,8 @@
                                 "plan",
                                 "status",
                                 "currentPeriodEnd",
-                                "cancelledAt"
+                                "cancelledAt",
+                                "renews"
                               ],
                               "additionalProperties": false
                             },
@@ -21378,17 +21859,31 @@
                                     }
                                   ]
                                 },
-                                "amountPaidPaise": {
+                                "provider": {
+                                  "type": "string",
+                                  "enum": [
+                                    "razorpay",
+                                    "polar"
+                                  ]
+                                },
+                                "currency": {
+                                  "type": "string",
+                                  "enum": [
+                                    "INR",
+                                    "USD"
+                                  ]
+                                },
+                                "amountPaid": {
                                   "type": "integer",
                                   "minimum": -9007199254740991,
                                   "maximum": 9007199254740991
                                 },
-                                "feePaise": {
+                                "fee": {
                                   "type": "integer",
                                   "minimum": -9007199254740991,
                                   "maximum": 9007199254740991
                                 },
-                                "refundPaise": {
+                                "refund": {
                                   "type": "integer",
                                   "minimum": -9007199254740991,
                                   "maximum": 9007199254740991
@@ -21400,9 +21895,11 @@
                               "required": [
                                 "paymentId",
                                 "plan",
-                                "amountPaidPaise",
-                                "feePaise",
-                                "refundPaise",
+                                "provider",
+                                "currency",
+                                "amountPaid",
+                                "fee",
+                                "refund",
                                 "refundableUntil"
                               ],
                               "additionalProperties": false
@@ -21449,7 +21946,7 @@
     },
     "/v1/refunds": {
       "post": {
-        "summary": "Refund a payment made in the last 6 hours, less Razorpay's fee, and end its plan",
+        "summary": "Refund a payment made in the last 6 hours, less the payment provider's fee, and end its plan",
         "tags": [
           "Billing"
         ],
@@ -21493,19 +21990,27 @@
                           "format": "uuid",
                           "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                         },
-                        "refundPaise": {
+                        "refund": {
                           "type": "integer",
                           "minimum": -9007199254740991,
                           "maximum": 9007199254740991
                         },
-                        "razorpayRefundId": {
+                        "currency": {
+                          "type": "string",
+                          "enum": [
+                            "INR",
+                            "USD"
+                          ]
+                        },
+                        "providerRefundId": {
                           "type": "string"
                         }
                       },
                       "required": [
                         "paymentId",
-                        "refundPaise",
-                        "razorpayRefundId"
+                        "refund",
+                        "currency",
+                        "providerRefundId"
                       ],
                       "additionalProperties": false
                     }
@@ -21618,6 +22123,9 @@
                                     "string",
                                     "null"
                                   ]
+                                },
+                                "renews": {
+                                  "type": "boolean"
                                 }
                               },
                               "required": [
@@ -21625,7 +22133,8 @@
                                 "plan",
                                 "status",
                                 "currentPeriodEnd",
-                                "cancelledAt"
+                                "cancelledAt",
+                                "renews"
                               ],
                               "additionalProperties": false
                             },
@@ -23151,6 +23660,12 @@
                                     "minimum": -9007199254740991,
                                     "maximum": 9007199254740991
                                   },
+                                  "lastError": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ]
+                                  },
                                   "costUsdMicros": {
                                     "type": "integer",
                                     "minimum": -9007199254740991,
@@ -23161,6 +23676,7 @@
                                   "step",
                                   "runs",
                                   "failed",
+                                  "lastError",
                                   "costUsdMicros"
                                 ],
                                 "additionalProperties": false
@@ -23356,7 +23872,7 @@
                                   "null"
                                 ]
                               },
-                              "razorpaySubscriptionId": {
+                              "providerSubscriptionId": {
                                 "type": [
                                   "string",
                                   "null"
@@ -23375,7 +23891,7 @@
                               "status",
                               "currentPeriodStart",
                               "currentPeriodEnd",
-                              "razorpaySubscriptionId",
+                              "providerSubscriptionId",
                               "complimentary",
                               "createdAt"
                             ],
@@ -23392,10 +23908,13 @@
                                 "format": "uuid",
                                 "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                               },
-                              "amountPaise": {
+                              "amount": {
                                 "type": "integer",
                                 "minimum": -9007199254740991,
                                 "maximum": 9007199254740991
+                              },
+                              "currency": {
+                                "type": "string"
                               },
                               "status": {
                                 "type": "string",
@@ -23412,7 +23931,14 @@
                                   "null"
                                 ]
                               },
-                              "razorpayPaymentId": {
+                              "provider": {
+                                "type": "string",
+                                "enum": [
+                                  "razorpay",
+                                  "polar"
+                                ]
+                              },
+                              "providerPaymentId": {
                                 "type": [
                                   "string",
                                   "null"
@@ -23424,10 +23950,12 @@
                             },
                             "required": [
                               "id",
-                              "amountPaise",
+                              "amount",
+                              "currency",
                               "status",
                               "method",
-                              "razorpayPaymentId",
+                              "provider",
+                              "providerPaymentId",
                               "createdAt"
                             ],
                             "additionalProperties": false
@@ -23761,6 +24289,12 @@
                                     "minimum": -9007199254740991,
                                     "maximum": 9007199254740991
                                   },
+                                  "lastError": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ]
+                                  },
                                   "costUsdMicros": {
                                     "type": "integer",
                                     "minimum": -9007199254740991,
@@ -23771,6 +24305,7 @@
                                   "step",
                                   "runs",
                                   "failed",
+                                  "lastError",
                                   "costUsdMicros"
                                 ],
                                 "additionalProperties": false
@@ -23966,7 +24501,7 @@
                                   "null"
                                 ]
                               },
-                              "razorpaySubscriptionId": {
+                              "providerSubscriptionId": {
                                 "type": [
                                   "string",
                                   "null"
@@ -23985,7 +24520,7 @@
                               "status",
                               "currentPeriodStart",
                               "currentPeriodEnd",
-                              "razorpaySubscriptionId",
+                              "providerSubscriptionId",
                               "complimentary",
                               "createdAt"
                             ],
@@ -24002,10 +24537,13 @@
                                 "format": "uuid",
                                 "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                               },
-                              "amountPaise": {
+                              "amount": {
                                 "type": "integer",
                                 "minimum": -9007199254740991,
                                 "maximum": 9007199254740991
+                              },
+                              "currency": {
+                                "type": "string"
                               },
                               "status": {
                                 "type": "string",
@@ -24022,7 +24560,14 @@
                                   "null"
                                 ]
                               },
-                              "razorpayPaymentId": {
+                              "provider": {
+                                "type": "string",
+                                "enum": [
+                                  "razorpay",
+                                  "polar"
+                                ]
+                              },
+                              "providerPaymentId": {
                                 "type": [
                                   "string",
                                   "null"
@@ -24034,10 +24579,12 @@
                             },
                             "required": [
                               "id",
-                              "amountPaise",
+                              "amount",
+                              "currency",
                               "status",
                               "method",
-                              "razorpayPaymentId",
+                              "provider",
+                              "providerPaymentId",
                               "createdAt"
                             ],
                             "additionalProperties": false
@@ -24463,6 +25010,12 @@
                                     "minimum": -9007199254740991,
                                     "maximum": 9007199254740991
                                   },
+                                  "lastError": {
+                                    "type": [
+                                      "string",
+                                      "null"
+                                    ]
+                                  },
                                   "costUsdMicros": {
                                     "type": "integer",
                                     "minimum": -9007199254740991,
@@ -24473,6 +25026,7 @@
                                   "step",
                                   "runs",
                                   "failed",
+                                  "lastError",
                                   "costUsdMicros"
                                 ],
                                 "additionalProperties": false
@@ -24668,7 +25222,7 @@
                                   "null"
                                 ]
                               },
-                              "razorpaySubscriptionId": {
+                              "providerSubscriptionId": {
                                 "type": [
                                   "string",
                                   "null"
@@ -24687,7 +25241,7 @@
                               "status",
                               "currentPeriodStart",
                               "currentPeriodEnd",
-                              "razorpaySubscriptionId",
+                              "providerSubscriptionId",
                               "complimentary",
                               "createdAt"
                             ],
@@ -24704,10 +25258,13 @@
                                 "format": "uuid",
                                 "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                               },
-                              "amountPaise": {
+                              "amount": {
                                 "type": "integer",
                                 "minimum": -9007199254740991,
                                 "maximum": 9007199254740991
+                              },
+                              "currency": {
+                                "type": "string"
                               },
                               "status": {
                                 "type": "string",
@@ -24724,7 +25281,14 @@
                                   "null"
                                 ]
                               },
-                              "razorpayPaymentId": {
+                              "provider": {
+                                "type": "string",
+                                "enum": [
+                                  "razorpay",
+                                  "polar"
+                                ]
+                              },
+                              "providerPaymentId": {
                                 "type": [
                                   "string",
                                   "null"
@@ -24736,10 +25300,12 @@
                             },
                             "required": [
                               "id",
-                              "amountPaise",
+                              "amount",
+                              "currency",
                               "status",
                               "method",
-                              "razorpayPaymentId",
+                              "provider",
+                              "providerPaymentId",
                               "createdAt"
                             ],
                             "additionalProperties": false
@@ -25177,6 +25743,97 @@
                             ],
                             "additionalProperties": false
                           }
+                        },
+                        "feedback": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                              },
+                              "at": {
+                                "type": "string"
+                              },
+                              "step": {
+                                "type": "string"
+                              },
+                              "helpful": {
+                                "type": "boolean"
+                              },
+                              "comment": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "contactOk": {
+                                "type": "boolean"
+                              },
+                              "userId": {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                              },
+                              "email": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "at",
+                              "step",
+                              "helpful",
+                              "comment",
+                              "contactOk",
+                              "userId",
+                              "email"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "health": {
+                          "type": "object",
+                          "properties": {
+                            "lastSuccessAt": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "failedSince": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "failedRuns": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "failedUsers": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "lastError": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "lastSuccessAt",
+                            "failedSince",
+                            "failedRuns",
+                            "failedUsers",
+                            "lastError"
+                          ],
+                          "additionalProperties": false
                         }
                       },
                       "required": [
@@ -25186,7 +25843,9 @@
                         "byModels",
                         "byDay",
                         "failures",
-                        "topUsers"
+                        "topUsers",
+                        "feedback",
+                        "health"
                       ],
                       "additionalProperties": false
                     }
@@ -25280,6 +25939,11 @@
                               "minimum": -9007199254740991,
                               "maximum": 9007199254740991
                             },
+                            "usdCents": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
                             "payers": {
                               "type": "integer",
                               "minimum": -9007199254740991,
@@ -25300,6 +25964,7 @@
                             "paise",
                             "previousPaise",
                             "allTimePaise",
+                            "usdCents",
                             "payers",
                             "checkouts",
                             "checkoutsPaid"
@@ -25386,10 +26051,13 @@
                               "createdAt": {
                                 "type": "string"
                               },
-                              "amountPaise": {
+                              "amount": {
                                 "type": "integer",
                                 "minimum": -9007199254740991,
                                 "maximum": 9007199254740991
+                              },
+                              "currency": {
+                                "type": "string"
                               },
                               "status": {
                                 "type": "string",
@@ -25406,7 +26074,14 @@
                                   "null"
                                 ]
                               },
-                              "razorpayPaymentId": {
+                              "provider": {
+                                "type": "string",
+                                "enum": [
+                                  "razorpay",
+                                  "polar"
+                                ]
+                              },
+                              "providerPaymentId": {
                                 "type": [
                                   "string",
                                   "null"
@@ -25438,10 +26113,12 @@
                             "required": [
                               "id",
                               "createdAt",
-                              "amountPaise",
+                              "amount",
+                              "currency",
                               "status",
                               "method",
-                              "razorpayPaymentId",
+                              "provider",
+                              "providerPaymentId",
                               "plan",
                               "userId",
                               "email"
@@ -26079,45 +26756,6 @@
                                     "additionalProperties": false
                                   }
                                 },
-                                "api": {
-                                  "type": "array",
-                                  "items": {
-                                    "type": "object",
-                                    "properties": {
-                                      "route": {
-                                        "type": "string"
-                                      },
-                                      "requests": {
-                                        "type": "integer",
-                                        "minimum": -9007199254740991,
-                                        "maximum": 9007199254740991
-                                      },
-                                      "p50Ms": {
-                                        "type": "integer",
-                                        "minimum": -9007199254740991,
-                                        "maximum": 9007199254740991
-                                      },
-                                      "p95Ms": {
-                                        "type": "integer",
-                                        "minimum": -9007199254740991,
-                                        "maximum": 9007199254740991
-                                      },
-                                      "errors": {
-                                        "type": "integer",
-                                        "minimum": -9007199254740991,
-                                        "maximum": 9007199254740991
-                                      }
-                                    },
-                                    "required": [
-                                      "route",
-                                      "requests",
-                                      "p50Ms",
-                                      "p95Ms",
-                                      "errors"
-                                    ],
-                                    "additionalProperties": false
-                                  }
-                                },
                                 "compiles": {
                                   "type": "object",
                                   "properties": {
@@ -26223,9 +26861,559 @@
                                 "devices",
                                 "browsers",
                                 "events",
-                                "api",
                                 "compiles",
                                 "recordings"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "configured",
+                        "dashboardUrl",
+                        "error",
+                        "data"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/api": {
+      "get": {
+        "summary": "API speed, requests and errors from PostHog",
+        "tags": [
+          "Admin"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "days",
+            "schema": {
+              "default": "30",
+              "type": "string",
+              "enum": [
+                "7",
+                "30",
+                "90"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "timeZone",
+            "schema": {
+              "default": "Asia/Kolkata",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "configured": {
+                          "type": "boolean"
+                        },
+                        "dashboardUrl": {
+                          "type": "string"
+                        },
+                        "error": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "data": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "slowMs": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991
+                                },
+                                "totals": {
+                                  "type": "object",
+                                  "properties": {
+                                    "requests": {
+                                      "type": "integer",
+                                      "minimum": -9007199254740991,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "serverErrors": {
+                                      "type": "integer",
+                                      "minimum": -9007199254740991,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "clientErrors": {
+                                      "type": "integer",
+                                      "minimum": -9007199254740991,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "p50Ms": {
+                                      "type": "integer",
+                                      "minimum": -9007199254740991,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "p95Ms": {
+                                      "type": "integer",
+                                      "minimum": -9007199254740991,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "previousRequests": {
+                                      "type": "integer",
+                                      "minimum": -9007199254740991,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "previousServerErrors": {
+                                      "type": "integer",
+                                      "minimum": -9007199254740991,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "previousP95Ms": {
+                                      "type": "integer",
+                                      "minimum": -9007199254740991,
+                                      "maximum": 9007199254740991
+                                    }
+                                  },
+                                  "required": [
+                                    "requests",
+                                    "serverErrors",
+                                    "clientErrors",
+                                    "p50Ms",
+                                    "p95Ms",
+                                    "previousRequests",
+                                    "previousServerErrors",
+                                    "previousP95Ms"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                "byDay": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "day": {
+                                        "type": "string"
+                                      },
+                                      "requests": {
+                                        "type": "integer",
+                                        "minimum": -9007199254740991,
+                                        "maximum": 9007199254740991
+                                      },
+                                      "serverErrors": {
+                                        "type": "integer",
+                                        "minimum": -9007199254740991,
+                                        "maximum": 9007199254740991
+                                      },
+                                      "p95Ms": {
+                                        "type": "integer",
+                                        "minimum": -9007199254740991,
+                                        "maximum": 9007199254740991
+                                      }
+                                    },
+                                    "required": [
+                                      "day",
+                                      "requests",
+                                      "serverErrors",
+                                      "p95Ms"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "routes": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "route": {
+                                        "type": "string"
+                                      },
+                                      "requests": {
+                                        "type": "integer",
+                                        "minimum": -9007199254740991,
+                                        "maximum": 9007199254740991
+                                      },
+                                      "p50Ms": {
+                                        "type": "integer",
+                                        "minimum": -9007199254740991,
+                                        "maximum": 9007199254740991
+                                      },
+                                      "p95Ms": {
+                                        "type": "integer",
+                                        "minimum": -9007199254740991,
+                                        "maximum": 9007199254740991
+                                      },
+                                      "maxMs": {
+                                        "type": "integer",
+                                        "minimum": -9007199254740991,
+                                        "maximum": 9007199254740991
+                                      },
+                                      "serverErrors": {
+                                        "type": "integer",
+                                        "minimum": -9007199254740991,
+                                        "maximum": 9007199254740991
+                                      },
+                                      "clientErrors": {
+                                        "type": "integer",
+                                        "minimum": -9007199254740991,
+                                        "maximum": 9007199254740991
+                                      },
+                                      "avgMs": {
+                                        "type": "integer",
+                                        "minimum": -9007199254740991,
+                                        "maximum": 9007199254740991
+                                      },
+                                      "avgAiMs": {
+                                        "type": "integer",
+                                        "minimum": -9007199254740991,
+                                        "maximum": 9007199254740991
+                                      },
+                                      "avgCompileMs": {
+                                        "type": "integer",
+                                        "minimum": -9007199254740991,
+                                        "maximum": 9007199254740991
+                                      }
+                                    },
+                                    "required": [
+                                      "route",
+                                      "requests",
+                                      "p50Ms",
+                                      "p95Ms",
+                                      "maxMs",
+                                      "serverErrors",
+                                      "clientErrors",
+                                      "avgMs",
+                                      "avgAiMs",
+                                      "avgCompileMs"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "recent": {
+                                  "type": "object",
+                                  "properties": {
+                                    "all": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "object",
+                                        "properties": {
+                                          "at": {
+                                            "type": "string"
+                                          },
+                                          "method": {
+                                            "type": "string"
+                                          },
+                                          "route": {
+                                            "type": "string"
+                                          },
+                                          "status": {
+                                            "type": "integer",
+                                            "minimum": -9007199254740991,
+                                            "maximum": 9007199254740991
+                                          },
+                                          "durationMs": {
+                                            "type": "integer",
+                                            "minimum": -9007199254740991,
+                                            "maximum": 9007199254740991
+                                          },
+                                          "aiMs": {
+                                            "anyOf": [
+                                              {
+                                                "type": "integer",
+                                                "minimum": -9007199254740991,
+                                                "maximum": 9007199254740991
+                                              },
+                                              {
+                                                "type": "null"
+                                              }
+                                            ]
+                                          },
+                                          "compileMs": {
+                                            "anyOf": [
+                                              {
+                                                "type": "integer",
+                                                "minimum": -9007199254740991,
+                                                "maximum": 9007199254740991
+                                              },
+                                              {
+                                                "type": "null"
+                                              }
+                                            ]
+                                          },
+                                          "userId": {
+                                            "type": [
+                                              "string",
+                                              "null"
+                                            ]
+                                          },
+                                          "email": {
+                                            "type": [
+                                              "string",
+                                              "null"
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "at",
+                                          "method",
+                                          "route",
+                                          "status",
+                                          "durationMs",
+                                          "aiMs",
+                                          "compileMs",
+                                          "userId",
+                                          "email"
+                                        ],
+                                        "additionalProperties": false
+                                      }
+                                    },
+                                    "errors": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "object",
+                                        "properties": {
+                                          "at": {
+                                            "type": "string"
+                                          },
+                                          "method": {
+                                            "type": "string"
+                                          },
+                                          "route": {
+                                            "type": "string"
+                                          },
+                                          "status": {
+                                            "type": "integer",
+                                            "minimum": -9007199254740991,
+                                            "maximum": 9007199254740991
+                                          },
+                                          "durationMs": {
+                                            "type": "integer",
+                                            "minimum": -9007199254740991,
+                                            "maximum": 9007199254740991
+                                          },
+                                          "aiMs": {
+                                            "anyOf": [
+                                              {
+                                                "type": "integer",
+                                                "minimum": -9007199254740991,
+                                                "maximum": 9007199254740991
+                                              },
+                                              {
+                                                "type": "null"
+                                              }
+                                            ]
+                                          },
+                                          "compileMs": {
+                                            "anyOf": [
+                                              {
+                                                "type": "integer",
+                                                "minimum": -9007199254740991,
+                                                "maximum": 9007199254740991
+                                              },
+                                              {
+                                                "type": "null"
+                                              }
+                                            ]
+                                          },
+                                          "userId": {
+                                            "type": [
+                                              "string",
+                                              "null"
+                                            ]
+                                          },
+                                          "email": {
+                                            "type": [
+                                              "string",
+                                              "null"
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "at",
+                                          "method",
+                                          "route",
+                                          "status",
+                                          "durationMs",
+                                          "aiMs",
+                                          "compileMs",
+                                          "userId",
+                                          "email"
+                                        ],
+                                        "additionalProperties": false
+                                      }
+                                    },
+                                    "slow": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "object",
+                                        "properties": {
+                                          "at": {
+                                            "type": "string"
+                                          },
+                                          "method": {
+                                            "type": "string"
+                                          },
+                                          "route": {
+                                            "type": "string"
+                                          },
+                                          "status": {
+                                            "type": "integer",
+                                            "minimum": -9007199254740991,
+                                            "maximum": 9007199254740991
+                                          },
+                                          "durationMs": {
+                                            "type": "integer",
+                                            "minimum": -9007199254740991,
+                                            "maximum": 9007199254740991
+                                          },
+                                          "aiMs": {
+                                            "anyOf": [
+                                              {
+                                                "type": "integer",
+                                                "minimum": -9007199254740991,
+                                                "maximum": 9007199254740991
+                                              },
+                                              {
+                                                "type": "null"
+                                              }
+                                            ]
+                                          },
+                                          "compileMs": {
+                                            "anyOf": [
+                                              {
+                                                "type": "integer",
+                                                "minimum": -9007199254740991,
+                                                "maximum": 9007199254740991
+                                              },
+                                              {
+                                                "type": "null"
+                                              }
+                                            ]
+                                          },
+                                          "userId": {
+                                            "type": [
+                                              "string",
+                                              "null"
+                                            ]
+                                          },
+                                          "email": {
+                                            "type": [
+                                              "string",
+                                              "null"
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "at",
+                                          "method",
+                                          "route",
+                                          "status",
+                                          "durationMs",
+                                          "aiMs",
+                                          "compileMs",
+                                          "userId",
+                                          "email"
+                                        ],
+                                        "additionalProperties": false
+                                      }
+                                    }
+                                  },
+                                  "required": [
+                                    "all",
+                                    "errors",
+                                    "slow"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                "errors": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "message": {
+                                        "type": "string"
+                                      },
+                                      "count": {
+                                        "type": "integer",
+                                        "minimum": -9007199254740991,
+                                        "maximum": 9007199254740991
+                                      },
+                                      "users": {
+                                        "type": "integer",
+                                        "minimum": -9007199254740991,
+                                        "maximum": 9007199254740991
+                                      },
+                                      "where": {
+                                        "type": "string"
+                                      },
+                                      "firstAt": {
+                                        "type": "string"
+                                      },
+                                      "lastAt": {
+                                        "type": "string"
+                                      },
+                                      "url": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "message",
+                                      "count",
+                                      "users",
+                                      "where",
+                                      "firstAt",
+                                      "lastAt",
+                                      "url"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                }
+                              },
+                              "required": [
+                                "slowMs",
+                                "totals",
+                                "byDay",
+                                "routes",
+                                "recent",
+                                "errors"
                               ],
                               "additionalProperties": false
                             },

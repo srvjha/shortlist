@@ -15,12 +15,12 @@ const product = [
 ] as const
 
 const fields = [
-  { category: 'marketing-sales', label: 'Marketing and sales' },
-  { category: 'finance', label: 'Finance and accounting' },
-  { category: 'consulting', label: 'Consulting' },
-  { category: 'data', label: 'Data' },
-  { category: 'software-engineering', label: 'Software' },
-  { category: 'students', label: 'Students and freshers' },
+  { template: 'marketing', label: 'Marketing and sales' },
+  { template: 'finance', label: 'Finance and accounting' },
+  { template: 'consulting', label: 'Consulting' },
+  { template: 'data-analyst', label: 'Data' },
+  { template: 'developer', label: 'Software' },
+  { template: 'campus', label: 'Students and freshers' },
 ] as const
 
 const help = [
@@ -76,10 +76,10 @@ export function SiteFooter() {
           </h2>
           <ul className={list}>
             {fields.map((item) => (
-              <li key={item.category}>
+              <li key={item.template}>
                 <Link
-                  to="/templates"
-                  search={{ category: item.category }}
+                  to="/templates/$templateId"
+                  params={{ templateId: item.template }}
                   className={link}
                 >
                   {item.label}

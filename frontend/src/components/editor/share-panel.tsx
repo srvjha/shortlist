@@ -11,7 +11,7 @@ import {
   Trash2Icon,
 } from 'lucide-react'
 import { useState } from 'react'
-import { toast } from 'sonner'
+import { toast } from '@/lib/toast'
 import { countryLabel } from '@/components/analytics/labels'
 import { ConfirmDialog } from '@/components/app/confirm-dialog'
 import { Badge } from '@/components/ui/badge'

@@ -10,7 +10,7 @@ import {
   UserRoundIcon,
 } from 'lucide-react'
 import { useRef, useState } from 'react'
-import { toast } from 'sonner'
+import { toast } from '@/lib/toast'
 import { z } from 'zod'
 import { PageHeader } from '@/components/app/page-header'
 import { PdfPreview } from '@/components/editor/pdf-preview'

@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { ArrowLeftIcon } from 'lucide-react'
 import { useState } from 'react'
-import { toast } from 'sonner'
+import { toast } from '@/lib/toast'
 import {
   EmptyNote,
   PlanBadge,
@@ -52,7 +52,7 @@ import type { AdminUser } from '@/lib/api/types'
 import {
   formatDate,
   formatDateTime,
-  formatInr,
+  formatMoney,
   formatNumber,
   formatUsd,
   initials,
@@ -382,7 +382,14 @@ function UserReport({ data }: { data: AdminUser }) {
                 <TableBody>
                   {data.ai.bySteps.map((row) => (
                     <TableRow key={row.step}>
-                      <TableCell>{stepLabel(row.step)}</TableCell>
+                      <TableCell className="whitespace-normal">
+                        {stepLabel(row.step)}
+                        {row.lastError && (
+                          <span className="mt-1 block font-mono text-xs break-words text-destructive">
+                            Last error: {row.lastError}
+                          </span>
+                        )}
+                      </TableCell>
                       <TableCell className="text-right tabular-nums">
                         {row.runs}
                       </TableCell>
@@ -461,7 +468,7 @@ function UserReport({ data }: { data: AdminUser }) {
                   className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 py-3 text-sm"
                 >
                   <span className="font-medium tabular-nums">
-                    {formatInr(payment.amountPaise)}
+                    {formatMoney(payment.amount, payment.currency)}
                   </span>
                   <Badge
                     variant={
@@ -478,7 +485,7 @@ function UserReport({ data }: { data: AdminUser }) {
                     {payment.method ?? 'no method'}
                   </span>
                   <span className="font-mono text-xs text-muted-foreground">
-                    {payment.razorpayPaymentId ?? 'no payment id'}
+                    {payment.providerPaymentId ?? 'no payment id'}
                   </span>
                   <span className="text-muted-foreground">
                     {formatDateTime(payment.createdAt)}
@@ -605,8 +612,9 @@ function GrantPlanDialog({
           <DialogHeader>
             <DialogTitle>Give {name} a plan</DialogTitle>
             <DialogDescription>
-              Free of charge, with no payment in Razorpay. It ends on its own
-              when the time runs out, and you can end it early from this page.
+              Free of charge, with no payment through a provider. It ends on its
+              own when the time runs out, and you can end it early from this
+              page.
             </DialogDescription>
           </DialogHeader>
           <FieldGroup className="grid gap-4 sm:grid-cols-2">

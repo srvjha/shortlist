@@ -1254,7 +1254,7 @@ export interface paths {
                                     id: string;
                                     createdAt: string;
                                     /** @enum {string} */
-                                    step: "import" | "jd_parse" | "plan" | "rewrite" | "verify" | "inline_edit" | "chat_edit" | "fix_compile" | "draft" | "ats_match" | "ats_review";
+                                    step: "import" | "jd_parse" | "plan" | "rewrite" | "verify" | "inline_edit" | "chat_edit" | "fix_compile" | "draft" | "ats_match" | "ats_review" | "project_link";
                                     /** @enum {string} */
                                     status: "pending" | "succeeded" | "failed";
                                     model: string;
@@ -4882,6 +4882,78 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/project-drafts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Write a projects entry from a GitHub repo, a web page or pasted text with AI */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /** Format: uri */
+                        url: string;
+                        notes?: string;
+                    } | {
+                        text: string;
+                        notes?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description OK */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                project: {
+                                    id: string;
+                                    name: string;
+                                    url?: string;
+                                    technologies: string[];
+                                    bullets: {
+                                        id: string;
+                                        text: string;
+                                        flags: string[];
+                                    }[];
+                                };
+                                /** Format: uuid */
+                                aiRunId: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Error */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/imports": {
         parameters: {
             query?: never;
@@ -5565,6 +5637,126 @@ export interface paths {
         };
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/resumes/{resumeId}/suggestions/{suggestionId}/feedback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Rate an AI suggestion after applying it */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    resumeId: string;
+                    suggestionId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        helpful: boolean;
+                        comment?: string;
+                        /** @default false */
+                        contactOk?: boolean;
+                    };
+                };
+            };
+            responses: {
+                /** @description No content */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Error */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Report a problem. Signed-out visitors must include an email. */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        description: string;
+                        /** Format: email */
+                        email?: string;
+                        page?: string;
+                        error?: {
+                            message: string;
+                            code?: string;
+                            status?: number;
+                            path?: string;
+                        };
+                    };
+                };
+            };
+            responses: {
+                /** @description OK */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                /** Format: uuid */
+                                id: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Error */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -6533,6 +6725,63 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/pricing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Prices for the visitor's country */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                /** @enum {string} */
+                                region: "india" | "global";
+                                country: string | null;
+                                /** @enum {string} */
+                                provider: "razorpay" | "polar";
+                                /** @enum {string} */
+                                currency: "INR" | "USD";
+                                season_pass: number;
+                                pro: number;
+                            };
+                        };
+                    };
+                };
+                /** @description Error */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/checkouts": {
         parameters: {
             query?: never;
@@ -6542,7 +6791,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Start a Razorpay checkout */
+        /** Start a checkout with the payment provider for the visitor's country */
         post: {
             parameters: {
                 query?: never;
@@ -6567,16 +6816,26 @@ export interface paths {
                     content: {
                         "application/json": {
                             data: {
+                                /** @enum {string} */
+                                plan: "season_pass" | "pro";
+                                amount: number;
+                                /** @enum {string} */
+                                currency: "INR" | "USD";
                                 /** @constant */
                                 provider: "razorpay";
                                 keyId: string;
-                                /** @enum {string} */
-                                plan: "season_pass" | "pro";
                                 orderId: string | null;
                                 razorpaySubscriptionId: string | null;
-                                amountPaise: number;
+                            } | {
+                                /** @enum {string} */
+                                plan: "season_pass" | "pro";
+                                amount: number;
+                                /** @enum {string} */
+                                currency: "INR" | "USD";
                                 /** @constant */
-                                currency: "INR";
+                                provider: "polar";
+                                /** Format: uri */
+                                url: string;
                             };
                         };
                     };
@@ -6634,6 +6893,7 @@ export interface paths {
                                     status: "created" | "active" | "past_due" | "cancelled" | "expired";
                                     currentPeriodEnd: string | null;
                                     cancelledAt: string | null;
+                                    renews: boolean;
                                 } | null;
                             };
                         };
@@ -6681,6 +6941,7 @@ export interface paths {
                                     status: "created" | "active" | "past_due" | "cancelled" | "expired";
                                     currentPeriodEnd: string | null;
                                     cancelledAt: string | null;
+                                    renews: boolean;
                                 } | null;
                             };
                         };
@@ -6731,9 +6992,13 @@ export interface paths {
                                     /** Format: uuid */
                                     paymentId: string;
                                     plan: ("season_pass" | "pro") | null;
-                                    amountPaidPaise: number;
-                                    feePaise: number;
-                                    refundPaise: number;
+                                    /** @enum {string} */
+                                    provider: "razorpay" | "polar";
+                                    /** @enum {string} */
+                                    currency: "INR" | "USD";
+                                    amountPaid: number;
+                                    fee: number;
+                                    refund: number;
                                     refundableUntil: string;
                                 } | null;
                                 reason: string | null;
@@ -6769,7 +7034,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Refund a payment made in the last 6 hours, less Razorpay's fee, and end its plan */
+        /** Refund a payment made in the last 6 hours, less the payment provider's fee, and end its plan */
         post: {
             parameters: {
                 query?: never;
@@ -6796,8 +7061,10 @@ export interface paths {
                             data: {
                                 /** Format: uuid */
                                 paymentId: string;
-                                refundPaise: number;
-                                razorpayRefundId: string;
+                                refund: number;
+                                /** @enum {string} */
+                                currency: "INR" | "USD";
+                                providerRefundId: string;
                             };
                         };
                     };
@@ -6863,6 +7130,7 @@ export interface paths {
                                     status: "created" | "active" | "past_due" | "cancelled" | "expired";
                                     currentPeriodEnd: string | null;
                                     cancelledAt: string | null;
+                                    renews: boolean;
                                 } | null;
                             };
                         };
@@ -7377,6 +7645,7 @@ export interface paths {
                                         step: string;
                                         runs: number;
                                         failed: number;
+                                        lastError: string | null;
                                         costUsdMicros: number;
                                     }[];
                                 };
@@ -7417,18 +7686,21 @@ export interface paths {
                                     status: "created" | "active" | "past_due" | "cancelled" | "expired";
                                     currentPeriodStart: string | null;
                                     currentPeriodEnd: string | null;
-                                    razorpaySubscriptionId: string | null;
+                                    providerSubscriptionId: string | null;
                                     complimentary: boolean;
                                     createdAt: string;
                                 }[];
                                 payments: {
                                     /** Format: uuid */
                                     id: string;
-                                    amountPaise: number;
+                                    amount: number;
+                                    currency: string;
                                     /** @enum {string} */
                                     status: "created" | "captured" | "failed" | "refunded";
                                     method: string | null;
-                                    razorpayPaymentId: string | null;
+                                    /** @enum {string} */
+                                    provider: "razorpay" | "polar";
+                                    providerPaymentId: string | null;
                                     createdAt: string;
                                 }[];
                                 sessions: {
@@ -7529,6 +7801,7 @@ export interface paths {
                                         step: string;
                                         runs: number;
                                         failed: number;
+                                        lastError: string | null;
                                         costUsdMicros: number;
                                     }[];
                                 };
@@ -7569,18 +7842,21 @@ export interface paths {
                                     status: "created" | "active" | "past_due" | "cancelled" | "expired";
                                     currentPeriodStart: string | null;
                                     currentPeriodEnd: string | null;
-                                    razorpaySubscriptionId: string | null;
+                                    providerSubscriptionId: string | null;
                                     complimentary: boolean;
                                     createdAt: string;
                                 }[];
                                 payments: {
                                     /** Format: uuid */
                                     id: string;
-                                    amountPaise: number;
+                                    amount: number;
+                                    currency: string;
                                     /** @enum {string} */
                                     status: "created" | "captured" | "failed" | "refunded";
                                     method: string | null;
-                                    razorpayPaymentId: string | null;
+                                    /** @enum {string} */
+                                    provider: "razorpay" | "polar";
+                                    providerPaymentId: string | null;
                                     createdAt: string;
                                 }[];
                                 sessions: {
@@ -7779,6 +8055,7 @@ export interface paths {
                                         step: string;
                                         runs: number;
                                         failed: number;
+                                        lastError: string | null;
                                         costUsdMicros: number;
                                     }[];
                                 };
@@ -7819,18 +8096,21 @@ export interface paths {
                                     status: "created" | "active" | "past_due" | "cancelled" | "expired";
                                     currentPeriodStart: string | null;
                                     currentPeriodEnd: string | null;
-                                    razorpaySubscriptionId: string | null;
+                                    providerSubscriptionId: string | null;
                                     complimentary: boolean;
                                     createdAt: string;
                                 }[];
                                 payments: {
                                     /** Format: uuid */
                                     id: string;
-                                    amountPaise: number;
+                                    amount: number;
+                                    currency: string;
                                     /** @enum {string} */
                                     status: "created" | "captured" | "failed" | "refunded";
                                     method: string | null;
-                                    razorpayPaymentId: string | null;
+                                    /** @enum {string} */
+                                    provider: "razorpay" | "polar";
+                                    providerPaymentId: string | null;
                                     createdAt: string;
                                 }[];
                                 sessions: {
@@ -7988,6 +8268,25 @@ export interface paths {
                                     runs: number;
                                     costUsdMicros: number;
                                 }[];
+                                feedback: {
+                                    /** Format: uuid */
+                                    id: string;
+                                    at: string;
+                                    step: string;
+                                    helpful: boolean;
+                                    comment: string | null;
+                                    contactOk: boolean;
+                                    /** Format: uuid */
+                                    userId: string;
+                                    email: string;
+                                }[];
+                                health: {
+                                    lastSuccessAt: string | null;
+                                    failedSince: string | null;
+                                    failedRuns: number;
+                                    failedUsers: number;
+                                    lastError: string | null;
+                                };
                             };
                         };
                     };
@@ -8044,6 +8343,7 @@ export interface paths {
                                     paise: number;
                                     previousPaise: number;
                                     allTimePaise: number;
+                                    usdCents: number;
                                     payers: number;
                                     checkouts: number;
                                     checkoutsPaid: number;
@@ -8065,11 +8365,14 @@ export interface paths {
                                     /** Format: uuid */
                                     id: string;
                                     createdAt: string;
-                                    amountPaise: number;
+                                    amount: number;
+                                    currency: string;
                                     /** @enum {string} */
                                     status: "created" | "captured" | "failed" | "refunded";
                                     method: string | null;
-                                    razorpayPaymentId: string | null;
+                                    /** @enum {string} */
+                                    provider: "razorpay" | "polar";
+                                    providerPaymentId: string | null;
                                     plan: ("season_pass" | "pro") | null;
                                     /** Format: uuid */
                                     userId: string;
@@ -8268,13 +8571,6 @@ export interface paths {
                                         count: number;
                                         people: number;
                                     }[];
-                                    api: {
-                                        route: string;
-                                        requests: number;
-                                        p50Ms: number;
-                                        p95Ms: number;
-                                        errors: number;
-                                    }[];
                                     compiles: {
                                         requests: number;
                                         cacheHitRate: number;
@@ -8291,6 +8587,135 @@ export interface paths {
                                         durationSeconds: number;
                                         clicks: number;
                                         startUrl: string | null;
+                                        url: string;
+                                    }[];
+                                } | null;
+                            };
+                        };
+                    };
+                };
+                /** @description Error */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/api": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** API speed, requests and errors from PostHog */
+        get: {
+            parameters: {
+                query?: {
+                    days?: "7" | "30" | "90";
+                    timeZone?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                configured: boolean;
+                                dashboardUrl: string;
+                                error: string | null;
+                                data: {
+                                    slowMs: number;
+                                    totals: {
+                                        requests: number;
+                                        serverErrors: number;
+                                        clientErrors: number;
+                                        p50Ms: number;
+                                        p95Ms: number;
+                                        previousRequests: number;
+                                        previousServerErrors: number;
+                                        previousP95Ms: number;
+                                    };
+                                    byDay: {
+                                        day: string;
+                                        requests: number;
+                                        serverErrors: number;
+                                        p95Ms: number;
+                                    }[];
+                                    routes: {
+                                        route: string;
+                                        requests: number;
+                                        p50Ms: number;
+                                        p95Ms: number;
+                                        maxMs: number;
+                                        serverErrors: number;
+                                        clientErrors: number;
+                                        avgMs: number;
+                                        avgAiMs: number;
+                                        avgCompileMs: number;
+                                    }[];
+                                    recent: {
+                                        all: {
+                                            at: string;
+                                            method: string;
+                                            route: string;
+                                            status: number;
+                                            durationMs: number;
+                                            aiMs: number | null;
+                                            compileMs: number | null;
+                                            userId: string | null;
+                                            email: string | null;
+                                        }[];
+                                        errors: {
+                                            at: string;
+                                            method: string;
+                                            route: string;
+                                            status: number;
+                                            durationMs: number;
+                                            aiMs: number | null;
+                                            compileMs: number | null;
+                                            userId: string | null;
+                                            email: string | null;
+                                        }[];
+                                        slow: {
+                                            at: string;
+                                            method: string;
+                                            route: string;
+                                            status: number;
+                                            durationMs: number;
+                                            aiMs: number | null;
+                                            compileMs: number | null;
+                                            userId: string | null;
+                                            email: string | null;
+                                        }[];
+                                    };
+                                    errors: {
+                                        message: string;
+                                        count: number;
+                                        users: number;
+                                        where: string;
+                                        firstAt: string;
+                                        lastAt: string;
                                         url: string;
                                     }[];
                                 } | null;

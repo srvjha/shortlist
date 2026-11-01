@@ -25,6 +25,7 @@ import type { AdminRevenue } from '@/lib/api/types'
 import {
   formatDateTime,
   formatInr,
+  formatMoney,
   formatNumber,
   percent,
   planLabels,
@@ -90,6 +91,9 @@ function RevenueReport({ data }: { data: AdminRevenue }) {
           current={totals.paise}
           previous={totals.previousPaise}
           format={formatInr}
+          {...(totals.usdCents > 0 && {
+            hint: `plus ${formatMoney(totals.usdCents, 'USD')} through Polar`,
+          })}
         />
         <Stat
           label="All time"
@@ -152,7 +156,7 @@ function RevenueReport({ data }: { data: AdminRevenue }) {
                   <TableHead className="text-right">Amount</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Method</TableHead>
-                  <TableHead>Razorpay ID</TableHead>
+                  <TableHead>Payment ID</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -174,7 +178,7 @@ function RevenueReport({ data }: { data: AdminRevenue }) {
                       {payment.plan ? planLabels[payment.plan] : 'Unknown'}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
-                      {formatInr(payment.amountPaise)}
+                      {formatMoney(payment.amount, payment.currency)}
                     </TableCell>
                     <TableCell>
                       <Badge variant={statusVariant[payment.status]}>
@@ -185,7 +189,7 @@ function RevenueReport({ data }: { data: AdminRevenue }) {
                       {payment.method ?? 'None'}
                     </TableCell>
                     <TableCell className="font-mono text-xs text-muted-foreground">
-                      {payment.razorpayPaymentId ?? 'None'}
+                      {payment.providerPaymentId ?? 'None'}
                     </TableCell>
                   </TableRow>
                 ))}

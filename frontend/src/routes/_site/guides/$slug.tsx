@@ -2,7 +2,7 @@ import { Link, createFileRoute, notFound } from '@tanstack/react-router'
 import { Button } from '@/components/ui/button'
 import { prose } from '@/lib/docs'
 import { findGuide, guides } from '@/lib/guides'
-import { site } from '@/lib/site'
+import { breadcrumbs, site } from '@/lib/site'
 
 export const Route = createFileRoute('/_site/guides/$slug')({
   loader: ({ params }) => {
@@ -39,6 +39,15 @@ export const Route = createFileRoute('/_site/guides/$slug')({
               url: site.url,
             },
           }),
+        },
+        {
+          type: 'application/ld+json',
+          children: JSON.stringify(
+            breadcrumbs([
+              ['Resume guides', `${site.url}/guides`],
+              [guide.title, url],
+            ]),
+          ),
         },
       ],
     }

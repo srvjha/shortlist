@@ -64,6 +64,17 @@ const inr = new Intl.NumberFormat('en-IN', {
 
 export const formatInr = (paise: number) => inr.format(paise / 100)
 
+// A payment amount in its currency's minor unit: paise for INR, cents for USD.
+export const formatMoney = (amount: number, currency: string) =>
+  currency === 'INR'
+    ? formatInr(amount)
+    : new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency,
+        // $9, but $1.50
+        minimumFractionDigits: amount % 100 ? 2 : 0,
+      }).format(amount / 100)
+
 const usd = new Intl.NumberFormat('en-US', {
   style: 'currency',
   currency: 'USD',

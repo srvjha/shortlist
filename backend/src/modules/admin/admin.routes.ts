@@ -5,6 +5,7 @@ import { currentUser, requireAuth } from "../../middleware/require-auth.js";
 import { validated } from "../../middleware/validate.js";
 import {
   adminAiResponse,
+  adminApiResponse,
   adminContentQuery,
   adminContentResponse,
   adminOverviewResponse,
@@ -21,7 +22,7 @@ import {
   updateAdminUserBody,
 } from "./admin.schemas.js";
 import * as admin from "./admin.service.js";
-import { getTraffic } from "./posthog.js";
+import { getApiReport, getTraffic } from "./posthog.js";
 
 export const adminRouter = Router();
 
@@ -113,6 +114,13 @@ adminRouter.get(
   "/admin/traffic",
   ...validated({ query: adminRangeQuery }, async (req, res) => {
     sendData(res, adminTrafficResponse, await getTraffic(req.query.days, req.query.timeZone));
+  }),
+);
+
+adminRouter.get(
+  "/admin/api",
+  ...validated({ query: adminRangeQuery }, async (req, res) => {
+    sendData(res, adminApiResponse, await admin.withEmails(await getApiReport(req.query.days, req.query.timeZone)));
   }),
 );
 

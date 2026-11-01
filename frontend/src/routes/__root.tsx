@@ -4,9 +4,11 @@ import {
   Scripts,
   createRootRouteWithContext,
 } from '@tanstack/react-router'
+import { ReportDialog } from '@/components/app/report-dialog'
 import { Button } from '@/components/ui/button'
 import { Toaster } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
+import { openReport } from '@/lib/report'
 import { site } from '@/lib/site'
 import { ThemeProvider, themeScript } from '@/lib/theme'
 import type { RouterContext } from '../router'
@@ -67,6 +69,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           <TooltipProvider>
             {children}
             <Toaster position="bottom-right" />
+            <ReportDialog />
           </TooltipProvider>
         </ThemeProvider>
         <Scripts />
@@ -75,14 +78,29 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   )
 }
 
-function StatusPage({ title, body }: { title: string; body: string }) {
+function StatusPage({
+  title,
+  body,
+  error,
+}: {
+  title: string
+  body: string
+  error?: string
+}) {
   return (
     <div className="mx-auto flex min-h-svh max-w-md flex-col justify-center gap-4 px-6">
       <h1 className="text-4xl font-semibold tracking-tight">{title}</h1>
       <p className="text-muted-foreground">{body}</p>
-      <Button asChild className="self-start">
-        <Link to="/">Go to the home page</Link>
-      </Button>
+      <div className="flex flex-wrap gap-2">
+        <Button asChild>
+          <Link to="/">Go to the home page</Link>
+        </Button>
+        {error !== undefined && (
+          <Button variant="outline" onClick={() => openReport(error)}>
+            Report this problem
+          </Button>
+        )}
+      </div>
     </div>
   )
 }
@@ -96,11 +114,12 @@ function NotFound() {
   )
 }
 
-function ErrorPage() {
+function ErrorPage({ error }: { error: unknown }) {
   return (
     <StatusPage
       title="Something went wrong"
       body="An unexpected error stopped this page from loading. Try refreshing."
+      error={(error instanceof Error && error.message) || 'The page crashed'}
     />
   )
 }

@@ -16,6 +16,7 @@ describe("request step timings", () => {
       route: { path: "/previews" },
       baseUrl: "/v1",
       originalUrl: "/v1/previews",
+      user: { id: "user_1" },
     };
     await new Promise<void>((resolve) =>
       requestMetrics(req as never, res as never, async () => {
@@ -27,7 +28,16 @@ describe("request step timings", () => {
       }),
     );
     res.emit("finish");
-    expect(sent[0]).toMatchObject({ route: "/v1/previews", ai_ms: 12, compile_cached: false });
+    expect(sent[0]).toMatchObject({ route: "/v1/previews", ai_ms: 12, compile_cached: false, user_id: "user_1" });
     expect(sent[0]!.compile_ms).toBeGreaterThanOrEqual(19);
+  });
+});
+
+describe("routePattern", async () => {
+  const { routePattern } = await import("../src/middleware/request-metrics.js");
+  it("adds the /v1 mount once, even for routes that carry it in their own path", () => {
+    const req = (path: string, originalUrl: string) => ({ route: { path }, baseUrl: "", originalUrl }) as never;
+    expect(routePattern(req("/resumes/:resumeId", "/v1/resumes/1"))).toBe("/v1/resumes/:resumeId");
+    expect(routePattern(req("/v1/webhooks/polar", "/v1/webhooks/polar"))).toBe("/v1/webhooks/polar");
   });
 });

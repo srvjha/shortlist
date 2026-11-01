@@ -5,7 +5,10 @@ import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import { useCheckout } from '@/hooks/use-checkout'
 import { useSession } from '@/lib/auth-client'
+import type { Pricing } from '@/lib/api/types'
+import { formatMoney } from '@/lib/format'
 import { plans } from '@/lib/plans'
+import { paymentLine, priceNote, priceOf, usePricing } from '@/lib/pricing'
 import { cn } from '@/lib/utils'
 
 type Plan = (typeof plans)[number]
@@ -63,11 +66,14 @@ function PlanCta({ plan }: { plan: Plan }) {
 export function PricingCards({
   headingLevel = 3,
   className,
+  pricing: initial,
 }: {
   headingLevel?: 2 | 3
   className?: string
+  pricing?: Pricing | null
 }) {
   const Heading = `h${headingLevel}` as const
+  const pricing = usePricing(initial)
   return (
     <div className={className}>
       {/* Cards share row lines (subgrid) so names, prices, buttons and lists align across plans. */}
@@ -102,13 +108,17 @@ export function PricingCards({
               <p className="mt-2 text-muted-foreground">{plan.forWhom}</p>
               <p className="mt-6 flex items-baseline gap-1.5">
                 <span className="font-serif text-5xl font-semibold tracking-tight tabular-nums">
-                  {plan.price}
+                  {plan.id === 'free'
+                    ? formatMoney(0, pricing.currency)
+                    : priceOf(plan.id, pricing)}
                 </span>
                 {plan.period && (
                   <span className="text-muted-foreground">{plan.period}</span>
                 )}
               </p>
-              <p className="mt-2 text-sm text-muted-foreground">{plan.note}</p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {plan.id === 'free' ? plan.note : priceNote(plan.id, pricing)}
+              </p>
               <PlanCta plan={plan} />
               <div className="mt-8 border-t pt-6">
                 <p className="text-sm font-medium">{plan.listTitle}</p>
@@ -129,8 +139,18 @@ export function PricingCards({
         })}
       </ul>
       <p className="mt-6 text-center text-sm text-muted-foreground">
-        Pay with UPI, cards or net banking through Razorpay. Changed your mind?
-        Ask for a refund within 6 hours.
+        {paymentLine(pricing)} Changed your mind? Ask for a refund within 6
+        hours.
+      </p>
+      <p className="mt-2 text-center text-xs text-muted-foreground">
+        <a
+          href="https://db-ip.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline-offset-4 hover:underline"
+        >
+          IP Geolocation by DB-IP
+        </a>
       </p>
     </div>
   )

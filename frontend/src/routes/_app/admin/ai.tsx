@@ -12,6 +12,7 @@ import {
   TrendChart,
   seriesColor,
 } from '@/components/admin/admin-ui'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import {
   Table,
   TableBody,
@@ -51,6 +52,7 @@ function AiReport({ data }: { data: AdminAi }) {
 
   return (
     <div className="flex flex-col gap-10">
+      <AiHealth health={data.health} />
       <StatGrid>
         <Stat
           label="AI runs"
@@ -236,6 +238,51 @@ function AiReport({ data }: { data: AdminAi }) {
         </Section>
       </div>
 
+      <Section title="Feedback on suggestions">
+        {data.feedback.length === 0 ? (
+          <EmptyNote>No feedback in this period.</EmptyNote>
+        ) : (
+          <ol className="flex flex-col divide-y rounded-lg border">
+            {data.feedback.map((row) => (
+              <li
+                key={row.id}
+                className="flex flex-col gap-1 px-4 py-3 text-sm"
+              >
+                <div className="flex flex-wrap items-baseline justify-between gap-x-3">
+                  <span>
+                    <span className="font-medium">
+                      {row.helpful ? 'Helpful' : 'Not helpful'}
+                    </span>{' '}
+                    <span className="text-muted-foreground">
+                      {stepLabel(row.step)} by{' '}
+                      <Link
+                        to="/admin/users/$userId"
+                        params={{ userId: row.userId }}
+                        className="hover:underline"
+                      >
+                        {row.email}
+                      </Link>
+                      {row.contactOk && ', OK to email'}
+                    </span>
+                  </span>
+                  <time
+                    dateTime={new Date(row.at).toISOString()}
+                    className="text-muted-foreground"
+                  >
+                    {timeAgo(row.at)}
+                  </time>
+                </div>
+                {row.comment && (
+                  <p className="whitespace-pre-wrap break-words">
+                    {row.comment}
+                  </p>
+                )}
+              </li>
+            ))}
+          </ol>
+        )}
+      </Section>
+
       <Section title="Recent failures">
         {data.failures.length === 0 ? (
           <EmptyNote>No failed AI runs in this period.</EmptyNote>
@@ -280,5 +327,38 @@ function AiReport({ data }: { data: AdminAi }) {
         )}
       </Section>
     </div>
+  )
+}
+
+// Not tied to the chosen range: whether AI on our key works right now.
+function AiHealth({ health }: { health: AdminAi['health'] }) {
+  const lastSuccess = health.lastSuccessAt
+    ? timeAgo(health.lastSuccessAt)
+    : 'never'
+  if (health.failedRuns === 0 || !health.failedSince)
+    return (
+      <p className="text-sm text-muted-foreground">
+        AI is working. Last successful run on our key: {lastSuccess}.
+      </p>
+    )
+  return (
+    <Alert variant="destructive">
+      <AlertTitle>
+        {formatNumber(health.failedRuns)} AI{' '}
+        {health.failedRuns === 1 ? 'run' : 'runs'} on our key failed since the
+        last one that worked
+      </AlertTitle>
+      <AlertDescription>
+        <p>
+          Failing since {timeAgo(health.failedSince)}, for{' '}
+          {formatNumber(health.failedUsers)}{' '}
+          {health.failedUsers === 1 ? 'person' : 'people'}. Last successful run:{' '}
+          {lastSuccess}.
+        </p>
+        {health.lastError && (
+          <p className="font-mono text-xs break-words">{health.lastError}</p>
+        )}
+      </AlertDescription>
+    </Alert>
   )
 }

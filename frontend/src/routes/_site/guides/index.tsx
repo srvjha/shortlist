@@ -2,14 +2,17 @@ import { Link, createFileRoute } from '@tanstack/react-router'
 import { guides } from '@/lib/guides'
 import { site } from '@/lib/site'
 
+const title = `Resume Guides for Freshers and Students | ${site.name}`
 const description =
   'Free guides for freshers and students: the right resume format, how to get past ATS software, and how to tailor a resume to each job.'
 
 export const Route = createFileRoute('/_site/guides/')({
   head: () => ({
     meta: [
-      { title: `Resume Guides for Freshers and Students | ${site.name}` },
+      { title },
       { name: 'description', content: description },
+      { property: 'og:title', content: title },
+      { property: 'og:url', content: `${site.url}/guides` },
     ],
     links: [{ rel: 'canonical', href: `${site.url}/guides` }],
   }),

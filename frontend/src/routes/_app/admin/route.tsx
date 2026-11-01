@@ -22,6 +22,7 @@ const tabs = [
   { to: '/admin/promo-codes', label: 'Promo codes', exact: false },
   { to: '/admin/content', label: 'Content', exact: false },
   { to: '/admin/traffic', label: 'Traffic', exact: false },
+  { to: '/admin/api', label: 'API', exact: false },
   { to: '/admin/system', label: 'System', exact: false },
 ] as const
 
@@ -32,6 +33,7 @@ const ranged = [
   '/admin/revenue',
   '/admin/content',
   '/admin/traffic',
+  '/admin/api',
 ]
 
 export const Route = createFileRoute('/_app/admin')({

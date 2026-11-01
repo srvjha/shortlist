@@ -2,16 +2,36 @@ import { z } from "zod";
 
 export const createCheckoutBody = z.object({ plan: z.enum(["season_pass", "pro"]) });
 
-export const checkoutResponse = z.object({
-  provider: z.literal("razorpay"),
-  keyId: z.string(),
-  plan: z.enum(["season_pass", "pro"]),
-  // Season Pass is a one-time order; Pro is a recurring subscription.
-  orderId: z.string().nullable(),
-  razorpaySubscriptionId: z.string().nullable(),
-  amountPaise: z.number().int(),
-  currency: z.literal("INR"),
+// The prices for the visitor's country, in the currency's minor unit. With Razorpay, Pro renews monthly; with Polar,
+// both plans are one payment.
+export const pricingResponse = z.object({
+  region: z.enum(["india", "global"]),
+  country: z.string().nullable(),
+  provider: z.enum(["razorpay", "polar"]),
+  currency: z.enum(["INR", "USD"]),
+  season_pass: z.number().int(),
+  pro: z.number().int(),
 });
+
+const checkoutBase = {
+  plan: z.enum(["season_pass", "pro"]),
+  // In the currency's minor unit (paise, cents).
+  amount: z.number().int(),
+  currency: z.enum(["INR", "USD"]),
+};
+
+// Razorpay opens its modal on the page; Polar sends the buyer to its own checkout page.
+export const checkoutResponse = z.discriminatedUnion("provider", [
+  z.object({
+    ...checkoutBase,
+    provider: z.literal("razorpay"),
+    keyId: z.string(),
+    // Season Pass is a one-time order; Pro is a recurring subscription.
+    orderId: z.string().nullable(),
+    razorpaySubscriptionId: z.string().nullable(),
+  }),
+  z.object({ ...checkoutBase, provider: z.literal("polar"), url: z.url() }),
+]);
 
 export const subscriptionResponse = z.object({
   plan: z.enum(["free", "season_pass", "pro"]),
@@ -22,6 +42,7 @@ export const subscriptionResponse = z.object({
       status: z.enum(["created", "active", "past_due", "cancelled", "expired"]),
       currentPeriodEnd: z.date().nullable(),
       cancelledAt: z.date().nullable(),
+      renews: z.boolean(),
     })
     .nullable(),
 });
@@ -32,9 +53,12 @@ export const refundQuoteResponse = z.object({
     .object({
       paymentId: z.uuid(),
       plan: z.enum(["season_pass", "pro"]).nullable(),
-      amountPaidPaise: z.number().int(),
-      feePaise: z.number().int(),
-      refundPaise: z.number().int(),
+      provider: z.enum(["razorpay", "polar"]),
+      // In the currency's minor unit (paise, cents).
+      currency: z.enum(["INR", "USD"]),
+      amountPaid: z.number().int(),
+      fee: z.number().int(),
+      refund: z.number().int(),
       refundableUntil: z.date(),
     })
     .nullable(),
@@ -45,6 +69,7 @@ export const createRefundBody = z.object({ paymentId: z.uuid() });
 
 export const refundResponse = z.object({
   paymentId: z.uuid(),
-  refundPaise: z.number().int(),
-  razorpayRefundId: z.string(),
+  refund: z.number().int(),
+  currency: z.enum(["INR", "USD"]),
+  providerRefundId: z.string(),
 });

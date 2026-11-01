@@ -32,6 +32,7 @@ import { Route as SitePrivacyRouteImport } from './routes/_site/privacy'
 import { Route as SiteTermsRouteImport } from './routes/_site/terms'
 import { Route as AppAdminIndexRouteImport } from './routes/_app/admin/index'
 import { Route as AppAdminAiRouteImport } from './routes/_app/admin/ai'
+import { Route as AppAdminApiRouteImport } from './routes/_app/admin/api'
 import { Route as AppAdminContentRouteImport } from './routes/_app/admin/content'
 import { Route as AppAdminPromoCodesRouteImport } from './routes/_app/admin/promo-codes'
 import { Route as AppAdminRevenueRouteImport } from './routes/_app/admin/revenue'
@@ -164,6 +165,11 @@ const AppAdminAiRoute = AppAdminAiRouteImport.update({
   path: '/ai',
   getParentRoute: () => AppAdminRouteRoute,
 } as any)
+const AppAdminApiRoute = AppAdminApiRouteImport.update({
+  id: '/api',
+  path: '/api',
+  getParentRoute: () => AppAdminRouteRoute,
+} as any)
 const AppAdminContentRoute = AppAdminContentRouteImport.update({
   id: '/content',
   path: '/content',
@@ -277,6 +283,7 @@ export interface FileRoutesByFullPath {
   '/terms': typeof SiteTermsRoute
   '/$username/': typeof UsernameIndexRoute
   '/admin/ai': typeof AppAdminAiRoute
+  '/admin/api': typeof AppAdminApiRoute
   '/admin/content': typeof AppAdminContentRoute
   '/admin/promo-codes': typeof AppAdminPromoCodesRoute
   '/admin/revenue': typeof AppAdminRevenueRoute
@@ -316,6 +323,7 @@ export interface FileRoutesByTo {
   '/terms': typeof SiteTermsRoute
   '/$username': typeof UsernameIndexRoute
   '/admin/ai': typeof AppAdminAiRoute
+  '/admin/api': typeof AppAdminApiRoute
   '/admin/content': typeof AppAdminContentRoute
   '/admin/promo-codes': typeof AppAdminPromoCodesRoute
   '/admin/revenue': typeof AppAdminRevenueRoute
@@ -360,6 +368,7 @@ export interface FileRoutesById {
   '/$username/': typeof UsernameIndexRoute
   '/_site/': typeof SiteIndexRoute
   '/_app/admin/ai': typeof AppAdminAiRoute
+  '/_app/admin/api': typeof AppAdminApiRoute
   '/_app/admin/content': typeof AppAdminContentRoute
   '/_app/admin/promo-codes': typeof AppAdminPromoCodesRoute
   '/_app/admin/revenue': typeof AppAdminRevenueRoute
@@ -403,6 +412,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/$username/'
     | '/admin/ai'
+    | '/admin/api'
     | '/admin/content'
     | '/admin/promo-codes'
     | '/admin/revenue'
@@ -442,6 +452,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/$username'
     | '/admin/ai'
+    | '/admin/api'
     | '/admin/content'
     | '/admin/promo-codes'
     | '/admin/revenue'
@@ -485,6 +496,7 @@ export interface FileRouteTypes {
     | '/$username/'
     | '/_site/'
     | '/_app/admin/ai'
+    | '/_app/admin/api'
     | '/_app/admin/content'
     | '/_app/admin/promo-codes'
     | '/_app/admin/revenue'
@@ -678,6 +690,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminAiRouteImport
       parentRoute: typeof AppAdminRouteRoute
     }
+    '/_app/admin/api': {
+      id: '/_app/admin/api'
+      path: '/api'
+      fullPath: '/admin/api'
+      preLoaderRoute: typeof AppAdminApiRouteImport
+      parentRoute: typeof AppAdminRouteRoute
+    }
     '/_app/admin/content': {
       id: '/_app/admin/content'
       path: '/content'
@@ -809,6 +828,7 @@ declare module '@tanstack/react-router' {
 
 interface AppAdminRouteRouteChildren {
   AppAdminAiRoute: typeof AppAdminAiRoute
+  AppAdminApiRoute: typeof AppAdminApiRoute
   AppAdminContentRoute: typeof AppAdminContentRoute
   AppAdminPromoCodesRoute: typeof AppAdminPromoCodesRoute
   AppAdminRevenueRoute: typeof AppAdminRevenueRoute
@@ -821,6 +841,7 @@ interface AppAdminRouteRouteChildren {
 
 const AppAdminRouteRouteChildren: AppAdminRouteRouteChildren = {
   AppAdminAiRoute: AppAdminAiRoute,
+  AppAdminApiRoute: AppAdminApiRoute,
   AppAdminContentRoute: AppAdminContentRoute,
   AppAdminPromoCodesRoute: AppAdminPromoCodesRoute,
   AppAdminRevenueRoute: AppAdminRevenueRoute,

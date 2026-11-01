@@ -25,6 +25,7 @@ import {
   aiCodeOutput,
   aiStructuredOutput,
   type createSuggestionBody,
+  type suggestionFeedbackBody,
   storedSuggestion,
 } from "./suggestions.schemas.js";
 import { track } from "../../lib/analytics.js";
@@ -264,6 +265,26 @@ export async function listSuggestions(userId: string, resumeId: string) {
     const { operations: _operations, ...rest } = toResponse(run);
     return rest;
   });
+}
+
+// Saving again replaces the earlier answer, so a user can add a comment after rating.
+export async function saveFeedback(
+  userId: string,
+  resumeId: string,
+  suggestionId: string,
+  input: z.output<typeof suggestionFeedbackBody>,
+) {
+  const run = await getOwnedSuggestionRun(userId, resumeId, suggestionId);
+  await db
+    .update(aiRuns)
+    .set({
+      helpful: input.helpful,
+      feedback: input.comment || null,
+      feedbackContactOk: input.contactOk,
+      feedbackAt: new Date(),
+    })
+    .where(eq(aiRuns.id, run.id));
+  track(userId, "ai_feedback", { helpful: input.helpful, step: run.step });
 }
 
 // Creates a new version from the accepted operations. Applied on top of the current head,

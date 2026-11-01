@@ -82,8 +82,10 @@ export function Hero() {
         className="isolate mx-auto max-w-6xl font-serif text-[2.4rem] leading-[1.04] font-semibold tracking-[-0.035em] sm:text-6xl lg:text-7xl"
       >
         {/* Phones drop "Your resume," so the line and the job each fit on one line. */}
-        <span className="max-sm:hidden">Your resume, tailored to every</span>
-        <span className="sm:hidden">Tailored to every</span>
+        <span className="max-sm:hidden">Your resume, </span>
+        <span className="inline-block max-sm:first-letter:uppercase">
+          tailored to every
+        </span>
         <br />
         <span className="whitespace-nowrap">
           <JobTitle word={titles[title]} /> job
@@ -143,8 +145,12 @@ function HowItWorksVideo() {
   useEffect(() => {
     const element = video.current
     if (!element || reduceMotion || stopped) return
-    if (onScreen) element.play().catch(() => {})
-    else element.pause()
+    if (!onScreen) return element.pause()
+    // The poster is the page's largest paint, so the recording only starts downloading once the page has loaded.
+    const play = () => element.play().catch(() => {})
+    if (document.readyState === 'complete') return void play()
+    window.addEventListener('load', play, { once: true })
+    return () => window.removeEventListener('load', play)
   }, [onScreen, reduceMotion, stopped])
 
   // timeupdate only fires a few times a second, so the step bars follow the frames while playing.
@@ -201,7 +207,7 @@ function HowItWorksVideo() {
               muted
               loop
               playsInline
-              preload="metadata"
+              preload="none"
               aria-describedby="how-it-works-video"
               onClick={toggle}
               onPlay={() => setPlaying(true)}

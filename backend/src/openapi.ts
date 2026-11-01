@@ -10,6 +10,7 @@ import {
   adminSubscriptionParams,
   adminSystemResponse,
   adminTrafficResponse,
+  adminApiResponse,
   adminUserListResponse,
   adminUserParams,
   adminUserResponse,
@@ -29,6 +30,7 @@ import {
   checkoutResponse,
   createCheckoutBody,
   createRefundBody,
+  pricingResponse,
   refundQuoteResponse,
   refundResponse,
   subscriptionResponse,
@@ -40,7 +42,13 @@ import {
   promoCodeParams,
   updatePromoCodeBody,
 } from "./modules/promo-codes/promo-codes.schemas.js";
-import { createDraftBody, createImportBody, importResponse } from "./modules/imports/imports.schemas.js";
+import {
+  createDraftBody,
+  createImportBody,
+  createProjectDraftBody,
+  importResponse,
+  projectDraftResponse,
+} from "./modules/imports/imports.schemas.js";
 import { usageResponse } from "./modules/usage/usage.routes.js";
 import {
   aiKeyListResponse,
@@ -98,10 +106,12 @@ import {
 } from "./modules/share-links/share-links.schemas.js";
 import {
   createSuggestionBody,
+  suggestionFeedbackBody,
   suggestionListResponse,
   suggestionParams,
   suggestionResponse,
 } from "./modules/suggestions/suggestions.schemas.js";
+import { createReportBody, reportResponse } from "./modules/reports/reports.schemas.js";
 import { templateListResponse } from "./modules/templates/templates.schemas.js";
 import { uploadParams, uploadResponse } from "./modules/uploads/uploads.schemas.js";
 import { meResponse, updateMeBody, usernameParams, usernameResponse } from "./modules/users/users.schemas.js";
@@ -390,6 +400,15 @@ const paths: ZodOpenApiPathsObject = {
       status: 201,
     }),
   },
+  "/v1/project-drafts": {
+    post: op({
+      summary: "Write a projects entry from a GitHub repo, a web page or pasted text with AI",
+      tag: "Import",
+      body: createProjectDraftBody,
+      response: projectDraftResponse,
+      status: 201,
+    }),
+  },
   "/v1/imports": {
     post: op({
       summary: "Extract resume content from an upload or text",
@@ -437,6 +456,25 @@ const paths: ZodOpenApiPathsObject = {
       tag: "Suggestions",
       params: suggestionParams,
       response: suggestionResponse,
+    }),
+  },
+  "/v1/resumes/{resumeId}/suggestions/{suggestionId}/feedback": {
+    put: op({
+      summary: "Rate an AI suggestion after applying it",
+      tag: "Suggestions",
+      params: suggestionParams,
+      body: suggestionFeedbackBody,
+      noContent: true,
+    }),
+  },
+
+  "/v1/reports": {
+    post: op({
+      summary: "Report a problem. Signed-out visitors must include an email.",
+      tag: "Reports",
+      body: createReportBody,
+      response: reportResponse,
+      status: 201,
     }),
   },
 
@@ -537,9 +575,17 @@ const paths: ZodOpenApiPathsObject = {
     }),
   },
 
+  "/v1/pricing": {
+    get: op({
+      summary: "Prices for the visitor's country",
+      tag: "Billing",
+      auth: false,
+      response: pricingResponse,
+    }),
+  },
   "/v1/checkouts": {
     post: op({
-      summary: "Start a Razorpay checkout",
+      summary: "Start a checkout with the payment provider for the visitor's country",
       tag: "Billing",
       body: createCheckoutBody,
       response: checkoutResponse,
@@ -563,7 +609,7 @@ const paths: ZodOpenApiPathsObject = {
   },
   "/v1/refunds": {
     post: op({
-      summary: "Refund a payment made in the last 6 hours, less Razorpay's fee, and end its plan",
+      summary: "Refund a payment made in the last 6 hours, less the payment provider's fee, and end its plan",
       tag: "Billing",
       body: createRefundBody,
       response: refundResponse,
@@ -685,6 +731,14 @@ const paths: ZodOpenApiPathsObject = {
       tag: "Admin",
       query: adminRangeQuery,
       response: adminTrafficResponse,
+    }),
+  },
+  "/v1/admin/api": {
+    get: op({
+      summary: "API speed, requests and errors from PostHog",
+      tag: "Admin",
+      query: adminRangeQuery,
+      response: adminApiResponse,
     }),
   },
   "/v1/admin/system": {

@@ -25,6 +25,7 @@ import {
 
 // Two rows of the three-column desktop grid.
 const batch = 6
+const title = `Free ATS-Friendly Resume Templates for Freshers | ${site.name}`
 
 export const Route = createFileRoute('/_site/templates/')({
   validateSearch: z.object({
@@ -35,9 +36,9 @@ export const Route = createFileRoute('/_site/templates/')({
   }),
   head: () => ({
     meta: [
-      {
-        title: `Free ATS-Friendly Resume Templates for Freshers | ${site.name}`,
-      },
+      { title },
+      { property: 'og:title', content: title },
+      { property: 'og:url', content: `${site.url}/templates` },
       {
         name: 'description',
         content:
@@ -101,11 +102,12 @@ function TemplatesPage() {
             ref={listRef}
             className="mt-10 grid gap-x-8 gap-y-14 sm:grid-cols-2 lg:grid-cols-3"
           >
-            {templates.slice(0, limit).map((template, index) => (
+            {/* Every card is in the HTML so crawlers find each template page; "Show more" only unhides them. */}
+            {templates.map((template, index) => (
               <li
                 key={template.id}
                 id={template.id}
-                className="flex scroll-mt-24 flex-col gap-4"
+                className={`flex scroll-mt-24 flex-col gap-4 ${index >= limit ? 'hidden' : ''}`}
               >
                 <div className="group/card relative">
                   <img

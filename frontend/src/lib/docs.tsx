@@ -1346,11 +1346,13 @@ export const docs: DocPage[] = [
         title: 'Billing',
         body: (
           <p>
-            The Season Pass is one payment and never renews on its own. Pro
-            renews monthly until you cancel, and stays active until the end of
-            the month you paid for. Payments are handled by Razorpay; we never
-            see your card or UPI details. To upgrade, see what you have used, or
-            cancel Pro, open <b>Plans and billing</b> in the sidebar.
+            The Season Pass is one payment and never renews on its own. In
+            India, Pro renews monthly until you cancel, and stays active until
+            the end of the month you paid for; outside India, Pro is one payment
+            for a month and doesn't renew. Payments are handled by Razorpay in
+            India and by Polar elsewhere; we never see your card or UPI details.
+            To upgrade, see what you have used, or cancel Pro, open{' '}
+            <b>Plans and billing</b> in the sidebar.
           </p>
         ),
       },

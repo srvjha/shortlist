@@ -12,6 +12,8 @@ services:
     env_file: .env.production
     # server.ts drains open requests on SIGTERM; AI calls can take ~2.5 min, so give deploys time before SIGKILL.
     stop_grace_period: 3m
+    # Docker keeps logs until the container is replaced; cap them so a busy day can't fill the disk.
+    logging: { driver: json-file, options: { max-size: "20m", max-file: "5" } }
     environment:
       NODE_ENV: production
       DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD}@shortlist-postgres:5432/resumebuilder
@@ -42,6 +44,7 @@ services:
     build: { context: ., target: api }
     restart: unless-stopped
     command: ["node", "dist/worker.js"]
+    logging: { driver: json-file, options: { max-size: "20m", max-file: "5" } }
     env_file: .env.production
     environment:
       NODE_ENV: production

@@ -115,7 +115,9 @@ export const adminUserResponse = z.object({
     byokRuns: int,
     costUsdMicros: int,
     lastRunAt: z.date().nullable(),
-    bySteps: z.array(z.object({ step: z.string(), runs: int, failed: int, costUsdMicros: int })),
+    bySteps: z.array(
+      z.object({ step: z.string(), runs: int, failed: int, lastError: z.string().nullable(), costUsdMicros: int }),
+    ),
   }),
   usage: usageResponse,
   subscriptions: z.array(
@@ -125,7 +127,7 @@ export const adminUserResponse = z.object({
       status: z.enum(["created", "active", "past_due", "cancelled", "expired"]),
       currentPeriodStart: z.date().nullable(),
       currentPeriodEnd: z.date().nullable(),
-      razorpaySubscriptionId: z.string().nullable(),
+      providerSubscriptionId: z.string().nullable(),
       complimentary: z.boolean(),
       createdAt: z.date(),
     }),
@@ -133,10 +135,13 @@ export const adminUserResponse = z.object({
   payments: z.array(
     z.object({
       id: z.uuid(),
-      amountPaise: int,
+      // In the currency's minor unit (paise, cents).
+      amount: int,
+      currency: z.string(),
       status: z.enum(["created", "captured", "failed", "refunded"]),
       method: z.string().nullable(),
-      razorpayPaymentId: z.string().nullable(),
+      provider: z.enum(["razorpay", "polar"]),
+      providerPaymentId: z.string().nullable(),
       createdAt: z.date(),
     }),
   ),
@@ -188,6 +193,26 @@ export const adminAiResponse = z.object({
     }),
   ),
   topUsers: z.array(z.object({ userId: z.uuid(), email: z.string(), name: z.string(), runs: int, costUsdMicros: int })),
+  // Answers to "Did this help?" after applying a suggestion, newest first.
+  feedback: z.array(
+    z.object({
+      id: z.uuid(),
+      at: z.date(),
+      step: z.string(),
+      helpful: z.boolean(),
+      comment: z.string().nullable(),
+      contactOk: z.boolean(),
+      userId: z.uuid(),
+      email: z.string(),
+    }),
+  ),
+  health: z.object({
+    lastSuccessAt: z.date().nullable(),
+    failedSince: z.date().nullable(),
+    failedRuns: int,
+    failedUsers: int,
+    lastError: z.string().nullable(),
+  }),
 });
 
 export const adminRevenueResponse = z.object({
@@ -196,6 +221,8 @@ export const adminRevenueResponse = z.object({
     paise: int,
     previousPaise: int,
     allTimePaise: int,
+    // Polar's dollar payments in the period, left out of the rupee totals.
+    usdCents: int,
     payers: int,
     checkouts: int,
     checkoutsPaid: int,
@@ -207,10 +234,13 @@ export const adminRevenueResponse = z.object({
     z.object({
       id: z.uuid(),
       createdAt: z.date(),
-      amountPaise: int,
+      // In the currency's minor unit (paise, cents).
+      amount: int,
+      currency: z.string(),
       status: z.enum(["created", "captured", "failed", "refunded"]),
       method: z.string().nullable(),
-      razorpayPaymentId: z.string().nullable(),
+      provider: z.enum(["razorpay", "polar"]),
+      providerPaymentId: z.string().nullable(),
       plan: z.enum(["season_pass", "pro"]).nullable(),
       userId: z.uuid(),
       email: z.string(),
@@ -254,7 +284,6 @@ const trafficData = z.object({
   devices: labelled,
   browsers: labelled,
   events: z.array(z.object({ event: z.string(), count: int, people: int })),
-  api: z.array(z.object({ route: z.string(), requests: int, p50Ms: int, p95Ms: int, errors: int })),
   // Compile time excludes cache hits; the lookup is the R2 round trip every compile starts with.
   compiles: z.object({
     requests: int,
@@ -284,6 +313,67 @@ export const adminTrafficResponse = z.object({
   dashboardUrl: z.string(),
   error: z.string().nullable(),
   data: trafficData.nullable(),
+});
+
+const apiRequest = z.object({
+  at: z.date(),
+  method: z.string(),
+  route: z.string(),
+  status: int,
+  durationMs: int,
+  aiMs: int.nullable(),
+  compileMs: int.nullable(),
+  userId: z.string().nullable(),
+  email: z.string().nullable(),
+});
+
+// From PostHog: api_request events (request-metrics.ts) and $exception events (captureError).
+const apiData = z.object({
+  slowMs: int,
+  totals: z.object({
+    requests: int,
+    serverErrors: int,
+    clientErrors: int,
+    p50Ms: int,
+    p95Ms: int,
+    previousRequests: int,
+    previousServerErrors: int,
+    previousP95Ms: int,
+  }),
+  byDay: z.array(z.object({ day: z.string(), requests: int, serverErrors: int, p95Ms: int })),
+  routes: z.array(
+    z.object({
+      route: z.string(),
+      requests: int,
+      p50Ms: int,
+      p95Ms: int,
+      maxMs: int,
+      serverErrors: int,
+      clientErrors: int,
+      avgMs: int,
+      avgAiMs: int,
+      avgCompileMs: int,
+    }),
+  ),
+  recent: z.object({ all: z.array(apiRequest), errors: z.array(apiRequest), slow: z.array(apiRequest) }),
+  errors: z.array(
+    z.object({
+      message: z.string(),
+      count: int,
+      users: int,
+      where: z.string(),
+      firstAt: z.date(),
+      lastAt: z.date(),
+      url: z.string(),
+    }),
+  ),
+});
+
+export const adminApiResponse = z.object({
+  configured: z.boolean(),
+  dashboardUrl: z.string(),
+  error: z.string().nullable(),
+  data: apiData.nullable(),
 });
 
 export const adminSystemResponse = z.object({

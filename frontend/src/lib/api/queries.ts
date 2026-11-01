@@ -18,6 +18,7 @@ export const queryKeys = {
   jobs: ['jobs'] as const,
   job: (id: string) => ['job', id] as const,
   subscription: ['subscription'] as const,
+  pricing: ['pricing'] as const,
   refundQuote: ['subscription', 'refund-quote'] as const,
   analytics: (days: number) => ['analytics', days] as const,
   admin: ['admin'] as const,
@@ -163,6 +164,13 @@ export const subscriptionQuery = queryOptions({
   queryFn: () => unwrap(api.GET('/v1/subscription')),
 })
 
+// Prices for the visitor's country, read from their IP. They don't change within a visit.
+export const pricingQuery = queryOptions({
+  queryKey: queryKeys.pricing,
+  queryFn: () => unwrap(api.GET('/v1/pricing')),
+  staleTime: Infinity,
+})
+
 export const refundQuoteQuery = queryOptions({
   queryKey: queryKeys.refundQuote,
   queryFn: () => unwrap(api.GET('/v1/refunds/quote')),
@@ -260,6 +268,21 @@ export const adminContentQuery = (days: AdminRange) =>
           params: { query: { days: String(days) as never } },
         }),
       ),
+  })
+
+export const adminApiQuery = (days: AdminRange) =>
+  queryOptions({
+    queryKey: queryKeys.adminReport('api', days),
+    queryFn: () =>
+      unwrap(
+        api.GET('/v1/admin/api', {
+          params: {
+            query: { days: String(days) as never, timeZone: timeZone() },
+          },
+        }),
+      ),
+    // The API caches this report for a minute.
+    staleTime: 60_000,
   })
 
 export const adminTrafficQuery = (days: AdminRange) =>

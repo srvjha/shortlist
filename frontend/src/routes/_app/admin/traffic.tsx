@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
-import { ExternalLinkIcon, PlayIcon } from 'lucide-react'
+import { PlayIcon } from 'lucide-react'
 import { useState } from 'react'
 import {
   EmptyNote,
-  QueryView,
+  PostHogView,
   Section,
   Stat,
   StatGrid,
@@ -12,14 +12,6 @@ import {
 } from '@/components/admin/admin-ui'
 import { BreakdownList } from '@/components/analytics/breakdown-list'
 import { referrerLabel } from '@/components/analytics/labels'
-import {
-  Alert,
-  AlertAction,
-  AlertDescription,
-  AlertTitle,
-} from '@/components/ui/alert'
-import { Spinner } from '@/components/ui/spinner'
-import { Button } from '@/components/ui/button'
 import {
   Table,
   TableBody,
@@ -49,82 +41,12 @@ function TrafficPage() {
   const { days = 30 } = Route.useSearch()
   const traffic = useQuery(adminTrafficQuery(days))
   return (
-    <QueryView query={traffic}>
-      {(result) => (
-        <div className="flex flex-col gap-10">
-          {result.configured && (
-            <div className="-mt-4 flex flex-wrap items-center justify-between gap-3">
-              <p className="text-sm text-muted-foreground">
-                From PostHog, refreshed every five minutes. Page text and inputs
-                are masked in recordings.
-              </p>
-              <Button variant="outline" size="sm" asChild>
-                <a href={result.dashboardUrl} target="_blank" rel="noreferrer">
-                  Open PostHog
-                  <ExternalLinkIcon data-icon="inline-end" aria-hidden />
-                </a>
-              </Button>
-            </div>
-          )}
-          {!result.configured ? (
-            <NotConfigured />
-          ) : result.error || !result.data ? (
-            <Alert variant="destructive">
-              <AlertTitle>
-                {busy(result.error)
-                  ? 'PostHog is busy right now'
-                  : "PostHog didn't answer"}
-              </AlertTitle>
-              <AlertDescription>
-                {busy(result.error)
-                  ? 'It limits how many reports run at once. Wait a moment and try again.'
-                  : `${result.error ?? 'No data came back.'} Check that the personal API key has the query:read and session_recording:read scopes.`}
-              </AlertDescription>
-              <AlertAction>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={traffic.isFetching}
-                  onClick={() => traffic.refetch()}
-                >
-                  {traffic.isFetching && <Spinner data-icon="inline-start" />}
-                  Try again
-                </Button>
-              </AlertAction>
-            </Alert>
-          ) : (
-            <TrafficReport data={result.data} />
-          )}
-        </div>
-      )}
-    </QueryView>
-  )
-}
-
-// 429 and 503 mean PostHog is overloaded for a moment, not that anything is set up wrong.
-const busy = (error: string | null) =>
-  Boolean(error && /PostHog (429|503)/.test(error))
-
-function NotConfigured() {
-  return (
-    <div className="flex flex-col gap-3 rounded-lg border border-dashed p-6">
-      <h2 className="font-sans text-base font-semibold">Connect PostHog</h2>
-      <p className="max-w-prose text-sm text-muted-foreground">
-        Events are already being sent to PostHog. To read them back here, add
-        these to the API's environment and restart it:
-      </p>
-      <ol className="flex list-decimal flex-col gap-1.5 pl-5 text-sm">
-        <li>
-          <span className="font-mono">POSTHOG_PERSONAL_API_KEY</span>: PostHog,
-          Settings, Personal API keys, with the scopes query:read and
-          session_recording:read.
-        </li>
-        <li>
-          <span className="font-mono">POSTHOG_PROJECT_ID</span>: the number
-          after /project/ in your PostHog URL.
-        </li>
-      </ol>
-    </div>
+    <PostHogView
+      query={traffic}
+      note="From PostHog, refreshed every five minutes. Page text and inputs are masked in recordings."
+    >
+      {(data) => <TrafficReport data={data} />}
+    </PostHogView>
   )
 }
 
@@ -341,56 +263,6 @@ function TrafficReport({ data }: { data: TrafficData }) {
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
                       {formatNumber(row.people)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-      </Section>
-
-      <Section
-        title="API speed"
-        description="Estimated from a sample: every error and slow request, and one in ten of the rest."
-      >
-        {data.api.length === 0 ? (
-          <EmptyNote>No API timings in this period.</EmptyNote>
-        ) : (
-          <div className="overflow-x-auto rounded-lg border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Endpoint</TableHead>
-                  <TableHead className="text-right">Requests</TableHead>
-                  <TableHead className="text-right">Median</TableHead>
-                  <TableHead className="text-right">Slowest 5%</TableHead>
-                  <TableHead className="text-right">Server errors</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.api.map((row) => (
-                  <TableRow key={row.route}>
-                    <TableCell className="font-mono text-xs">
-                      {row.route}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {formatNumber(row.requests)}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {formatNumber(row.p50Ms)} ms
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {formatNumber(row.p95Ms)} ms
-                    </TableCell>
-                    <TableCell
-                      className={
-                        row.errors > 0
-                          ? 'text-right font-medium text-destructive tabular-nums'
-                          : 'text-right tabular-nums'
-                      }
-                    >
-                      {formatNumber(row.errors)}
                     </TableCell>
                   </TableRow>
                 ))}

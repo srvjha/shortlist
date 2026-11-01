@@ -43,6 +43,7 @@ export const aiLimiter = limiter(minute, 10);
 export const atsLimiter = limiter(10 * minute, 10);
 // Slows anyone guessing promo codes.
 export const redeemLimiter = limiter(10 * minute, 10);
+export const reportLimiter = limiter(10 * minute, 5);
 export const uploadLimiter = limiter(10 * minute, 20);
 // Counts only wrong share-link and contact passwords, per link, so a crowd of visitors cannot brute-force one link.
 // A wrong contact password still answers 200 with the contacts locked, so the route flags it in res.locals.

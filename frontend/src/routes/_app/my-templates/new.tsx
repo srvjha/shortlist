@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { toast } from 'sonner'
+import { toast } from '@/lib/toast'
 import { TemplateEditor } from '@/components/templates/template-editor'
 import { api, errorMessage, unwrap } from '@/lib/api/client'
 import { queryKeys } from '@/lib/api/queries'
