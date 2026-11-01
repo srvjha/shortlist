@@ -8,7 +8,7 @@ import {
   Trash2Icon,
 } from 'lucide-react'
 import { useState } from 'react'
-import { toast } from 'sonner'
+import { toast } from '@/lib/toast'
 import { ConfirmDialog } from '@/components/app/confirm-dialog'
 import { NewJobForm } from '@/components/ai/ai-panel'
 import { PageHeader } from '@/components/app/page-header'

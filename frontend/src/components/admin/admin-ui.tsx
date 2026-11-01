@@ -2,7 +2,7 @@ import type { UseQueryResult } from '@tanstack/react-query'
 import { CheckIcon, CopyIcon, ExternalLinkIcon } from 'lucide-react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useId, useState } from 'react'
-import { toast } from 'sonner'
+import { toast } from '@/lib/toast'
 import { Change } from '@/components/analytics/change'
 import { formatDay, niceMax } from '@/components/analytics/views-chart'
 import {

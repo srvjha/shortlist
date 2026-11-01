@@ -68,6 +68,10 @@ const envSchema = z.object({
   POSTHOG_PROJECT_ID: optionalString,
   POSTHOG_APP_HOST: z.preprocess(emptyAsUnset, z.url().default("https://us.posthog.com")),
 
+  // Email through Resend's API. Empty: nothing is emailed (problem reports are still saved).
+  RESEND_API_KEY: optionalString,
+  EMAIL_FROM: z.preprocess(emptyAsUnset, z.string().default("Shortlist <onboarding@resend.dev>")),
+
   // Comma-separated emails that can open the admin dashboard. They must be verified by the sign-in provider.
   ADMIN_EMAILS: z.preprocess(
     emptyAsUnset,

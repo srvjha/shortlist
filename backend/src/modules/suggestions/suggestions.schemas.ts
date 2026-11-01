@@ -15,6 +15,13 @@ export const createSuggestionBody = z.discriminatedUnion("type", [
   z.object({ type: z.literal("fix_compile") }),
 ]);
 
+export const suggestionFeedbackBody = z.object({
+  helpful: z.boolean(),
+  comment: z.string().trim().max(2000).optional(),
+  // The user agreed to be emailed about this feedback.
+  contactOk: z.boolean().default(false),
+});
+
 export const suggestionType = z.enum(["tailor", "edit", "fix_compile"]);
 
 const operationResponse = z.object({

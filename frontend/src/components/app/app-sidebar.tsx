@@ -6,6 +6,7 @@ import {
   ChartColumnIcon,
   ChevronsUpDownIcon,
   CreditCardIcon,
+  FlagIcon,
   FileTextIcon,
   GaugeIcon,
   LayoutDashboardIcon,
@@ -18,7 +19,8 @@ import {
   SunIcon,
   UserRoundIcon,
 } from 'lucide-react'
-import { toast } from 'sonner'
+import { openReport } from '@/lib/report'
+import { toast } from '@/lib/toast'
 import { Logo } from '@/components/brand/logo'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -177,6 +179,18 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        <SidebarGroup className="mt-auto">
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton onClick={() => openReport()}>
+                  <FlagIcon />
+                  <span>Report a problem</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

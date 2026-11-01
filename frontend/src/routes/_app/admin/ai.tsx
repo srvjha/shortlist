@@ -238,6 +238,51 @@ function AiReport({ data }: { data: AdminAi }) {
         </Section>
       </div>
 
+      <Section title="Feedback on suggestions">
+        {data.feedback.length === 0 ? (
+          <EmptyNote>No feedback in this period.</EmptyNote>
+        ) : (
+          <ol className="flex flex-col divide-y rounded-lg border">
+            {data.feedback.map((row) => (
+              <li
+                key={row.id}
+                className="flex flex-col gap-1 px-4 py-3 text-sm"
+              >
+                <div className="flex flex-wrap items-baseline justify-between gap-x-3">
+                  <span>
+                    <span className="font-medium">
+                      {row.helpful ? 'Helpful' : 'Not helpful'}
+                    </span>{' '}
+                    <span className="text-muted-foreground">
+                      {stepLabel(row.step)} by{' '}
+                      <Link
+                        to="/admin/users/$userId"
+                        params={{ userId: row.userId }}
+                        className="hover:underline"
+                      >
+                        {row.email}
+                      </Link>
+                      {row.contactOk && ', OK to email'}
+                    </span>
+                  </span>
+                  <time
+                    dateTime={new Date(row.at).toISOString()}
+                    className="text-muted-foreground"
+                  >
+                    {timeAgo(row.at)}
+                  </time>
+                </div>
+                {row.comment && (
+                  <p className="whitespace-pre-wrap break-words">
+                    {row.comment}
+                  </p>
+                )}
+              </li>
+            ))}
+          </ol>
+        )}
+      </Section>
+
       <Section title="Recent failures">
         {data.failures.length === 0 ? (
           <EmptyNote>No failed AI runs in this period.</EmptyNote>

@@ -11,7 +11,7 @@ import {
   XIcon,
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { toast } from 'sonner'
+import { toast } from '@/lib/toast'
 import { AtsReport } from '@/components/ats/ats-report'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -57,6 +57,7 @@ import { plans } from '@/lib/plans'
 import { panelStorage } from '@/lib/panel-storage'
 import { priceNote, priceOf, usePricing } from '@/lib/pricing'
 import { CoverageReport } from './coverage-report'
+import { FeedbackCard } from './feedback-card'
 import { SuggestionReview } from './suggestion-review'
 
 export type AiPanelMode = 'tailor' | 'edit' | 'fix'
@@ -234,6 +235,16 @@ const pendingText: Record<SuggestBody['type'], string> = {
   fix_compile: 'Fixing the LaTeX…',
 }
 
+// Every tailor asks; chat edits ask at most every 3 days so the question doesn't nag.
+function shouldAskFeedback(type: Suggestion['type']) {
+  if (type === 'tailor') return true
+  if (type !== 'edit') return false
+  const last = Number(panelStorage.getItem('feedback-asked:edit'))
+  if (Date.now() - last < 3 * 24 * 60 * 60_000) return false
+  panelStorage.setItem('feedback-asked:edit', String(Date.now()))
+  return true
+}
+
 // Docked beside the preview on wide screens, a slide-over sheet on smaller ones.
 export function AiPanel({
   open,
@@ -269,6 +280,7 @@ export function AiPanel({
   const [instructions, setInstructions] = useState('')
   const [request, setRequest] = useState('')
   const composer = useRef<HTMLTextAreaElement>(null)
+  const [rating, setRating] = useState<Suggestion | null>(null)
 
   // A run keeps going on the server if the page reloads, so offer a finished suggestion the user never saw.
   const seenKey = `seen-suggestion:${resumeId}`
@@ -420,8 +432,9 @@ export function AiPanel({
             content={content}
             texSource={texSource}
             onApplied={() => {
+              if (shouldAskFeedback(suggestion.type)) setRating(suggestion)
+              else if (!docked) onOpenChange(false)
               setSuggestion(null)
-              if (!docked) onOpenChange(false)
             }}
             onDiscard={() => setSuggestion(null)}
             hasUnsavedChanges={hasUnsavedChanges}
@@ -511,6 +524,17 @@ export function AiPanel({
           </div>
         ) : (
           <div className="flex flex-col gap-8">
+            {rating && (
+              <FeedbackCard
+                key={rating.id}
+                resumeId={resumeId}
+                suggestion={rating}
+                onDone={() => {
+                  setRating(null)
+                  if (!docked) onOpenChange(false)
+                }}
+              />
+            )}
             {ready && (
               <Alert role="status">
                 <SparklesIcon />

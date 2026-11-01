@@ -560,90 +560,107 @@ export async function getAiUsage(days: number, timeZone: string) {
   const ours = and(eq(aiRuns.byok, false), eq(aiRuns.status, "succeeded"));
   const sinceLastSuccess = sql`${aiRuns.createdAt} > coalesce((select max(${aiRuns.createdAt}) from ${aiRuns} where ${ours}), '-infinity')`;
 
-  const [[totals], bySteps, byModels, byDay, failures, topUsers, [lastSuccess], [failing]] = await Promise.all([
-    db
-      .select({
-        runs: count(),
-        failed: filtered(sql`${aiRuns.status} = 'failed'`),
-        byok: filtered(sql`${aiRuns.byok}`),
-        costUsdMicros: cost,
-        inputTokens: sql<number>`coalesce(sum(${aiRuns.inputTokens}), 0)`.mapWith(Number),
-        cachedInputTokens: sql<number>`coalesce(sum(${aiRuns.cachedInputTokens}), 0)`.mapWith(Number),
-        outputTokens: sql<number>`coalesce(sum(${aiRuns.outputTokens}), 0)`.mapWith(Number),
-        users: countDistinct(aiRuns.userId),
-      })
-      .from(aiRuns)
-      .where(inRange),
-    db
-      .select({
-        step: aiRuns.step,
-        runs: count(),
-        failed: filtered(sql`${aiRuns.status} = 'failed'`),
-        costUsdMicros: cost,
-        p50Ms: sql<number>`coalesce(percentile_cont(0.5) within group (order by ${aiRuns.latencyMs}), 0)`.mapWith(
-          Number,
-        ),
-        p95Ms: sql<number>`coalesce(percentile_cont(0.95) within group (order by ${aiRuns.latencyMs}), 0)`.mapWith(
-          Number,
-        ),
-      })
-      .from(aiRuns)
-      .where(inRange)
-      .groupBy(aiRuns.step)
-      .orderBy(desc(count())),
-    db
-      .select({
-        model: aiRuns.model,
-        runs: count(),
-        costUsdMicros: cost,
-        tokens: sql<number>`coalesce(sum(${aiRuns.inputTokens} + ${aiRuns.outputTokens}), 0)`.mapWith(Number),
-      })
-      .from(aiRuns)
-      .where(inRange)
-      .groupBy(aiRuns.model)
-      .orderBy(desc(cost)),
-    db
-      .select({ day: dayOf(aiRuns.createdAt, timeZone), runs: count(), costUsdMicros: cost })
-      .from(aiRuns)
-      .where(inRange)
-      .groupBy(sql`1`),
-    db
-      .select({
-        id: aiRuns.id,
-        createdAt: aiRuns.createdAt,
-        step: aiRuns.step,
-        model: aiRuns.model,
-        error: aiRuns.error,
-        userId: users.id,
-        email: users.email,
-      })
-      .from(aiRuns)
-      .innerJoin(users, eq(users.id, aiRuns.userId))
-      .where(and(inRange, eq(aiRuns.status, "failed")))
-      .orderBy(desc(aiRuns.createdAt))
-      .limit(20),
-    db
-      .select({ userId: users.id, email: users.email, name: users.name, runs: count(), costUsdMicros: cost })
-      .from(aiRuns)
-      .innerJoin(users, eq(users.id, aiRuns.userId))
-      .where(inRange)
-      .groupBy(users.id)
-      .orderBy(desc(cost))
-      .limit(10),
-    db
-      .select({ at: sql<Date | null>`max(${aiRuns.createdAt})` })
-      .from(aiRuns)
-      .where(ours),
-    db
-      .select({
-        runs: count(),
-        users: countDistinct(aiRuns.userId),
-        since: sql<Date | null>`min(${aiRuns.createdAt})`,
-        lastError: sql<string | null>`(array_agg(${aiRuns.error} order by ${aiRuns.createdAt} desc))[1]`,
-      })
-      .from(aiRuns)
-      .where(and(eq(aiRuns.byok, false), eq(aiRuns.status, "failed"), sinceLastSuccess)),
-  ]);
+  const [[totals], bySteps, byModels, byDay, failures, topUsers, feedback, [lastSuccess], [failing]] =
+    await Promise.all([
+      db
+        .select({
+          runs: count(),
+          failed: filtered(sql`${aiRuns.status} = 'failed'`),
+          byok: filtered(sql`${aiRuns.byok}`),
+          costUsdMicros: cost,
+          inputTokens: sql<number>`coalesce(sum(${aiRuns.inputTokens}), 0)`.mapWith(Number),
+          cachedInputTokens: sql<number>`coalesce(sum(${aiRuns.cachedInputTokens}), 0)`.mapWith(Number),
+          outputTokens: sql<number>`coalesce(sum(${aiRuns.outputTokens}), 0)`.mapWith(Number),
+          users: countDistinct(aiRuns.userId),
+        })
+        .from(aiRuns)
+        .where(inRange),
+      db
+        .select({
+          step: aiRuns.step,
+          runs: count(),
+          failed: filtered(sql`${aiRuns.status} = 'failed'`),
+          costUsdMicros: cost,
+          p50Ms: sql<number>`coalesce(percentile_cont(0.5) within group (order by ${aiRuns.latencyMs}), 0)`.mapWith(
+            Number,
+          ),
+          p95Ms: sql<number>`coalesce(percentile_cont(0.95) within group (order by ${aiRuns.latencyMs}), 0)`.mapWith(
+            Number,
+          ),
+        })
+        .from(aiRuns)
+        .where(inRange)
+        .groupBy(aiRuns.step)
+        .orderBy(desc(count())),
+      db
+        .select({
+          model: aiRuns.model,
+          runs: count(),
+          costUsdMicros: cost,
+          tokens: sql<number>`coalesce(sum(${aiRuns.inputTokens} + ${aiRuns.outputTokens}), 0)`.mapWith(Number),
+        })
+        .from(aiRuns)
+        .where(inRange)
+        .groupBy(aiRuns.model)
+        .orderBy(desc(cost)),
+      db
+        .select({ day: dayOf(aiRuns.createdAt, timeZone), runs: count(), costUsdMicros: cost })
+        .from(aiRuns)
+        .where(inRange)
+        .groupBy(sql`1`),
+      db
+        .select({
+          id: aiRuns.id,
+          createdAt: aiRuns.createdAt,
+          step: aiRuns.step,
+          model: aiRuns.model,
+          error: aiRuns.error,
+          userId: users.id,
+          email: users.email,
+        })
+        .from(aiRuns)
+        .innerJoin(users, eq(users.id, aiRuns.userId))
+        .where(and(inRange, eq(aiRuns.status, "failed")))
+        .orderBy(desc(aiRuns.createdAt))
+        .limit(20),
+      db
+        .select({ userId: users.id, email: users.email, name: users.name, runs: count(), costUsdMicros: cost })
+        .from(aiRuns)
+        .innerJoin(users, eq(users.id, aiRuns.userId))
+        .where(inRange)
+        .groupBy(users.id)
+        .orderBy(desc(cost))
+        .limit(10),
+      db
+        .select({
+          id: aiRuns.id,
+          at: aiRuns.feedbackAt,
+          step: aiRuns.step,
+          helpful: aiRuns.helpful,
+          comment: aiRuns.feedback,
+          contactOk: aiRuns.feedbackContactOk,
+          userId: users.id,
+          email: users.email,
+        })
+        .from(aiRuns)
+        .innerJoin(users, eq(users.id, aiRuns.userId))
+        .where(and(gte(aiRuns.feedbackAt, since), isNotNull(aiRuns.helpful)))
+        .orderBy(desc(aiRuns.feedbackAt))
+        .limit(50),
+      db
+        .select({ at: sql<Date | null>`max(${aiRuns.createdAt})` })
+        .from(aiRuns)
+        .where(ours),
+      db
+        .select({
+          runs: count(),
+          users: countDistinct(aiRuns.userId),
+          since: sql<Date | null>`min(${aiRuns.createdAt})`,
+          lastError: sql<string | null>`(array_agg(${aiRuns.error} order by ${aiRuns.createdAt} desc))[1]`,
+        })
+        .from(aiRuns)
+        .where(and(eq(aiRuns.byok, false), eq(aiRuns.status, "failed"), sinceLastSuccess)),
+    ]);
 
   return {
     days,
@@ -662,6 +679,12 @@ export async function getAiUsage(days: number, timeZone: string) {
     byDay: fillDays(dayKeys(days, timeZone, now), byDay, ["runs", "costUsdMicros"]),
     failures: failures.map((failure) => ({ ...failure, error: hideKeys(failure.error) })),
     topUsers,
+    feedback: feedback.map((row) => ({
+      ...row,
+      at: row.at!,
+      helpful: row.helpful!,
+      contactOk: row.contactOk ?? false,
+    })),
     health: {
       lastSuccessAt: lastSuccess?.at ? new Date(lastSuccess.at) : null,
       failedSince: failing?.since ? new Date(failing.since) : null,

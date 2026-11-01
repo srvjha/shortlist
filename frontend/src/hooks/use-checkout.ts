@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { toast } from 'sonner'
+import { toast } from '@/lib/toast'
 import { api, errorMessage, unwrap } from '@/lib/api/client'
 import { meQuery, queryKeys } from '@/lib/api/queries'
 import { openRazorpayCheckout } from '@/lib/razorpay'
