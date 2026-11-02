@@ -22938,7 +22938,12 @@
                               "minimum": -9007199254740991,
                               "maximum": 9007199254740991
                             },
-                            "paidUsers": {
+                            "payingUsers": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "freePassUsers": {
                               "type": "integer",
                               "minimum": -9007199254740991,
                               "maximum": 9007199254740991
@@ -23016,7 +23021,8 @@
                             "previousNewUsers",
                             "activeUsers",
                             "previousActiveUsers",
-                            "paidUsers",
+                            "payingUsers",
+                            "freePassUsers",
                             "suspendedUsers",
                             "resumes",
                             "resumesCreated",
@@ -23203,6 +23209,51 @@
                             ],
                             "additionalProperties": false
                           }
+                        },
+                        "runningPlans": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "email": {
+                                "type": "string"
+                              },
+                              "plan": {
+                                "type": "string",
+                                "enum": [
+                                  "free",
+                                  "season_pass",
+                                  "pro"
+                                ]
+                              },
+                              "planEndsAt": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "planPaid": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name",
+                              "email",
+                              "plan",
+                              "planEndsAt",
+                              "planPaid"
+                            ],
+                            "additionalProperties": false
+                          }
                         }
                       },
                       "required": [
@@ -23212,7 +23263,8 @@
                         "plans",
                         "providers",
                         "funnel",
-                        "recentSignups"
+                        "recentSignups",
+                        "runningPlans"
                       ],
                       "additionalProperties": false
                     }
@@ -23355,6 +23407,15 @@
                                   "null"
                                 ]
                               },
+                              "planEndsAt": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "planPaid": {
+                                "type": "boolean"
+                              },
                               "providers": {
                                 "type": "array",
                                 "items": {
@@ -23383,6 +23444,8 @@
                               "suspendedAt",
                               "createdAt",
                               "lastActiveAt",
+                              "planEndsAt",
+                              "planPaid",
                               "providers",
                               "resumes",
                               "aiRuns"

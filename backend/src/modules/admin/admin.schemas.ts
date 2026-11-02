@@ -17,7 +17,9 @@ export const adminOverviewResponse = z.object({
     previousNewUsers: int,
     activeUsers: int,
     previousActiveUsers: int,
-    paidUsers: int,
+    // On a plan backed by a captured payment, and on a free pass from an admin or a promo code.
+    payingUsers: int,
+    freePassUsers: int,
     suspendedUsers: int,
     resumes: int,
     resumesCreated: int,
@@ -47,6 +49,16 @@ export const adminOverviewResponse = z.object({
       providers: z.array(z.string()),
     }),
   ),
+  runningPlans: z.array(
+    z.object({
+      id: z.uuid(),
+      name: z.string(),
+      email: z.string(),
+      plan,
+      planEndsAt: z.date().nullable(),
+      planPaid: z.boolean(),
+    }),
+  ),
 });
 
 export const adminUsersQuery = z.object({
@@ -69,6 +81,9 @@ export const adminUserListResponse = z.object({
       suspendedAt: z.date().nullable(),
       createdAt: z.date(),
       lastActiveAt: z.date().nullable(),
+      // When the running plan ends, and whether it was paid for; null and false on Free.
+      planEndsAt: z.date().nullable(),
+      planPaid: z.boolean(),
       providers: z.array(z.string()),
       resumes: int,
       aiRuns: int,

@@ -7433,7 +7433,8 @@ export interface paths {
                                     previousNewUsers: number;
                                     activeUsers: number;
                                     previousActiveUsers: number;
-                                    paidUsers: number;
+                                    payingUsers: number;
+                                    freePassUsers: number;
                                     suspendedUsers: number;
                                     resumes: number;
                                     resumesCreated: number;
@@ -7480,6 +7481,16 @@ export interface paths {
                                     plan: "free" | "season_pass" | "pro";
                                     createdAt: string;
                                     providers: string[];
+                                }[];
+                                runningPlans: {
+                                    /** Format: uuid */
+                                    id: string;
+                                    name: string;
+                                    email: string;
+                                    /** @enum {string} */
+                                    plan: "free" | "season_pass" | "pro";
+                                    planEndsAt: string | null;
+                                    planPaid: boolean;
                                 }[];
                             };
                         };
@@ -7547,6 +7558,8 @@ export interface paths {
                                     suspendedAt: string | null;
                                     createdAt: string;
                                     lastActiveAt: string | null;
+                                    planEndsAt: string | null;
+                                    planPaid: boolean;
                                     providers: string[];
                                     resumes: number;
                                     aiRuns: number;

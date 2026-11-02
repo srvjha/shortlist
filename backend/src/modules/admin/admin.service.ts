@@ -76,6 +76,13 @@ const outer = (table: string, column: string) => sql.raw(`"${table}"."${column}"
 const providersOf = sql<
   string[]
 >`coalesce((select array_agg(distinct ${accounts.providerId}) from ${accounts} where ${accounts.userId} = ${outer("users", "id")}), '{}')`;
+// A user's plans that are running now, as recomputePlan sees them. Paid means a captured payment; the rest are
+// free passes from an admin or a promo code.
+const runningPlans = sql`${subscriptions.userId} = ${outer("users", "id")} and ${subscriptions.status} in ('active', 'cancelled', 'past_due') and ${subscriptions.currentPeriodEnd} > now()`;
+const paidFor = sql`exists (select 1 from ${payments} where ${payments.subscriptionId} = ${subscriptions.id} and ${payments.status} = 'captured')`;
+const planEndsOf = sql<Date | null>`(select max(${subscriptions.currentPeriodEnd}) from ${subscriptions} where ${runningPlans})`;
+const planPaidOf = sql<boolean>`exists (select 1 from ${subscriptions} where ${runningPlans} and ${paidFor})`;
+
 const lastActiveOf = sql<Date | null>`(select max(${sessions.updatedAt}) from ${sessions} where ${sessions.userId} = ${outer("users", "id")})`;
 
 export async function getOverview(days: number, timeZone: string) {
@@ -98,6 +105,7 @@ export async function getOverview(days: number, timeZone: string) {
     providers,
     [funnel],
     recentSignups,
+    runningPlanUsers,
   ] = await Promise.all([
     db
       .select({
@@ -105,7 +113,8 @@ export async function getOverview(days: number, timeZone: string) {
         guests: filtered(sql`${users.isAnonymous}`),
         newUsers: filtered(sql`not ${users.isAnonymous} and ${current(users.createdAt)}`),
         previousNewUsers: filtered(sql`not ${users.isAnonymous} and ${previous(users.createdAt)}`),
-        paid: filtered(sql`${users.plan} <> 'free'`),
+        paying: filtered(sql`${users.plan} <> 'free' and ${planPaidOf}`),
+        freePass: filtered(sql`${users.plan} <> 'free' and not ${planPaidOf}`),
         suspended: filtered(sql`${users.suspendedAt} is not null`),
       })
       .from(users),
@@ -222,6 +231,20 @@ export async function getOverview(days: number, timeZone: string) {
       .where(eq(users.isAnonymous, false))
       .orderBy(desc(users.createdAt))
       .limit(8),
+    // Everyone on a plan now, the soonest to end first.
+    db
+      .select({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        plan: users.plan,
+        planEndsAt: planEndsOf,
+        planPaid: planPaidOf,
+      })
+      .from(users)
+      .where(sql`${users.plan} <> 'free'`)
+      .orderBy(planEndsOf)
+      .limit(100),
   ]);
 
   const keys = dayKeys(days, timeZone, now);
@@ -248,7 +271,8 @@ export async function getOverview(days: number, timeZone: string) {
       previousNewUsers: userTotals?.previousNewUsers ?? 0,
       activeUsers: active?.users ?? 0,
       previousActiveUsers: active?.previousUsers ?? 0,
-      paidUsers: userTotals?.paid ?? 0,
+      payingUsers: userTotals?.paying ?? 0,
+      freePassUsers: userTotals?.freePass ?? 0,
       suspendedUsers: userTotals?.suspended ?? 0,
       resumes: resumeTotals?.total ?? 0,
       resumesCreated: resumeTotals?.created ?? 0,
@@ -268,6 +292,10 @@ export async function getOverview(days: number, timeZone: string) {
     providers,
     funnel: funnel ?? { signedUp: 0, createdResume: 0, usedAi: 0, shared: 0, paid: 0 },
     recentSignups,
+    runningPlans: runningPlanUsers.map((row) => ({
+      ...row,
+      planEndsAt: row.planEndsAt ? new Date(row.planEndsAt) : null,
+    })),
   };
 }
 
@@ -302,6 +330,8 @@ export async function listUsers(query: {
         suspendedAt: users.suspendedAt,
         createdAt: users.createdAt,
         lastActiveAt: lastActiveOf,
+        planEndsAt: planEndsOf,
+        planPaid: planPaidOf,
         providers: providersOf,
         resumes:
           sql<number>`(select count(*) from ${resumes} where ${resumes.userId} = ${outer("users", "id")} and ${resumes.deletedAt} is null)`.mapWith(
@@ -319,7 +349,11 @@ export async function listUsers(query: {
   ]);
 
   return {
-    users: rows.map((row) => ({ ...row, lastActiveAt: row.lastActiveAt ? new Date(row.lastActiveAt) : null })),
+    users: rows.map((row) => ({
+      ...row,
+      lastActiveAt: row.lastActiveAt ? new Date(row.lastActiveAt) : null,
+      planEndsAt: row.planEndsAt ? new Date(row.planEndsAt) : null,
+    })),
     page: query.page,
     pageSize: PAGE_SIZE,
     total: total?.count ?? 0,
