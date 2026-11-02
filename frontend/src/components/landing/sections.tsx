@@ -366,7 +366,7 @@ function Print({
           width={560}
           height={724}
           loading="lazy"
-          className="aspect-[560/724] w-full"
+          className="aspect-[560/724] w-full object-cover object-top"
         />
       </motion.div>
     </motion.div>
