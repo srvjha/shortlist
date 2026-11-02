@@ -10,6 +10,7 @@ import {
   inArray,
   isNotNull,
   isNull,
+  notInArray,
   or,
   sql,
   sum,
@@ -76,6 +77,17 @@ const outer = (table: string, column: string) => sql.raw(`"${table}"."${column}"
 const providersOf = sql<
   string[]
 >`coalesce((select array_agg(distinct ${accounts.providerId}) from ${accounts} where ${accounts.userId} = ${outer("users", "id")}), '{}')`;
+// Admins' own accounts are left out of customer numbers (paying users, plans, revenue), so their test payments and
+// passes never read as customers.
+const customer = (userId: PgColumn) =>
+  notInArray(
+    userId,
+    db
+      .select({ id: users.id })
+      .from(users)
+      .where(inArray(sql`lower(${users.email})`, env.ADMIN_EMAILS)),
+  );
+
 // A user's plans that are running now, as recomputePlan sees them. Paid means a captured payment; the rest are
 // free passes from an admin or a promo code.
 const runningPlans = sql`${subscriptions.userId} = ${outer("users", "id")} and ${subscriptions.status} in ('active', 'cancelled', 'past_due') and ${subscriptions.currentPeriodEnd} > now()`;
@@ -113,8 +125,8 @@ export async function getOverview(days: number, timeZone: string) {
         guests: filtered(sql`${users.isAnonymous}`),
         newUsers: filtered(sql`not ${users.isAnonymous} and ${current(users.createdAt)}`),
         previousNewUsers: filtered(sql`not ${users.isAnonymous} and ${previous(users.createdAt)}`),
-        paying: filtered(sql`${users.plan} <> 'free' and ${planPaidOf}`),
-        freePass: filtered(sql`${users.plan} <> 'free' and not ${planPaidOf}`),
+        paying: filtered(sql`${users.plan} <> 'free' and ${planPaidOf} and ${customer(users.id)}`),
+        freePass: filtered(sql`${users.plan} <> 'free' and not ${planPaidOf} and ${customer(users.id)}`),
         suspended: filtered(sql`${users.suspendedAt} is not null`),
       })
       .from(users),
@@ -212,7 +224,7 @@ export async function getOverview(days: number, timeZone: string) {
           sql`exists (select 1 from ${shareLinks} where ${shareLinks.userId} = ${outer("users", "id")})`,
         ),
         paid: filtered(
-          sql`exists (select 1 from ${payments} where ${payments.userId} = ${outer("users", "id")} and ${payments.status} = 'captured')`,
+          sql`exists (select 1 from ${payments} where ${payments.userId} = ${outer("users", "id")} and ${payments.status} = 'captured') and ${customer(users.id)}`,
         ),
       })
       .from(users)
@@ -242,7 +254,7 @@ export async function getOverview(days: number, timeZone: string) {
         planPaid: planPaidOf,
       })
       .from(users)
-      .where(sql`${users.plan} <> 'free'`)
+      .where(and(sql`${users.plan} <> 'free'`, customer(users.id)))
       .orderBy(planEndsOf)
       .limit(100),
   ]);
@@ -733,6 +745,7 @@ export async function getRevenue(days: number, timeZone: string) {
   const { now, since, previousSince } = range(days);
   // The rupee totals leave out Polar's dollar payments, which are summed on their own.
   const captured = and(eq(payments.status, "captured"), eq(payments.currency, "INR"))!;
+  const customers = customer(payments.userId);
   const capturedUsd = and(eq(payments.status, "captured"), eq(payments.currency, "USD"));
 
   const [[totals], byDay, byPlan, recent, statuses] = await Promise.all([
@@ -757,11 +770,12 @@ export async function getRevenue(days: number, timeZone: string) {
         checkouts: filtered(sql`${payments.createdAt} >= ${since}`),
         checkoutsPaid: filtered(sql`${payments.createdAt} >= ${since} and ${payments.status} = 'captured'`),
       })
-      .from(payments),
+      .from(payments)
+      .where(customers),
     db
       .select({ day: dayOf(payments.updatedAt, timeZone), paise: sum(payments.amount).mapWith(Number) })
       .from(payments)
-      .where(and(captured, gte(payments.updatedAt, since)))
+      .where(and(captured, customers, gte(payments.updatedAt, since)))
       .groupBy(sql`1`),
     db
       .select({ plan: subscriptions.plan, active: count() })
@@ -770,6 +784,7 @@ export async function getRevenue(days: number, timeZone: string) {
         and(
           sql`${subscriptions.status} in ('active', 'cancelled', 'past_due')`,
           sql`${subscriptions.currentPeriodEnd} > now()`,
+          customer(subscriptions.userId),
         ),
       )
       .groupBy(subscriptions.plan),
@@ -790,12 +805,13 @@ export async function getRevenue(days: number, timeZone: string) {
       .from(payments)
       .innerJoin(users, eq(users.id, payments.userId))
       .leftJoin(subscriptions, eq(subscriptions.id, payments.subscriptionId))
+      .where(customers)
       .orderBy(desc(payments.createdAt))
       .limit(50),
     db
       .select({ label: payments.status, count: count() })
       .from(payments)
-      .where(gte(payments.createdAt, since))
+      .where(and(customers, gte(payments.createdAt, since)))
       .groupBy(payments.status),
   ]);
 
