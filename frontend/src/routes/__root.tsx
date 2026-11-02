@@ -13,7 +13,6 @@ import { site } from '@/lib/site'
 import { ThemeProvider, themeScript } from '@/lib/theme'
 import type { RouterContext } from '../router'
 import appCss from '../styles.css?url'
-import serifFont from '@fontsource-variable/source-serif-4/files/source-serif-4-latin-wght-normal.woff2?url'
 import { initAnalytics } from '@/lib/analytics'
 import { useEffect } from 'react'
 
@@ -42,14 +41,6 @@ export const Route = createRootRouteWithContext<RouterContext>()({
     ],
     links: [
       { rel: 'stylesheet', href: appCss },
-      // Headings use the serif, so fetch it with the stylesheet instead of after it.
-      {
-        rel: 'preload',
-        href: serifFont,
-        as: 'font',
-        type: 'font/woff2',
-        crossOrigin: 'anonymous',
-      },
       { rel: 'icon', href: '/favicon.ico', sizes: '32x32' },
       { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' },
     ],
