@@ -38,7 +38,12 @@ export const Route = createFileRoute('/$username/')({
     const indexable = ok && loaderData.data.resumes.length > 0
     return {
       meta: [
-        { title: `${name} | Resumes` },
+        // No loader data means the loader threw notFound.
+        {
+          title: loaderData
+            ? `${name} | Resumes`
+            : `Page not found | ${site.name}`,
+        },
         { name: 'description', content: `Resumes shared by ${name}.` },
         ...(indexable
           ? []
