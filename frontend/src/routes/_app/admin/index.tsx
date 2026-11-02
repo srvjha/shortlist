@@ -18,6 +18,7 @@ import {
   Funnel,
   Meter,
   PlanBadge,
+  PlanEnds,
   QueryView,
   RingChart,
   Section,
@@ -132,9 +133,9 @@ function Overview({ data }: { data: AdminOverview }) {
             hint={`${formatNumber(totals.newUsers)} new in the last ${data.days} days`}
           />
           <Total
-            label="On a paid plan"
-            value={totals.paidUsers}
-            hint={`${percent(totals.paidUsers, totals.users)} of people signed up`}
+            label="Paying"
+            value={totals.payingUsers}
+            hint={`${percent(totals.payingUsers, totals.users)} of people signed up, plus ${formatNumber(totals.freePassUsers)} on a free pass`}
           />
           <Total
             label="Guests"
@@ -310,6 +311,38 @@ function Overview({ data }: { data: AdminOverview }) {
           />
         </Section>
       </div>
+
+      <Section
+        title="Plans running"
+        description="Everyone on Season Pass or Pro, the soonest to end first. Free passes come from you or a promo code."
+      >
+        {data.runningPlans.length === 0 ? (
+          <EmptyNote>Nobody is on a plan right now.</EmptyNote>
+        ) : (
+          <ul className="flex flex-col divide-y overflow-hidden rounded-xl border bg-card">
+            {data.runningPlans.map((user) => (
+              <li key={user.id}>
+                <Link
+                  to="/admin/users/$userId"
+                  params={{ userId: user.id }}
+                  className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3 transition-colors hover:bg-muted/50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
+                >
+                  <span className="flex min-w-0 flex-1 flex-col">
+                    <span className="truncate font-medium">
+                      {displayName(user)}
+                    </span>
+                    <span className="truncate text-sm text-muted-foreground">
+                      {user.email}
+                    </span>
+                  </span>
+                  <PlanBadge plan={user.plan} />
+                  <PlanEnds endsAt={user.planEndsAt} paid={user.planPaid} />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Section>
 
       <Section
         title="Latest sign-ups"

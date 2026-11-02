@@ -16,7 +16,13 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Spinner } from '@/components/ui/spinner'
 import { errorMessage } from '@/lib/api/client'
-import { formatNumber, percent, planLabels } from '@/lib/format'
+import {
+  formatDate,
+  formatNumber,
+  percent,
+  planLabels,
+  timeAgo,
+} from '@/lib/format'
 import { templateCatalog } from '@/lib/templates'
 import { cn } from '@/lib/utils'
 
@@ -649,6 +655,23 @@ export function PlanBadge({ plan }: { plan: keyof typeof planLabels }) {
     <Badge variant={plan === 'free' ? 'secondary' : 'default'}>
       {planLabels[plan]}
     </Badge>
+  )
+}
+
+// Whether a running plan was paid for or given free, and when it ends.
+export function PlanEnds({
+  endsAt,
+  paid,
+}: {
+  endsAt: string | Date | null
+  paid: boolean
+}) {
+  if (!endsAt) return null
+  return (
+    <span className="block text-xs whitespace-nowrap text-muted-foreground">
+      {paid ? 'Paid' : 'Free pass'} until {formatDate(endsAt)} (
+      {timeAgo(endsAt)})
+    </span>
   )
 }
 

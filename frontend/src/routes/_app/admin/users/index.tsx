@@ -6,6 +6,7 @@ import { z } from 'zod'
 import {
   EmptyNote,
   PlanBadge,
+  PlanEnds,
   QueryView,
   providerLabel,
   CopyEmail,
@@ -241,6 +242,7 @@ function UsersTable({
                     )}
                     {user.isAnonymous && <Badge variant="outline">Guest</Badge>}
                   </span>
+                  <PlanEnds endsAt={user.planEndsAt} paid={user.planPaid} />
                 </TableCell>
                 <TableCell className="text-muted-foreground">
                   {user.providers.map(providerLabel).join(', ') || 'None'}
