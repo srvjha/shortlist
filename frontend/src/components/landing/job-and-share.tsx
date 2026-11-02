@@ -245,6 +245,7 @@ function JobPanel() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="mt-4 flex flex-col gap-2.5"
+              role="status"
               aria-label="Reading the job"
             >
               {[70, 45, 90, 60].map((w, i) => (
