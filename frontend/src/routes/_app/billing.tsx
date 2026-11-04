@@ -34,7 +34,7 @@ import {
   formatMoney,
   planLabels,
 } from '@/lib/format'
-import { priceNote, priceOf, usePricing } from '@/lib/pricing'
+import { comingSoon, priceNote, priceOf, usePricing } from '@/lib/pricing'
 import { site } from '@/lib/site'
 import { cn } from '@/lib/utils'
 
@@ -327,12 +327,16 @@ function Billing({
                 <Button
                   variant={plan.id === 'season_pass' ? 'default' : 'outline'}
                   onClick={() => checkout.mutate(plan.id)}
-                  disabled={checkout.isPending}
+                  disabled={checkout.isPending || !pricing.checkoutOpen}
                 >
                   {checkout.isPending && checkout.variables === plan.id && (
                     <Spinner data-icon="inline-start" />
                   )}
-                  {plan.id === 'season_pass' ? 'Get the Season Pass' : 'Go Pro'}
+                  {!pricing.checkoutOpen
+                    ? comingSoon
+                    : plan.id === 'season_pass'
+                      ? 'Get the Season Pass'
+                      : 'Go Pro'}
                 </Button>
               </CardFooter>
             </Card>

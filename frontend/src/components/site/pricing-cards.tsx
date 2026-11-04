@@ -8,12 +8,18 @@ import { useSession } from '@/lib/auth-client'
 import type { Pricing } from '@/lib/api/types'
 import { formatMoney } from '@/lib/format'
 import { plans } from '@/lib/plans'
-import { paymentLine, priceNote, priceOf, usePricing } from '@/lib/pricing'
+import {
+  comingSoon,
+  paymentLine,
+  priceNote,
+  priceOf,
+  usePricing,
+} from '@/lib/pricing'
 import { cn } from '@/lib/utils'
 
 type Plan = (typeof plans)[number]
 
-function PlanCta({ plan }: { plan: Plan }) {
+function PlanCta({ plan, open }: { plan: Plan; open: boolean }) {
   const featured = 'featured' in plan && plan.featured
   const { data: session } = useSession()
   const { checkout, me } = useCheckout({ enabled: !!session })
@@ -29,6 +35,12 @@ function PlanCta({ plan }: { plan: Plan }) {
         <Link to="/login" search={{ mode: 'signup' }}>
           {plan.cta}
         </Link>
+      </Button>
+    )
+  if (!open)
+    return (
+      <Button {...style} disabled>
+        {comingSoon}
       </Button>
     )
   // Signed out: sign up, then land on billing with this plan picked.
@@ -119,7 +131,7 @@ export function PricingCards({
               <p className="mt-2 text-sm text-muted-foreground">
                 {plan.id === 'free' ? plan.note : priceNote(plan.id, pricing)}
               </p>
-              <PlanCta plan={plan} />
+              <PlanCta plan={plan} open={pricing.checkoutOpen} />
               <div className="mt-8 border-t pt-6">
                 <p className="text-sm font-medium">{plan.listTitle}</p>
                 <ul className="mt-4 flex flex-col gap-3">

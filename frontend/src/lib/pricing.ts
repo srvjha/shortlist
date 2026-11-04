@@ -10,6 +10,7 @@ export const fallbackPricing: Pricing = {
   region: 'india',
   country: null,
   provider: 'razorpay',
+  checkoutOpen: true,
   currency: 'INR',
   season_pass: 49_900,
   pro: 12_900,
@@ -24,6 +25,8 @@ export function usePricing(initial?: Pricing | null) {
   return data ?? fallbackPricing
 }
 
+export const comingSoon = 'Coming soon in your country'
+
 export const priceOf = (plan: PaidPlan, pricing: Pricing) =>
   formatMoney(pricing[plan], pricing.currency)
 
@@ -37,6 +40,8 @@ export function priceNote(plan: PaidPlan, pricing: Pricing) {
 }
 
 export function paymentLine(pricing: Pricing) {
+  if (!pricing.checkoutOpen)
+    return 'Prices for your country, in US dollars. Payments from your country are coming soon; until then, the Free plan is open to everyone.'
   return pricing.provider === 'razorpay'
     ? 'Pay with UPI, cards or net banking through Razorpay.'
     : 'Prices for your country, in US dollars. Cards from any country work. Payments go through Polar, which adds any sales tax or VAT where you live.'

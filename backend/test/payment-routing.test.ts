@@ -6,7 +6,7 @@ vi.mock("../src/config/env.js", async (original) => {
   return { env: new Proxy(real, { get: (target, key: string) => (key in env ? env[key] : target[key as never]) }) };
 });
 
-import { pricingFor } from "../src/modules/billing/billing.service.js";
+import { createCheckout, pricingFor } from "../src/modules/billing/billing.service.js";
 
 const polarSetUp = {
   POLAR_ACCESS_TOKEN: "polar_test",
@@ -30,9 +30,15 @@ describe("payment routing", () => {
     expect(pricingFor("US")).toMatchObject({ provider: "polar", currency: "USD", season_pass: 900, pro: 400 });
   });
 
-  it("keeps everyone on Razorpay until Polar is set up", () => {
+  it("shows dollar prices abroad with checkout closed until Polar is set up", () => {
     env.POLAR_PRO_PRODUCT_ID = undefined;
-    expect(pricingFor("US")).toMatchObject({ provider: "razorpay", currency: "INR" });
+    expect(pricingFor("US")).toMatchObject({ currency: "USD", season_pass: 900, checkoutOpen: false });
+    expect(pricingFor("IN")).toMatchObject({ provider: "razorpay", checkoutOpen: true });
+  });
+
+  it("refuses a checkout while it is closed", async () => {
+    env.POLAR_PRO_PRODUCT_ID = undefined;
+    await expect(createCheckout("user-1", "pro", "US")).rejects.toMatchObject({ code: "CHECKOUT_UNAVAILABLE" });
   });
 
   it("can move India to Polar, still in rupees", () => {

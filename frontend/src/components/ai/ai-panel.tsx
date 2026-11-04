@@ -55,7 +55,7 @@ import { fixInstruction } from '@/lib/ats'
 import { formatDate } from '@/lib/format'
 import { plans } from '@/lib/plans'
 import { panelStorage } from '@/lib/panel-storage'
-import { priceNote, priceOf, usePricing } from '@/lib/pricing'
+import { comingSoon, priceNote, priceOf, usePricing } from '@/lib/pricing'
 import { CoverageReport } from './coverage-report'
 import { FeedbackCard } from './feedback-card'
 import { SuggestionReview } from './suggestion-review'
@@ -794,10 +794,10 @@ function TailorUpgrade() {
       <div className="flex flex-wrap gap-2">
         <Button
           onClick={() => checkout.mutate('season_pass')}
-          disabled={checkout.isPending}
+          disabled={checkout.isPending || !pricing.checkoutOpen}
         >
           {checkout.isPending && <Spinner data-icon="inline-start" />}
-          {seasonPass.cta}
+          {pricing.checkoutOpen ? seasonPass.cta : comingSoon}
         </Button>
         <Button variant="ghost" asChild>
           <Link to="/billing">See all plans</Link>

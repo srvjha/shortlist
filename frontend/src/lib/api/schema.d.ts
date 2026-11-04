@@ -6755,6 +6755,7 @@ export interface paths {
                                 country: string | null;
                                 /** @enum {string} */
                                 provider: "razorpay" | "polar";
+                                checkoutOpen: boolean;
                                 /** @enum {string} */
                                 currency: "INR" | "USD";
                                 season_pass: number;

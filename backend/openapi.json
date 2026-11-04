@@ -21371,6 +21371,9 @@
                             "polar"
                           ]
                         },
+                        "checkoutOpen": {
+                          "type": "boolean"
+                        },
                         "currency": {
                           "type": "string",
                           "enum": [
@@ -21393,6 +21396,7 @@
                         "region",
                         "country",
                         "provider",
+                        "checkoutOpen",
                         "currency",
                         "season_pass",
                         "pro"

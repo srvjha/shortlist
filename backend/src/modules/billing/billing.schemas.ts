@@ -8,6 +8,8 @@ export const pricingResponse = z.object({
   region: z.enum(["india", "global"]),
   country: z.string().nullable(),
   provider: z.enum(["razorpay", "polar"]),
+  // False while payments from this visitor's region aren't open yet; the prices are still shown.
+  checkoutOpen: z.boolean(),
   currency: z.enum(["INR", "USD"]),
   season_pass: z.number().int(),
   pro: z.number().int(),

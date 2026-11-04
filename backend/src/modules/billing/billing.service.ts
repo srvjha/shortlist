@@ -64,8 +64,10 @@ export function pricingFor(country: string | null) {
 }
 
 export async function createCheckout(userId: string, plan: PaidPlan, country: string | null = null) {
-  await assertNotGuest(userId);
   const route = routeFor(country);
+  if (!route.checkoutOpen)
+    throw new AppError(503, "CHECKOUT_UNAVAILABLE", "Payments from your country are coming soon");
+  await assertNotGuest(userId);
   const { provider, currency } = route;
   const amount = route[plan];
   track(userId, "checkout_started", { plan, provider: provider.id });

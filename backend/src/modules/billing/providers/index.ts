@@ -62,9 +62,10 @@ export const regions = {
 
 // Which provider takes a payment from this visitor, and at what price. India and any country the IP lookup can't
 // tell pay in rupees (guessing wrong must never overcharge someone in India); everyone else pays in dollars through
-// Polar, once Polar is set up.
+// Polar. Until Polar is set up, visitors abroad see their prices with checkout closed ("coming soon").
 export function routeFor(country: string | null) {
-  const region = country && country !== "IN" && polarProvider.configured() ? "global" : "india";
+  const region = country && country !== "IN" ? "global" : "india";
   const provider = providerOf(region === "global" ? "polar" : env.PAYMENTS_INDIA);
-  return { region, country, provider, ...regions[region] } as const;
+  const checkoutOpen = region === "india" || provider.configured();
+  return { region, country, provider, checkoutOpen, ...regions[region] } as const;
 }
