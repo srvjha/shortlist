@@ -55,6 +55,7 @@ import {
 } from '@/components/ui/tooltip'
 import { useCollapsedSidebar } from '@/hooks/use-collapsed-sidebar'
 import { useDebouncedEffect } from '@/hooks/use-debounced-effect'
+import { flushStep } from '@/lib/save-flush'
 import { useMediaQuery } from '@/hooks/use-media-query'
 import { usePdfPreview } from '@/hooks/use-pdf-preview'
 import { ApiError, api, errorMessage, unwrap } from '@/lib/api/client'
@@ -294,6 +295,42 @@ function ResumeEditor({
     [draft, save.isPending],
     1500,
   )
+
+  // Downloads read the saved version, so they wait here until what's on screen is saved.
+  const saveWaiters = useRef<
+    { resolve: () => void; reject: (reason: unknown) => void }[]
+  >([])
+  const [saveRequest, setSaveRequest] = useState(0)
+  const saveFirst = () =>
+    new Promise<void>((resolve, reject) => {
+      saveWaiters.current.push({ resolve, reject })
+      // A draft that just failed waits for the next edit, but a download is worth another try.
+      if (save.isError) save.reset()
+      setSaveRequest((request) => request + 1)
+    })
+  useEffect(() => {
+    if (saveWaiters.current.length === 0) return
+    const step = flushStep({
+      unsaved: draft !== lastSaved.current,
+      saving: save.isPending,
+      failed: conflict || (save.isError && save.variables === draft),
+    })
+    if (step === 'wait') return
+    if (step === 'save') {
+      save.mutate(draft)
+      return
+    }
+    const waiters = saveWaiters.current
+    saveWaiters.current = []
+    for (const { resolve, reject } of waiters) {
+      if (step === 'done') resolve()
+      else
+        reject(
+          save.error ??
+            new Error("Your latest edits aren't saved yet, so try again."),
+        )
+    }
+  }, [draft, save.isPending, save.isError, conflict, saveRequest])
 
   // Closing the dialog any other way keeps this tab's version; the replaced one stays in History.
   function resolveConflict(open: boolean) {
@@ -583,6 +620,7 @@ function ResumeEditor({
             resumeId={resume.id}
             title={title}
             structured={structured}
+            saveFirst={saveFirst}
           />
           <Tooltip>
             <TooltipTrigger asChild>

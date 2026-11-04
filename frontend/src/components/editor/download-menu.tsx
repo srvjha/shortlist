@@ -20,13 +20,16 @@ export function DownloadMenu({
   resumeId,
   title,
   structured,
+  saveFirst,
 }: {
   resumeId: string
   title: string
   structured: boolean
+  saveFirst: () => Promise<void>
 }) {
   async function download(path: string, extension: string) {
     try {
+      await saveFirst()
       await downloadFile(
         `/v1/resumes/${resumeId}/${path}`,
         `${title.trim() || 'resume'}.${extension}`,
@@ -38,7 +41,8 @@ export function DownloadMenu({
   async function copyLatex() {
     try {
       // A promised ClipboardItem keeps Safari's copy permission across the fetch.
-      const text = fetchFile(`/v1/resumes/${resumeId}/tex`)
+      const text = saveFirst()
+        .then(() => fetchFile(`/v1/resumes/${resumeId}/tex`))
         .then((response) => response.text())
         .then((tex) => new Blob([tex], { type: 'text/plain' }))
       await navigator.clipboard.write([
