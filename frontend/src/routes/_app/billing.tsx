@@ -155,7 +155,10 @@ function Billing({
         `Refund of ${formatMoney(result.refund, result.currency)} started. It reaches your account in 5 to 7 working days.`,
       )
     },
-    onError: (error) => toast.error(errorMessage(error)),
+    onError: (error) => {
+      refresh()
+      toast.error(errorMessage(error))
+    },
   })
 
   const cancel = useMutation({
