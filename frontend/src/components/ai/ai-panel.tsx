@@ -3,6 +3,7 @@ import { Link } from '@tanstack/react-router'
 import {
   ArrowLeftIcon,
   ArrowUpIcon,
+  MailIcon,
   PlusIcon,
   RotateCwIcon,
   SparklesIcon,
@@ -42,6 +43,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { useCheckout } from '@/hooks/use-checkout'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { api, errorMessage, unwrap } from '@/lib/api/client'
+import { useWriteCoverLetter } from '@/hooks/use-write-cover-letter'
 import { aiErrorMessage } from '@/lib/api/errors'
 import {
   jobsQuery,
@@ -150,7 +152,7 @@ export function NewJobForm({
 const noJob = 'none'
 
 // With optional, the picker offers "no job" and hides the new job form behind a button.
-function JobPicker({
+export function JobPicker({
   id,
   value,
   onChange,
@@ -275,6 +277,7 @@ export function AiPanel({
   checkAtsOnOpen?: boolean
 }) {
   const [jobId, setJobId] = useState<string | null>(initialJobId)
+  const writeLetter = useWriteCoverLetter()
   const [atsJobId, setAtsJobId] = useState<string | null>(initialJobId)
   const [atsOpen, setAtsOpen] = useState(false)
   const [instructions, setInstructions] = useState('')
@@ -632,6 +635,18 @@ export function AiPanel({
                   >
                     <SparklesIcon data-icon="inline-start" />
                     Tailor resume
+                  </Button>
+                )}
+                {jobId && (
+                  <Button
+                    variant="outline"
+                    disabled={hasUnsavedChanges || writeLetter.isPending}
+                    onClick={() => writeLetter.mutate({ resumeId, jobId })}
+                  >
+                    <MailIcon data-icon="inline-start" />
+                    {writeLetter.isPending
+                      ? 'Writing your letter…'
+                      : 'Write a cover letter for this job'}
                   </Button>
                 )}
               </FieldGroup>

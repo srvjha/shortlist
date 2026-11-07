@@ -17,6 +17,8 @@ export const queryKeys = {
   shareLinkStats: (id: string) => ['share-link', id, 'stats'] as const,
   jobs: ['jobs'] as const,
   job: (id: string) => ['job', id] as const,
+  letters: ['letters'] as const,
+  letter: (id: string) => ['letters', id] as const,
   subscription: ['subscription'] as const,
   pricing: ['pricing'] as const,
   refundQuote: ['subscription', 'refund-quote'] as const,
@@ -118,6 +120,20 @@ export const jobsQuery = queryOptions({
   queryKey: queryKeys.jobs,
   queryFn: () => unwrap(api.GET('/v1/jobs')),
 })
+
+export const lettersQuery = queryOptions({
+  queryKey: queryKeys.letters,
+  queryFn: () => unwrap(api.GET('/v1/letters')),
+})
+
+export const letterQuery = (letterId: string) =>
+  queryOptions({
+    queryKey: queryKeys.letter(letterId),
+    queryFn: () =>
+      unwrap(
+        api.GET('/v1/letters/{letterId}', { params: { path: { letterId } } }),
+      ),
+  })
 
 export const jobQuery = (jobId: string) =>
   queryOptions({

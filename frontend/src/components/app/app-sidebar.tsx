@@ -12,6 +12,7 @@ import {
   LayoutDashboardIcon,
   LayoutTemplateIcon,
   LogOutIcon,
+  MailIcon,
   MonitorIcon,
   MoonIcon,
   SettingsIcon,
@@ -87,6 +88,7 @@ const nav = [
     match: ['/profile'],
   },
   { to: '/jobs', label: 'Jobs', icon: BriefcaseBusinessIcon, match: ['/jobs'] },
+  { to: '/letters', label: 'Letters', icon: MailIcon, match: ['/letters'] },
   {
     to: '/analytics',
     label: 'Analytics',

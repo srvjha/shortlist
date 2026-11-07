@@ -26,9 +26,11 @@ import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppWorkspaceRouteImport } from './routes/_app/workspace'
 import { Route as SiteIndexRouteImport } from './routes/_site/index'
 import { Route as SiteAtsCheckerRouteImport } from './routes/_site/ats-checker'
+import { Route as SiteCoverLetterGeneratorRouteImport } from './routes/_site/cover-letter-generator'
 import { Route as SiteDocsRouteRouteImport } from './routes/_site/docs/route'
 import { Route as SitePricingRouteImport } from './routes/_site/pricing'
 import { Route as SitePrivacyRouteImport } from './routes/_site/privacy'
+import { Route as SiteResignationLetterGeneratorRouteImport } from './routes/_site/resignation-letter-generator'
 import { Route as SiteTermsRouteImport } from './routes/_site/terms'
 import { Route as AppAdminIndexRouteImport } from './routes/_app/admin/index'
 import { Route as AppAdminAiRouteImport } from './routes/_app/admin/ai'
@@ -38,6 +40,9 @@ import { Route as AppAdminPromoCodesRouteImport } from './routes/_app/admin/prom
 import { Route as AppAdminRevenueRouteImport } from './routes/_app/admin/revenue'
 import { Route as AppAdminSystemRouteImport } from './routes/_app/admin/system'
 import { Route as AppAdminTrafficRouteImport } from './routes/_app/admin/traffic'
+import { Route as AppLettersIndexRouteImport } from './routes/_app/letters/index'
+import { Route as AppLettersLetterIdRouteImport } from './routes/_app/letters/$letterId'
+import { Route as AppLettersNewResignationRouteImport } from './routes/_app/letters/new-resignation'
 import { Route as AppMyTemplatesIndexRouteImport } from './routes/_app/my-templates/index'
 import { Route as AppMyTemplatesCustomTemplateIdRouteImport } from './routes/_app/my-templates/$customTemplateId'
 import { Route as AppMyTemplatesNewRouteImport } from './routes/_app/my-templates/new'
@@ -135,6 +140,12 @@ const SiteAtsCheckerRoute = SiteAtsCheckerRouteImport.update({
   path: '/ats-checker',
   getParentRoute: () => SiteRoute,
 } as any)
+const SiteCoverLetterGeneratorRoute =
+  SiteCoverLetterGeneratorRouteImport.update({
+    id: '/cover-letter-generator',
+    path: '/cover-letter-generator',
+    getParentRoute: () => SiteRoute,
+  } as any)
 const SiteDocsRouteRoute = SiteDocsRouteRouteImport.update({
   id: '/docs',
   path: '/docs',
@@ -150,6 +161,12 @@ const SitePrivacyRoute = SitePrivacyRouteImport.update({
   path: '/privacy',
   getParentRoute: () => SiteRoute,
 } as any)
+const SiteResignationLetterGeneratorRoute =
+  SiteResignationLetterGeneratorRouteImport.update({
+    id: '/resignation-letter-generator',
+    path: '/resignation-letter-generator',
+    getParentRoute: () => SiteRoute,
+  } as any)
 const SiteTermsRoute = SiteTermsRouteImport.update({
   id: '/terms',
   path: '/terms',
@@ -195,6 +212,22 @@ const AppAdminTrafficRoute = AppAdminTrafficRouteImport.update({
   path: '/traffic',
   getParentRoute: () => AppAdminRouteRoute,
 } as any)
+const AppLettersIndexRoute = AppLettersIndexRouteImport.update({
+  id: '/letters/',
+  path: '/letters/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppLettersLetterIdRoute = AppLettersLetterIdRouteImport.update({
+  id: '/letters/$letterId',
+  path: '/letters/$letterId',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppLettersNewResignationRoute =
+  AppLettersNewResignationRouteImport.update({
+    id: '/letters/new-resignation',
+    path: '/letters/new-resignation',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppMyTemplatesIndexRoute = AppMyTemplatesIndexRouteImport.update({
   id: '/my-templates/',
   path: '/my-templates/',
@@ -278,8 +311,10 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AppSettingsRoute
   '/workspace': typeof AppWorkspaceRoute
   '/ats-checker': typeof SiteAtsCheckerRoute
+  '/cover-letter-generator': typeof SiteCoverLetterGeneratorRoute
   '/pricing': typeof SitePricingRoute
   '/privacy': typeof SitePrivacyRoute
+  '/resignation-letter-generator': typeof SiteResignationLetterGeneratorRoute
   '/terms': typeof SiteTermsRoute
   '/$username/': typeof UsernameIndexRoute
   '/admin/ai': typeof AppAdminAiRoute
@@ -289,6 +324,8 @@ export interface FileRoutesByFullPath {
   '/admin/revenue': typeof AppAdminRevenueRoute
   '/admin/system': typeof AppAdminSystemRoute
   '/admin/traffic': typeof AppAdminTrafficRoute
+  '/letters/$letterId': typeof AppLettersLetterIdRoute
+  '/letters/new-resignation': typeof AppLettersNewResignationRoute
   '/my-templates/$customTemplateId': typeof AppMyTemplatesCustomTemplateIdRoute
   '/my-templates/new': typeof AppMyTemplatesNewRoute
   '/resumes/$resumeId': typeof AppResumesResumeIdRoute
@@ -297,6 +334,7 @@ export interface FileRoutesByFullPath {
   '/guides/$slug': typeof SiteGuidesSlugRoute
   '/templates/$templateId': typeof SiteTemplatesTemplateIdRoute
   '/admin/': typeof AppAdminIndexRoute
+  '/letters/': typeof AppLettersIndexRoute
   '/my-templates/': typeof AppMyTemplatesIndexRoute
   '/docs/': typeof SiteDocsIndexRoute
   '/guides/': typeof SiteGuidesIndexRoute
@@ -318,8 +356,10 @@ export interface FileRoutesByTo {
   '/settings': typeof AppSettingsRoute
   '/workspace': typeof AppWorkspaceRoute
   '/ats-checker': typeof SiteAtsCheckerRoute
+  '/cover-letter-generator': typeof SiteCoverLetterGeneratorRoute
   '/pricing': typeof SitePricingRoute
   '/privacy': typeof SitePrivacyRoute
+  '/resignation-letter-generator': typeof SiteResignationLetterGeneratorRoute
   '/terms': typeof SiteTermsRoute
   '/$username': typeof UsernameIndexRoute
   '/admin/ai': typeof AppAdminAiRoute
@@ -329,6 +369,8 @@ export interface FileRoutesByTo {
   '/admin/revenue': typeof AppAdminRevenueRoute
   '/admin/system': typeof AppAdminSystemRoute
   '/admin/traffic': typeof AppAdminTrafficRoute
+  '/letters/$letterId': typeof AppLettersLetterIdRoute
+  '/letters/new-resignation': typeof AppLettersNewResignationRoute
   '/my-templates/$customTemplateId': typeof AppMyTemplatesCustomTemplateIdRoute
   '/my-templates/new': typeof AppMyTemplatesNewRoute
   '/resumes/$resumeId': typeof AppResumesResumeIdRoute
@@ -337,6 +379,7 @@ export interface FileRoutesByTo {
   '/guides/$slug': typeof SiteGuidesSlugRoute
   '/templates/$templateId': typeof SiteTemplatesTemplateIdRoute
   '/admin': typeof AppAdminIndexRoute
+  '/letters': typeof AppLettersIndexRoute
   '/my-templates': typeof AppMyTemplatesIndexRoute
   '/docs': typeof SiteDocsIndexRoute
   '/guides': typeof SiteGuidesIndexRoute
@@ -362,8 +405,10 @@ export interface FileRoutesById {
   '/_app/settings': typeof AppSettingsRoute
   '/_app/workspace': typeof AppWorkspaceRoute
   '/_site/ats-checker': typeof SiteAtsCheckerRoute
+  '/_site/cover-letter-generator': typeof SiteCoverLetterGeneratorRoute
   '/_site/pricing': typeof SitePricingRoute
   '/_site/privacy': typeof SitePrivacyRoute
+  '/_site/resignation-letter-generator': typeof SiteResignationLetterGeneratorRoute
   '/_site/terms': typeof SiteTermsRoute
   '/$username/': typeof UsernameIndexRoute
   '/_site/': typeof SiteIndexRoute
@@ -374,6 +419,8 @@ export interface FileRoutesById {
   '/_app/admin/revenue': typeof AppAdminRevenueRoute
   '/_app/admin/system': typeof AppAdminSystemRoute
   '/_app/admin/traffic': typeof AppAdminTrafficRoute
+  '/_app/letters/$letterId': typeof AppLettersLetterIdRoute
+  '/_app/letters/new-resignation': typeof AppLettersNewResignationRoute
   '/_app/my-templates/$customTemplateId': typeof AppMyTemplatesCustomTemplateIdRoute
   '/_app/my-templates/new': typeof AppMyTemplatesNewRoute
   '/_app/resumes/$resumeId': typeof AppResumesResumeIdRoute
@@ -382,6 +429,7 @@ export interface FileRoutesById {
   '/_site/guides/$slug': typeof SiteGuidesSlugRoute
   '/_site/templates/$templateId': typeof SiteTemplatesTemplateIdRoute
   '/_app/admin/': typeof AppAdminIndexRoute
+  '/_app/letters/': typeof AppLettersIndexRoute
   '/_app/my-templates/': typeof AppMyTemplatesIndexRoute
   '/_site/docs/': typeof SiteDocsIndexRoute
   '/_site/guides/': typeof SiteGuidesIndexRoute
@@ -407,8 +455,10 @@ export interface FileRouteTypes {
     | '/settings'
     | '/workspace'
     | '/ats-checker'
+    | '/cover-letter-generator'
     | '/pricing'
     | '/privacy'
+    | '/resignation-letter-generator'
     | '/terms'
     | '/$username/'
     | '/admin/ai'
@@ -418,6 +468,8 @@ export interface FileRouteTypes {
     | '/admin/revenue'
     | '/admin/system'
     | '/admin/traffic'
+    | '/letters/$letterId'
+    | '/letters/new-resignation'
     | '/my-templates/$customTemplateId'
     | '/my-templates/new'
     | '/resumes/$resumeId'
@@ -426,6 +478,7 @@ export interface FileRouteTypes {
     | '/guides/$slug'
     | '/templates/$templateId'
     | '/admin/'
+    | '/letters/'
     | '/my-templates/'
     | '/docs/'
     | '/guides/'
@@ -447,8 +500,10 @@ export interface FileRouteTypes {
     | '/settings'
     | '/workspace'
     | '/ats-checker'
+    | '/cover-letter-generator'
     | '/pricing'
     | '/privacy'
+    | '/resignation-letter-generator'
     | '/terms'
     | '/$username'
     | '/admin/ai'
@@ -458,6 +513,8 @@ export interface FileRouteTypes {
     | '/admin/revenue'
     | '/admin/system'
     | '/admin/traffic'
+    | '/letters/$letterId'
+    | '/letters/new-resignation'
     | '/my-templates/$customTemplateId'
     | '/my-templates/new'
     | '/resumes/$resumeId'
@@ -466,6 +523,7 @@ export interface FileRouteTypes {
     | '/guides/$slug'
     | '/templates/$templateId'
     | '/admin'
+    | '/letters'
     | '/my-templates'
     | '/docs'
     | '/guides'
@@ -490,8 +548,10 @@ export interface FileRouteTypes {
     | '/_app/settings'
     | '/_app/workspace'
     | '/_site/ats-checker'
+    | '/_site/cover-letter-generator'
     | '/_site/pricing'
     | '/_site/privacy'
+    | '/_site/resignation-letter-generator'
     | '/_site/terms'
     | '/$username/'
     | '/_site/'
@@ -502,6 +562,8 @@ export interface FileRouteTypes {
     | '/_app/admin/revenue'
     | '/_app/admin/system'
     | '/_app/admin/traffic'
+    | '/_app/letters/$letterId'
+    | '/_app/letters/new-resignation'
     | '/_app/my-templates/$customTemplateId'
     | '/_app/my-templates/new'
     | '/_app/resumes/$resumeId'
@@ -510,6 +572,7 @@ export interface FileRouteTypes {
     | '/_site/guides/$slug'
     | '/_site/templates/$templateId'
     | '/_app/admin/'
+    | '/_app/letters/'
     | '/_app/my-templates/'
     | '/_site/docs/'
     | '/_site/guides/'
@@ -648,6 +711,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SiteAtsCheckerRouteImport
       parentRoute: typeof SiteRoute
     }
+    '/_site/cover-letter-generator': {
+      id: '/_site/cover-letter-generator'
+      path: '/cover-letter-generator'
+      fullPath: '/cover-letter-generator'
+      preLoaderRoute: typeof SiteCoverLetterGeneratorRouteImport
+      parentRoute: typeof SiteRoute
+    }
     '/_site/docs': {
       id: '/_site/docs'
       path: '/docs'
@@ -667,6 +737,13 @@ declare module '@tanstack/react-router' {
       path: '/privacy'
       fullPath: '/privacy'
       preLoaderRoute: typeof SitePrivacyRouteImport
+      parentRoute: typeof SiteRoute
+    }
+    '/_site/resignation-letter-generator': {
+      id: '/_site/resignation-letter-generator'
+      path: '/resignation-letter-generator'
+      fullPath: '/resignation-letter-generator'
+      preLoaderRoute: typeof SiteResignationLetterGeneratorRouteImport
       parentRoute: typeof SiteRoute
     }
     '/_site/terms': {
@@ -731,6 +808,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/traffic'
       preLoaderRoute: typeof AppAdminTrafficRouteImport
       parentRoute: typeof AppAdminRouteRoute
+    }
+    '/_app/letters/': {
+      id: '/_app/letters/'
+      path: '/letters'
+      fullPath: '/letters/'
+      preLoaderRoute: typeof AppLettersIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/letters/$letterId': {
+      id: '/_app/letters/$letterId'
+      path: '/letters/$letterId'
+      fullPath: '/letters/$letterId'
+      preLoaderRoute: typeof AppLettersLetterIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/letters/new-resignation': {
+      id: '/_app/letters/new-resignation'
+      path: '/letters/new-resignation'
+      fullPath: '/letters/new-resignation'
+      preLoaderRoute: typeof AppLettersNewResignationRouteImport
+      parentRoute: typeof AppRoute
     }
     '/_app/my-templates/': {
       id: '/_app/my-templates/'
@@ -866,10 +964,13 @@ interface AppRouteChildren {
   AppProfileRoute: typeof AppProfileRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppWorkspaceRoute: typeof AppWorkspaceRoute
+  AppLettersLetterIdRoute: typeof AppLettersLetterIdRoute
+  AppLettersNewResignationRoute: typeof AppLettersNewResignationRoute
   AppMyTemplatesCustomTemplateIdRoute: typeof AppMyTemplatesCustomTemplateIdRoute
   AppMyTemplatesNewRoute: typeof AppMyTemplatesNewRoute
   AppResumesResumeIdRoute: typeof AppResumesResumeIdRoute
   AppResumesNewRoute: typeof AppResumesNewRoute
+  AppLettersIndexRoute: typeof AppLettersIndexRoute
   AppMyTemplatesIndexRoute: typeof AppMyTemplatesIndexRoute
 }
 
@@ -883,10 +984,13 @@ const AppRouteChildren: AppRouteChildren = {
   AppProfileRoute: AppProfileRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppWorkspaceRoute: AppWorkspaceRoute,
+  AppLettersLetterIdRoute: AppLettersLetterIdRoute,
+  AppLettersNewResignationRoute: AppLettersNewResignationRoute,
   AppMyTemplatesCustomTemplateIdRoute: AppMyTemplatesCustomTemplateIdRoute,
   AppMyTemplatesNewRoute: AppMyTemplatesNewRoute,
   AppResumesResumeIdRoute: AppResumesResumeIdRoute,
   AppResumesNewRoute: AppResumesNewRoute,
+  AppLettersIndexRoute: AppLettersIndexRoute,
   AppMyTemplatesIndexRoute: AppMyTemplatesIndexRoute,
 }
 
@@ -909,8 +1013,10 @@ const SiteDocsRouteRouteWithChildren = SiteDocsRouteRoute._addFileChildren(
 interface SiteRouteChildren {
   SiteDocsRouteRoute: typeof SiteDocsRouteRouteWithChildren
   SiteAtsCheckerRoute: typeof SiteAtsCheckerRoute
+  SiteCoverLetterGeneratorRoute: typeof SiteCoverLetterGeneratorRoute
   SitePricingRoute: typeof SitePricingRoute
   SitePrivacyRoute: typeof SitePrivacyRoute
+  SiteResignationLetterGeneratorRoute: typeof SiteResignationLetterGeneratorRoute
   SiteTermsRoute: typeof SiteTermsRoute
   SiteIndexRoute: typeof SiteIndexRoute
   SiteGuidesSlugRoute: typeof SiteGuidesSlugRoute
@@ -922,8 +1028,10 @@ interface SiteRouteChildren {
 const SiteRouteChildren: SiteRouteChildren = {
   SiteDocsRouteRoute: SiteDocsRouteRouteWithChildren,
   SiteAtsCheckerRoute: SiteAtsCheckerRoute,
+  SiteCoverLetterGeneratorRoute: SiteCoverLetterGeneratorRoute,
   SitePricingRoute: SitePricingRoute,
   SitePrivacyRoute: SitePrivacyRoute,
+  SiteResignationLetterGeneratorRoute: SiteResignationLetterGeneratorRoute,
   SiteTermsRoute: SiteTermsRoute,
   SiteIndexRoute: SiteIndexRoute,
   SiteGuidesSlugRoute: SiteGuidesSlugRoute,
