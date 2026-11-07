@@ -5,19 +5,22 @@ import { AppError, NotFoundError } from "../../lib/errors.js";
 import { hasUserAiKey } from "../ai-keys/ai-keys.service.js";
 
 export type Plan = (typeof users.$inferSelect)["plan"];
-export type QuotaKind = "tailor" | "edit" | "import" | "draft" | "job" | "ats" | "review";
+export type QuotaKind = "tailor" | "edit" | "import" | "draft" | "job" | "ats" | "review" | "letter";
 
 // Monthly AI limits per plan; resumes are unlimited on every plan (1000 = unlimited). Paid limits are fair-use caps.
 // Imports are free on every plan; the cap only stops abuse. Job descriptions are parsed once per posting, then reused.
 // Free gets one resume written from notes per account (counted for all time), to see it work once.
 // ATS checks with a job description have their own cap, so they never use up the AI edits people see.
 // The AI resume review is paid only; free is 0 and is turned away by assertPaidPlan before the quota.
-export const planLimits: Record<Plan, Record<QuotaKind | "resumes", number>> = {
+export const planLimits: Record<Plan, Record<Exclude<QuotaKind, "letter"> | "resumes", number>> = {
   free: { resumes: 1000, tailor: 1, edit: 50, import: 20, draft: 1, job: 10, ats: 20, review: 0 },
   season_pass: { resumes: 1000, tailor: 40, edit: 1000, import: 20, draft: 30, job: 100, ats: 200, review: 100 },
   pro: { resumes: 1000, tailor: 60, edit: 1000, import: 20, draft: 30, job: 100, ats: 200, review: 100 },
   lifetime: { resumes: 1000, tailor: 60, edit: 1000, import: 20, draft: 30, job: 100, ats: 200, review: 100 },
 };
+
+// AI cover letters are free on every plan, so this fair-use cap is the same for all of them.
+const LETTER_LIMIT = 30;
 
 // A new Free account can tailor 5 resumes in its first 7 days, counted from sign-up, then gets the monthly limit.
 const TRIAL_DAYS = 7;
@@ -31,6 +34,7 @@ const stepsFor: Record<QuotaKind, (typeof aiRuns.$inferSelect)["step"][]> = {
   job: ["jd_parse"],
   ats: ["ats_match"],
   review: ["ats_review"],
+  letter: ["cover_letter"],
 };
 
 // Calendar month in UTC.
@@ -137,7 +141,7 @@ async function checkQuota(userId: string, kind: QuotaKind, executor: Executor = 
   const account = await accountOf(userId, executor);
   const { plan } = account;
   const trial = kind === "tailor" ? trialEndsAt(account) : null;
-  const limit = trial ? TRIAL_TAILORS : planLimits[plan][kind];
+  const limit = kind === "letter" ? LETTER_LIMIT : trial ? TRIAL_TAILORS : planLimits[plan][kind];
   const once = kind === "draft" && plan === "free";
   // A trial counts every tailor since sign-up, so it doesn't start over on the 1st of the month.
   const used = await usedThisPeriod(userId, kind, once || Boolean(trial), executor);
@@ -156,7 +160,8 @@ async function checkQuota(userId: string, kind: QuotaKind, executor: Executor = 
     );
   }
   if (used >= limit) {
-    throw quotaError(`You've used all ${limit} ${kind} requests for this month`, limit, used, periodEnd());
+    const what = kind === "letter" ? "AI cover letters" : `${kind} requests`;
+    throw quotaError(`You've used all ${limit} ${what} for this month`, limit, used, periodEnd());
   }
 }
 
