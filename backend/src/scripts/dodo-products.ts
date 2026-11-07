@@ -28,8 +28,8 @@ const base = { currency: "USD", discount: 0, purchasing_power_parity: false } as
 const PRODUCTS = [
   {
     env: "DODO_PRODUCT_PRO",
-    name: "Shortlist Pro",
-    description: "Shortlist Pro, billed every month until you cancel.",
+    name: "Shortlist Basic",
+    description: "Shortlist Basic, billed every month until you cancel.",
     price: {
       ...base,
       type: "recurring_price",
@@ -43,8 +43,8 @@ const PRODUCTS = [
   },
   {
     env: "DODO_PRODUCT_LIFETIME",
-    name: "Shortlist Lifetime",
-    description: "Shortlist Lifetime, one payment with fair monthly limits on AI use.",
+    name: "Shortlist Pro",
+    description: "Shortlist Pro, one payment with fair monthly limits on AI use.",
     price: { ...base, type: "one_time_price", price: prices.lifetime },
   },
 ] as const;

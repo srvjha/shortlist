@@ -629,7 +629,7 @@ function GrantPlanDialog({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="season_pass">Season Pass</SelectItem>
-                  <SelectItem value="pro">Pro</SelectItem>
+                  <SelectItem value="pro">Basic</SelectItem>
                 </SelectContent>
               </Select>
             </Field>

@@ -487,8 +487,8 @@ export const docs: DocPage[] = [
         title: 'How many you get',
         body: (
           <p>
-            Free includes one AI-written resume per account, to try it. Pro and
-            Lifetime include 30 a month, and with your own AI key there is no
+            Free includes one AI-written resume per account, to try it. Basic
+            and Pro include 30 a month, and with your own AI key there is no
             limit. Writing and editing resumes yourself is always free.
           </p>
         ),
@@ -1276,14 +1276,14 @@ export const docs: DocPage[] = [
                   <td>Free</td>
                 </tr>
                 <tr>
-                  <td>Pro</td>
+                  <td>Basic</td>
                   <td>$12 a month</td>
                   <td>60 a month</td>
                   <td>1,000 a month</td>
                   <td>Free</td>
                 </tr>
                 <tr>
-                  <td>Lifetime</td>
+                  <td>Pro</td>
                   <td>$90 once</td>
                   <td>60 a month</td>
                   <td>1,000 a month</td>
@@ -1349,12 +1349,12 @@ export const docs: DocPage[] = [
         title: 'Billing',
         body: (
           <p>
-            Pro renews monthly until you cancel, and stays active until the end
-            of the month you paid for. Lifetime is one payment and never renews,
-            with the same monthly limits as Pro. A Season Pass you already have
-            runs until its end date. Payments are handled by Dodo Payments; we
-            never see your card details. To upgrade, see what you have used, or
-            cancel Pro, open <b>Plans and billing</b> in the sidebar.
+            Basic renews monthly until you cancel, and stays active until the
+            end of the month you paid for. Pro is one payment and never renews,
+            with the same monthly limits as Basic. A Season Pass you already
+            have runs until its end date. Payments are handled by Dodo Payments;
+            we never see your card details. To upgrade, see what you have used,
+            or cancel Basic, open <b>Plans and billing</b> in the sidebar.
           </p>
         ),
       },

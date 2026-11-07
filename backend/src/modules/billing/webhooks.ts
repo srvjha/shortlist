@@ -56,7 +56,7 @@ async function rowOfPayment(tx: Tx, event: Extract<BillingEvent, { type: "paid" 
 
 async function stopRunningPro(userId: string) {
   await cancelSubscription(userId).catch((err: unknown) => {
-    if (!(err instanceof NotFoundError)) logger.error({ err, userId }, "Could not cancel Pro after buying Lifetime");
+    if (!(err instanceof NotFoundError)) logger.error({ err, userId }, "Could not cancel Basic after buying Pro");
   });
 }
 
@@ -104,7 +104,7 @@ async function onPaid(tx: Tx, event: Extract<BillingEvent, { type: "paid" }>, ra
   }
 
   const lifetime = subscription.plan === "lifetime";
-  // Pro's real dates come from its subscription event, which may arrive before or after this payment.
+  // Basic's real dates come from its subscription event, which may arrive before or after this payment.
   const starting = subscription.status === "created";
   if (starting || event.subscriptionId) {
     await tx
@@ -123,7 +123,7 @@ async function onPaid(tx: Tx, event: Extract<BillingEvent, { type: "paid" }>, ra
 
   return () => {
     track(subscription.userId, "payment_captured", { amount_usd: amount / 100 });
-    // Lifetime replaces a running Pro, which would otherwise keep charging every month.
+    // Pro replaces a running Basic, which would otherwise keep charging every month.
     if (lifetime && starting) void stopRunningPro(subscription.userId);
   };
 }
@@ -162,7 +162,7 @@ async function onSubscription(tx: Tx, event: Extract<BillingEvent, { type: "subs
 
 // A full refund ends the one-time plan it paid for straight away; a partial one (a goodwill credit) changes nothing.
 // Self-serve refunds (requestRefund) end the plan themselves, so this is a no-op for them.
-// A recurring Pro is left alone: it is cancelled at Dodo for a refund, and that event ends it.
+// A recurring Basic is left alone: it is cancelled at Dodo for a refund, and that event ends it.
 async function onRefund(tx: Tx, event: Extract<BillingEvent, { type: "refunded" }>) {
   const [row] = await tx.select().from(payments).where(eq(payments.providerPaymentId, event.paymentId)).limit(1);
   if (!row || !event.full) return;

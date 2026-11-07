@@ -44,8 +44,8 @@ export function formatDateTime(value: string | Date) {
 export const planLabels = {
   free: 'Free',
   season_pass: 'Season Pass',
-  pro: 'Pro',
-  lifetime: 'Lifetime',
+  pro: 'Basic',
+  lifetime: 'Pro',
 } as const
 
 export function initials(name: string) {

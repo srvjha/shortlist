@@ -368,8 +368,8 @@ function NewResumePage() {
           <SparklesIcon />
           <AlertTitle>The Free plan includes 1 resume</AlertTitle>
           <AlertDescription>
-            Nothing is locked: you can keep editing the one you have. Pro and
-            Lifetime include unlimited resumes.{' '}
+            Nothing is locked: you can keep editing the one you have. Basic and
+            Pro include unlimited resumes.{' '}
             <Link to="/pricing" className="underline underline-offset-4">
               See plans
             </Link>
@@ -596,7 +596,7 @@ function NewResumePage() {
                         You've used your free AI-written resume
                       </AlertTitle>
                       <AlertDescription>
-                        Pro and Lifetime include more, or add your own AI key in
+                        Basic and Pro include more, or add your own AI key in
                         Settings for unlimited.{' '}
                         <Link
                           to="/pricing"

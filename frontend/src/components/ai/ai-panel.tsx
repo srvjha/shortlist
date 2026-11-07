@@ -807,8 +807,8 @@ function UpgradeCard({ title }: { title: string }) {
       <div className="flex flex-col gap-1">
         <p className="text-sm font-semibold">{title}</p>
         <p className="text-sm text-muted-foreground">
-          Pro gives you 60 tailored resumes a month and unlimited AI edits, for{' '}
-          {priceOf('pro', pricing)} {pro.period}. {priceNote('pro')}
+          Basic gives you 60 tailored resumes a month and unlimited AI edits,
+          for {priceOf('pro', pricing)} {pro.period}. {priceNote('pro')}
         </p>
       </div>
       <div className="flex flex-wrap gap-2">
