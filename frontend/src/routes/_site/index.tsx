@@ -5,6 +5,7 @@ import { JobAndShare } from '@/components/landing/job-and-share'
 import {
   Faq,
   FinalCta,
+  Letters,
   PlanPicker,
   TemplateFinder,
 } from '@/components/landing/sections'
@@ -78,6 +79,7 @@ function LandingPage() {
       <JobAndShare />
       <TemplateFinder />
       <Bento />
+      <Letters />
       <PlanPicker pricing={pricing} />
       <Faq />
       <FinalCta />
