@@ -31,7 +31,7 @@ export const sampleResume: ResumeContent = resumeContentSchema.parse({
       entries: [
         {
           id: "e1",
-          organization: "Razorpay",
+          organization: "Paylane",
           role: "SDE Intern",
           location: "Bengaluru",
           start: "2025-05",
