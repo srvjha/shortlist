@@ -4,7 +4,12 @@ const generateStructured = vi.hoisted(() => vi.fn());
 vi.mock("../src/lib/ai/generate.js", () => ({ generateStructured }));
 vi.mock("../src/db/index.js", () => ({ db: {} }));
 
-import { coverLetterPrompt, letterFlags, writeCoverLetter } from "../src/modules/letters/cover-letter.js";
+import {
+  coverLetterPrompt,
+  letterFlags,
+  withoutSignOff,
+  writeCoverLetter,
+} from "../src/modules/letters/cover-letter.js";
 
 const facts = ["Marketing Associate at Acme. Ran email campaigns, grew leads by 40%. HubSpot."];
 
@@ -24,6 +29,18 @@ describe("letterFlags", () => {
 
   it("names each term once", () => {
     expect(letterFlags(["I used Salesforce daily. We chose Salesforce too."], facts)).toEqual(["Salesforce"]);
+  });
+});
+
+describe("withoutSignOff", () => {
+  it("drops a sign-off the model added, so the letter closes once", () => {
+    expect(withoutSignOff(["I ran campaigns.", "Sincerely,"])).toEqual(["I ran campaigns."]);
+    expect(withoutSignOff(["I ran campaigns.", "Best regards,\nNeha"])).toEqual(["I ran campaigns."]);
+  });
+
+  it("keeps ordinary closing sentences", () => {
+    const paragraphs = ["I ran campaigns.", "Thank you for considering my application."];
+    expect(withoutSignOff(paragraphs)).toEqual(paragraphs);
   });
 });
 

@@ -46,6 +46,15 @@ ${stripTags(input.resume).slice(0, 15_000)}
 </resume>${input.profile ? `\n\n<master_profile>\n${stripTags(input.profile)}\n</master_profile>` : ""}`;
 }
 
+// The prompt asks for no sign-off, but a model sometimes adds one anyway, and the letter would close twice.
+const signOff =
+  /^(sincerely|regards|best regards|kind regards|warm regards|yours (sincerely|faithfully|truly)|thank you|thanks)[,.!]?\s*(\n.*)?$/i;
+export const withoutSignOff = (paragraphs: string[]) => {
+  const kept = [...paragraphs];
+  while (kept.length > 1 && signOff.test(kept.at(-1)!.trim())) kept.pop();
+  return kept;
+};
+
 const inText = (value: string | null, text: string) =>
   value && text.toLowerCase().includes(value.toLowerCase()) ? [value] : [];
 
@@ -79,12 +88,13 @@ export async function writeCoverLetter(input: {
   const claims = await findUnsupportedClaims({
     userId: input.userId,
     sources: redacted.text,
-    texts: [masked.paragraphs.join("\n\n")],
+    texts: [withoutSignOff(masked.paragraphs).join("\n\n")],
     ...(input.resumeId && { resumeId: input.resumeId }),
     ...(input.jobId && { jobId: input.jobId }),
   });
   const data = redacted.restore(masked);
-  const written = data.paragraphs.join("\n\n");
+  const paragraphs = withoutSignOff(data.paragraphs);
+  const written = paragraphs.join("\n\n");
   const quotes = claimsByText(redacted.restore(claims), [written])[0] ?? [];
   const signature = input.signature || data.name || "[Your name]";
   return {
@@ -93,7 +103,7 @@ export async function writeCoverLetter(input: {
     flags: [
       ...new Set([
         ...quotes,
-        ...letterFlags(data.paragraphs, [
+        ...letterFlags(paragraphs, [
           ...input.facts,
           ...inText(data.company, input.jobText),
           ...inText(data.role, input.jobText),
