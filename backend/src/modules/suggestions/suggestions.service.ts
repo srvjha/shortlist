@@ -8,11 +8,14 @@ import { knownCostUsdMicros } from "../../lib/ai/pricing.js";
 import { ConflictError, NotFoundError } from "../../lib/errors.js";
 import { shortId } from "../../lib/ids.js";
 import { compileTex } from "../../lib/latex/compile.js";
+import { logger } from "../../lib/logger.js";
 import type { ResumeContent } from "../../schemas/resume-content.js";
+import { texToText } from "../ats/scoring.js";
 import { getJob } from "../jobs/jobs.service.js";
 import { getProfile } from "../profiles/profiles.service.js";
 import { appendVersion, getOwnedResume, getResume } from "../resumes/resumes.service.js";
 import { assertAiQuota } from "../usage/quotas.js";
+import { claimsByText, findUnsupportedClaims } from "./claims.js";
 import {
   applyOperations,
   factText,
@@ -79,6 +82,27 @@ function flagsFor(op: z.infer<typeof operationSchema>, facts: string[]) {
   return [];
 }
 
+const notBacked = (quote: string) => `Not backed by your resume: "${quote}"`;
+const notChecked = "Couldn't double-check this against your resume";
+
+// One flag list per text. If the check fails the AI's work is still shown, since it was paid for, but marked unchecked.
+async function claimFlags(input: Parameters<typeof findUnsupportedClaims>[0], restore: <T>(value: T) => T) {
+  try {
+    const found = restore(await findUnsupportedClaims(input));
+    return claimsByText(found, restore(input.texts)).map((quotes) => quotes.map(notBacked));
+  } catch (err) {
+    logger.warn({ err }, "Claim check failed");
+    return input.texts.map(() => [notChecked]);
+  }
+}
+
+const opText = (op: z.infer<typeof operationSchema>) =>
+  op.type === "update_bullet" || op.type === "add_bullet" || op.type === "update_headline"
+    ? op.text
+    : op.type === "update_skills"
+      ? op.items.join(", ")
+      : null;
+
 function toResponse(run: typeof aiRuns.$inferSelect) {
   const stored = storedSuggestion.parse(run.patchOps);
   return {
@@ -142,11 +166,28 @@ ${input.instructions ? `\nThe user adds: ${input.instructions}\n` : ""}
   const data = redacted.restore(masked);
 
   const facts = [factText(content), factText(profile)];
-  const operations: Operation[] = data.operations.flatMap((raw) => {
+  const written: { op: Operation; masked: string }[] = [];
+  const operations: Operation[] = data.operations.flatMap((raw, index) => {
     const op = toOperation(raw);
     if (!op || !isApplicable(content, op)) return [];
-    return [{ ...op, id: shortId(), reason: raw.reason, flags: flagsFor(op, facts) }];
+    const operation: Operation = { ...op, id: shortId(), reason: raw.reason, flags: flagsFor(op, facts) };
+    // Checked on the model's masked text, so private values stay out of this call too.
+    const maskedOp = toOperation(masked.operations[index]!);
+    const text = maskedOp && opText(maskedOp);
+    if (text) written.push({ op: operation, masked: text });
+    return [operation];
   });
+  const flags = await claimFlags(
+    {
+      userId,
+      sources: redacted.text,
+      texts: written.map((item) => item.masked),
+      resumeId,
+      ...(jobId && { jobId }),
+    },
+    redacted.restore,
+  );
+  written.forEach(({ op }, index) => op.flags.push(...(flags[index] ?? [])));
   return { runId, summary: data.summary, operations };
 }
 
@@ -194,6 +235,20 @@ ${input.instructions ? `The user adds: ${input.instructions}\n` : ""}
   const flags = compiled.ok
     ? []
     : compiled.errors.map((e) => `Does not compile${e.line ? ` (line ${e.line})` : ""}: ${e.message}`);
+  // A compile fix keeps the content the same, so only tailoring and edits can add claims.
+  if (input.type !== "fix_compile") {
+    const [claims] = await claimFlags(
+      {
+        userId,
+        sources: redacted.text,
+        texts: [texToText(masked.texSource)],
+        resumeId,
+        ...(jobId && { jobId }),
+      },
+      redacted.restore,
+    );
+    flags.push(...(claims ?? []));
+  }
   const operations: Operation[] = [
     { type: "replace_source", texSource: data.texSource, id: shortId(), reason: data.reason, flags },
   ];
