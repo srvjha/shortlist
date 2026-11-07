@@ -12,13 +12,14 @@ export const usageResponse = z.object({
   periodStart: z.date(),
   periodEnd: z.date(),
   resumes: counter,
+  // On Free, tailor, edit and draft count for all time, not per month.
   tailor: counter,
-  // While set, a new Free account's tailor limit is the first-week trial, counted from sign-up.
-  trialEndsAt: z.date().nullable(),
   edit: counter,
   import: counter,
-  // Resumes written by AI from the user's notes; on Free this counts for all time, not per month.
+  // Resumes written by AI from the user's notes.
   draft: counter,
+  // PDF downloads, on Free only; paid plans get null.
+  pdf: counter.nullable(),
 });
 
 export const usageRouter = Router();

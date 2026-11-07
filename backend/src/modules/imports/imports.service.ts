@@ -4,7 +4,7 @@ import { db } from "../../db/index.js";
 import { users } from "../../db/schema/index.js";
 import { generateStructured } from "../../lib/ai/generate.js";
 import { readUpload } from "../uploads/uploads.service.js";
-import { assertAiQuota } from "../usage/quotas.js";
+import { assertAiQuota, assertResumeQuota } from "../usage/quotas.js";
 import { applyBold, extractionSchema, normalizeExtraction, placeLinks } from "./extraction.js";
 import { linkStyleOf, type pdfHints } from "./pdf-hints.js";
 import { track } from "../../lib/analytics.js";
@@ -168,6 +168,8 @@ Rules:
 
 // Writes a first resume from notes for someone starting from nothing. Same output and cleanup as an import.
 export async function createDraft(userId: string, input: { role: string; notes: string }) {
+  // A draft only ever becomes a new resume, so don't spend the AI call when that would be refused.
+  await assertResumeQuota(userId);
   await assertAiQuota(userId, "draft");
   const { data, runId } = await generateStructured({
     userId,

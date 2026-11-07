@@ -8,6 +8,7 @@ import {
   jsonb,
   pgEnum,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uuid,
@@ -147,4 +148,18 @@ export const customTemplates = pgTable(
       sql`(${t.mode} = 'structured' AND ${t.content} IS NOT NULL) OR (${t.mode} = 'code' AND ${t.texSource} IS NOT NULL)`,
     ),
   ],
+);
+
+// One row for each version a Free account has downloaded as a PDF. There is no foreign key to the version, so deleting
+// a resume doesn't give the download back.
+export const pdfDownloads = pgTable(
+  "pdf_downloads",
+  {
+    userId: uuid()
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    versionId: uuid().notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.versionId] })],
 );

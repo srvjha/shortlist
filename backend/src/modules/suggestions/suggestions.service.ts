@@ -50,6 +50,9 @@ const rules = `Rules you must follow:
   otherwise keep the resume's own.
 - Text like [email 1] or [company 2] is a private placeholder. Copy it exactly; never guess what it stands for.`;
 
+const quotaFor = (type: CreateInput["type"]) =>
+  type === "tailor" ? "tailor" : type === "fix_compile" ? "fix" : "edit";
+
 function toOperation(raw: z.infer<typeof aiStructuredOutput>["operations"][number]) {
   const candidate =
     raw.type === "update_bullet"
@@ -129,7 +132,7 @@ ${input.instructions ? `\nThe user adds: ${input.instructions}\n` : ""}
     userId,
     step: input.type === "tailor" ? "rewrite" : isInline ? "inline_edit" : "chat_edit",
     tier: isInline ? "fast" : "smart",
-    quota: input.type === "tailor" ? "tailor" : "edit",
+    quota: quotaFor(input.type),
     schema: aiStructuredOutput,
     system: `You are an expert resume editor for every field, from software and data to finance, consulting, marketing and design. Use the vocabulary recruiters in the person's field expect.\n${rules}`,
     prompt: redacted.text,
@@ -177,7 +180,7 @@ ${input.instructions ? `The user adds: ${input.instructions}\n` : ""}
     userId,
     step: input.type === "fix_compile" ? "fix_compile" : input.type === "tailor" ? "rewrite" : "chat_edit",
     tier: "smart",
-    quota: input.type === "tailor" ? "tailor" : "edit",
+    quota: quotaFor(input.type),
     schema: aiCodeOutput,
     system: `You edit LaTeX resumes. Return the complete document.\n${rules}`,
     prompt: redacted.text,
@@ -205,7 +208,7 @@ export async function createSuggestion(userId: string, resumeId: string, input: 
   if (input.type === "fix_compile" && resume.mode !== "code") {
     throw new ConflictError("Only code-mode resumes can have compile fixes");
   }
-  await assertAiQuota(userId, input.type === "tailor" ? "tailor" : "edit");
+  await assertAiQuota(userId, quotaFor(input.type));
 
   const result =
     resume.mode === "code"
