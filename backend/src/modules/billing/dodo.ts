@@ -62,6 +62,8 @@ export type BillingEvent =
       subscriptionId: string | null;
       paymentId: string;
       method: string | null;
+      // Before tax, in CURRENCY's minor unit; null when Dodo didn't say in that currency.
+      amount: number | null;
     }
   | { type: "failed"; checkoutSessionId: string }
   | { type: "refunded"; paymentId: string; full: boolean }
@@ -74,6 +76,15 @@ export type BillingEvent =
       periodStart: Date;
       periodEnd: Date;
     };
+
+// A coupon makes this differ from the list price. With adaptive pricing the buyer pays in their own currency, so the
+// amount settled to us is used instead.
+const amountBeforeTax = (payment: Payment) =>
+  payment.currency === CURRENCY
+    ? payment.total_amount - (payment.tax ?? 0)
+    : payment.settlement_currency === CURRENCY
+      ? payment.settlement_amount - (payment.settlement_tax ?? 0)
+      : null;
 
 const checkoutOf = (metadata: Payment["metadata"] | null | undefined) =>
   metadata?.app === APP && typeof metadata.checkout === "string" ? metadata.checkout : null;
@@ -92,6 +103,7 @@ export function paymentEvents(payment: Payment, outcome = payment.status): Billi
         subscriptionId: payment.subscription_id ?? null,
         paymentId: payment.payment_id,
         method: payment.payment_method_type ?? payment.payment_method ?? null,
+        amount: amountBeforeTax(payment),
       },
     ];
   }
