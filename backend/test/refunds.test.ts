@@ -229,6 +229,6 @@ describe("requesting a refund", () => {
 
 describe("the refund quote", () => {
   it("says nothing when no payment is in the window", async () => {
-    await expect(getRefundQuote("user_1")).resolves.toEqual({ quote: null, reason: null });
+    await expect(getRefundQuote("user_1")).resolves.toEqual({ quote: null, reason: null, status: null });
   });
 });
