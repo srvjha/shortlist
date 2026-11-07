@@ -18,7 +18,7 @@ export const plans = [
       '1 resume written by AI from your notes',
       '3 PDF downloads',
       'The ATS checker, and importing your old resume',
-      'Cover letters and resignation letters',
+      '30 AI cover letters a month, and unlimited resignation letters',
     ],
   },
   {

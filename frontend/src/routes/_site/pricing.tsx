@@ -48,8 +48,12 @@ const comparison: { label: string; values: [string, string, string] }[] = [
     values: ['Included', 'Included', 'Included'],
   },
   {
-    label: 'Cover letters and resignation letters',
-    values: ['Included', 'Included', 'Included'],
+    label: 'AI cover letters from your resume',
+    values: ['30 a month', '30 a month', '30 a month'],
+  },
+  {
+    label: 'Resignation letters',
+    values: ['Unlimited', 'Unlimited', 'Unlimited'],
   },
   {
     label: 'Imports from PDF, .tex or text',
