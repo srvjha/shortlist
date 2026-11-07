@@ -58,7 +58,8 @@
                           "enum": [
                             "free",
                             "season_pass",
-                            "pro"
+                            "pro",
+                            "lifetime"
                           ]
                         },
                         "isAnonymous": {
@@ -177,7 +178,8 @@
                           "enum": [
                             "free",
                             "season_pass",
-                            "pro"
+                            "pro",
+                            "lifetime"
                           ]
                         },
                         "isAnonymous": {
@@ -383,7 +385,8 @@
                           "enum": [
                             "free",
                             "season_pass",
-                            "pro"
+                            "pro",
+                            "lifetime"
                           ]
                         },
                         "ownAiKey": {
@@ -21336,7 +21339,7 @@
     },
     "/v1/pricing": {
       "get": {
-        "summary": "Prices for the visitor's country",
+        "summary": "Prices of the plans for sale",
         "tags": [
           "Billing"
         ],
@@ -21351,55 +21354,25 @@
                     "data": {
                       "type": "object",
                       "properties": {
-                        "region": {
-                          "type": "string",
-                          "enum": [
-                            "india",
-                            "global"
-                          ]
-                        },
-                        "country": {
-                          "type": [
-                            "string",
-                            "null"
-                          ]
-                        },
-                        "provider": {
-                          "type": "string",
-                          "enum": [
-                            "razorpay",
-                            "polar"
-                          ]
-                        },
-                        "checkoutOpen": {
-                          "type": "boolean"
-                        },
                         "currency": {
                           "type": "string",
-                          "enum": [
-                            "INR",
-                            "USD"
-                          ]
+                          "const": "USD"
                         },
-                        "season_pass": {
+                        "pro": {
                           "type": "integer",
                           "minimum": -9007199254740991,
                           "maximum": 9007199254740991
                         },
-                        "pro": {
+                        "lifetime": {
                           "type": "integer",
                           "minimum": -9007199254740991,
                           "maximum": 9007199254740991
                         }
                       },
                       "required": [
-                        "region",
-                        "country",
-                        "provider",
-                        "checkoutOpen",
                         "currency",
-                        "season_pass",
-                        "pro"
+                        "pro",
+                        "lifetime"
                       ],
                       "additionalProperties": false
                     }
@@ -21427,7 +21400,7 @@
     },
     "/v1/checkouts": {
       "post": {
-        "summary": "Start a checkout with the payment provider for the visitor's country",
+        "summary": "Start a Dodo checkout for a plan",
         "tags": [
           "Billing"
         ],
@@ -21445,8 +21418,8 @@
                   "plan": {
                     "type": "string",
                     "enum": [
-                      "season_pass",
-                      "pro"
+                      "pro",
+                      "lifetime"
                     ]
                   }
                 },
@@ -21466,102 +21439,173 @@
                   "type": "object",
                   "properties": {
                     "data": {
-                      "oneOf": [
-                        {
-                          "type": "object",
-                          "properties": {
-                            "plan": {
-                              "type": "string",
-                              "enum": [
-                                "season_pass",
-                                "pro"
-                              ]
-                            },
-                            "amount": {
-                              "type": "integer",
-                              "minimum": -9007199254740991,
-                              "maximum": 9007199254740991
-                            },
-                            "currency": {
-                              "type": "string",
-                              "enum": [
-                                "INR",
-                                "USD"
-                              ]
-                            },
-                            "provider": {
-                              "type": "string",
-                              "const": "razorpay"
-                            },
-                            "keyId": {
-                              "type": "string"
-                            },
-                            "orderId": {
-                              "type": [
-                                "string",
-                                "null"
-                              ]
-                            },
-                            "razorpaySubscriptionId": {
-                              "type": [
-                                "string",
-                                "null"
-                              ]
-                            }
-                          },
-                          "required": [
-                            "plan",
-                            "amount",
-                            "currency",
-                            "provider",
-                            "keyId",
-                            "orderId",
-                            "razorpaySubscriptionId"
-                          ],
-                          "additionalProperties": false
+                      "type": "object",
+                      "properties": {
+                        "checkoutId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                         },
-                        {
-                          "type": "object",
-                          "properties": {
-                            "plan": {
-                              "type": "string",
-                              "enum": [
-                                "season_pass",
-                                "pro"
-                              ]
-                            },
-                            "amount": {
-                              "type": "integer",
-                              "minimum": -9007199254740991,
-                              "maximum": 9007199254740991
-                            },
-                            "currency": {
-                              "type": "string",
-                              "enum": [
-                                "INR",
-                                "USD"
-                              ]
-                            },
-                            "provider": {
-                              "type": "string",
-                              "const": "polar"
-                            },
-                            "url": {
-                              "type": "string",
-                              "format": "uri"
-                            }
-                          },
-                          "required": [
-                            "plan",
-                            "amount",
-                            "currency",
-                            "provider",
-                            "url"
-                          ],
-                          "additionalProperties": false
+                        "url": {
+                          "type": "string",
+                          "format": "uri"
+                        },
+                        "plan": {
+                          "type": "string",
+                          "enum": [
+                            "pro",
+                            "lifetime"
+                          ]
+                        },
+                        "amount": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "currency": {
+                          "type": "string",
+                          "const": "USD"
                         }
+                      },
+                      "required": [
+                        "checkoutId",
+                        "url",
+                        "plan",
+                        "amount",
+                        "currency"
                       ],
-                      "type": "object"
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/checkouts/{checkoutId}/confirmation": {
+      "post": {
+        "summary": "Check a checkout with Dodo after the buyer returns, and switch the plan on if it is paid",
+        "tags": [
+          "Billing"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "checkoutId",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "plan": {
+                          "type": "string",
+                          "enum": [
+                            "free",
+                            "season_pass",
+                            "pro",
+                            "lifetime"
+                          ]
+                        },
+                        "subscription": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                },
+                                "plan": {
+                                  "type": "string",
+                                  "enum": [
+                                    "season_pass",
+                                    "pro",
+                                    "lifetime"
+                                  ]
+                                },
+                                "status": {
+                                  "type": "string",
+                                  "enum": [
+                                    "created",
+                                    "active",
+                                    "past_due",
+                                    "cancelled",
+                                    "expired"
+                                  ]
+                                },
+                                "currentPeriodEnd": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                },
+                                "cancelledAt": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                },
+                                "renews": {
+                                  "type": "boolean"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "plan",
+                                "status",
+                                "currentPeriodEnd",
+                                "cancelledAt",
+                                "renews"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "plan",
+                        "subscription"
+                      ],
+                      "additionalProperties": false
                     }
                   },
                   "required": [
@@ -21612,7 +21656,8 @@
                           "enum": [
                             "free",
                             "season_pass",
-                            "pro"
+                            "pro",
+                            "lifetime"
                           ]
                         },
                         "subscription": {
@@ -21629,7 +21674,8 @@
                                   "type": "string",
                                   "enum": [
                                     "season_pass",
-                                    "pro"
+                                    "pro",
+                                    "lifetime"
                                   ]
                                 },
                                 "status": {
@@ -21727,7 +21773,8 @@
                           "enum": [
                             "free",
                             "season_pass",
-                            "pro"
+                            "pro",
+                            "lifetime"
                           ]
                         },
                         "subscription": {
@@ -21744,7 +21791,8 @@
                                   "type": "string",
                                   "enum": [
                                     "season_pass",
-                                    "pro"
+                                    "pro",
+                                    "lifetime"
                                   ]
                                 },
                                 "status": {
@@ -21819,7 +21867,7 @@
     },
     "/v1/refunds/quote": {
       "get": {
-        "summary": "What a refund of the latest payment would return, while it is within 24 hours",
+        "summary": "What a refund of the latest payment would return, while it is within 7 days",
         "tags": [
           "Billing"
         ],
@@ -21855,7 +21903,8 @@
                                       "type": "string",
                                       "enum": [
                                         "season_pass",
-                                        "pro"
+                                        "pro",
+                                        "lifetime"
                                       ]
                                     },
                                     {
@@ -21863,29 +21912,9 @@
                                     }
                                   ]
                                 },
-                                "provider": {
-                                  "type": "string",
-                                  "enum": [
-                                    "razorpay",
-                                    "polar"
-                                  ]
-                                },
                                 "currency": {
                                   "type": "string",
-                                  "enum": [
-                                    "INR",
-                                    "USD"
-                                  ]
-                                },
-                                "amountPaid": {
-                                  "type": "integer",
-                                  "minimum": -9007199254740991,
-                                  "maximum": 9007199254740991
-                                },
-                                "fee": {
-                                  "type": "integer",
-                                  "minimum": -9007199254740991,
-                                  "maximum": 9007199254740991
+                                  "const": "USD"
                                 },
                                 "refund": {
                                   "type": "integer",
@@ -21899,10 +21928,7 @@
                               "required": [
                                 "paymentId",
                                 "plan",
-                                "provider",
                                 "currency",
-                                "amountPaid",
-                                "fee",
                                 "refund",
                                 "refundableUntil"
                               ],
@@ -21950,7 +21976,7 @@
     },
     "/v1/refunds": {
       "post": {
-        "summary": "Refund a payment made in the last 6 hours, less the payment provider's fee, and end its plan",
+        "summary": "Refund a payment made in the last 7 days in full, and end its plan",
         "tags": [
           "Billing"
         ],
@@ -22001,10 +22027,7 @@
                         },
                         "currency": {
                           "type": "string",
-                          "enum": [
-                            "INR",
-                            "USD"
-                          ]
+                          "const": "USD"
                         },
                         "providerRefundId": {
                           "type": "string"
@@ -22086,7 +22109,8 @@
                           "enum": [
                             "free",
                             "season_pass",
-                            "pro"
+                            "pro",
+                            "lifetime"
                           ]
                         },
                         "subscription": {
@@ -22103,7 +22127,8 @@
                                   "type": "string",
                                   "enum": [
                                     "season_pass",
-                                    "pro"
+                                    "pro",
+                                    "lifetime"
                                   ]
                                 },
                                 "status": {
@@ -22222,7 +22247,8 @@
                                 "type": "string",
                                 "enum": [
                                   "season_pass",
-                                  "pro"
+                                  "pro",
+                                  "lifetime"
                                 ]
                               },
                               "months": {
@@ -22476,7 +22502,8 @@
                                 "type": "string",
                                 "enum": [
                                   "season_pass",
-                                  "pro"
+                                  "pro",
+                                  "lifetime"
                                 ]
                               },
                               "months": {
@@ -22705,7 +22732,8 @@
                                 "type": "string",
                                 "enum": [
                                   "season_pass",
-                                  "pro"
+                                  "pro",
+                                  "lifetime"
                                 ]
                               },
                               "months": {
@@ -22997,12 +23025,12 @@
                               "minimum": -9007199254740991,
                               "maximum": 9007199254740991
                             },
-                            "revenuePaise": {
+                            "revenueCents": {
                               "type": "integer",
                               "minimum": -9007199254740991,
                               "maximum": 9007199254740991
                             },
-                            "previousRevenuePaise": {
+                            "previousRevenueCents": {
                               "type": "integer",
                               "minimum": -9007199254740991,
                               "maximum": 9007199254740991
@@ -23036,8 +23064,8 @@
                             "aiFailed",
                             "aiCostUsdMicros",
                             "previousAiCostUsdMicros",
-                            "revenuePaise",
-                            "previousRevenuePaise",
+                            "revenueCents",
+                            "previousRevenueCents",
                             "shareViews",
                             "previousShareViews"
                           ],
@@ -23189,7 +23217,8 @@
                                 "enum": [
                                   "free",
                                   "season_pass",
-                                  "pro"
+                                  "pro",
+                                  "lifetime"
                                 ]
                               },
                               "createdAt": {
@@ -23235,7 +23264,8 @@
                                 "enum": [
                                   "free",
                                   "season_pass",
-                                  "pro"
+                                  "pro",
+                                  "lifetime"
                                 ]
                               },
                               "planEndsAt": {
@@ -23322,7 +23352,8 @@
               "enum": [
                 "free",
                 "season_pass",
-                "pro"
+                "pro",
+                "lifetime"
               ]
             }
           },
@@ -23390,7 +23421,8 @@
                                 "enum": [
                                   "free",
                                   "season_pass",
-                                  "pro"
+                                  "pro",
+                                  "lifetime"
                                 ]
                               },
                               "isAnonymous": {
@@ -23568,7 +23600,8 @@
                               "enum": [
                                 "free",
                                 "season_pass",
-                                "pro"
+                                "pro",
+                                "lifetime"
                               ]
                             },
                             "isAnonymous": {
@@ -23767,7 +23800,8 @@
                               "enum": [
                                 "free",
                                 "season_pass",
-                                "pro"
+                                "pro",
+                                "lifetime"
                               ]
                             },
                             "ownAiKey": {
@@ -23914,7 +23948,8 @@
                                 "type": "string",
                                 "enum": [
                                   "season_pass",
-                                  "pro"
+                                  "pro",
+                                  "lifetime"
                                 ]
                               },
                               "status": {
@@ -24002,7 +24037,8 @@
                                 "type": "string",
                                 "enum": [
                                   "razorpay",
-                                  "polar"
+                                  "polar",
+                                  "dodo"
                                 ]
                               },
                               "providerPaymentId": {
@@ -24197,7 +24233,8 @@
                               "enum": [
                                 "free",
                                 "season_pass",
-                                "pro"
+                                "pro",
+                                "lifetime"
                               ]
                             },
                             "isAnonymous": {
@@ -24396,7 +24433,8 @@
                               "enum": [
                                 "free",
                                 "season_pass",
-                                "pro"
+                                "pro",
+                                "lifetime"
                               ]
                             },
                             "ownAiKey": {
@@ -24543,7 +24581,8 @@
                                 "type": "string",
                                 "enum": [
                                   "season_pass",
-                                  "pro"
+                                  "pro",
+                                  "lifetime"
                                 ]
                               },
                               "status": {
@@ -24631,7 +24670,8 @@
                                 "type": "string",
                                 "enum": [
                                   "razorpay",
-                                  "polar"
+                                  "polar",
+                                  "dodo"
                                 ]
                               },
                               "providerPaymentId": {
@@ -24918,7 +24958,8 @@
                               "enum": [
                                 "free",
                                 "season_pass",
-                                "pro"
+                                "pro",
+                                "lifetime"
                               ]
                             },
                             "isAnonymous": {
@@ -25117,7 +25158,8 @@
                               "enum": [
                                 "free",
                                 "season_pass",
-                                "pro"
+                                "pro",
+                                "lifetime"
                               ]
                             },
                             "ownAiKey": {
@@ -25264,7 +25306,8 @@
                                 "type": "string",
                                 "enum": [
                                   "season_pass",
-                                  "pro"
+                                  "pro",
+                                  "lifetime"
                                 ]
                               },
                               "status": {
@@ -25352,7 +25395,8 @@
                                 "type": "string",
                                 "enum": [
                                   "razorpay",
-                                  "polar"
+                                  "polar",
+                                  "dodo"
                                 ]
                               },
                               "providerPaymentId": {
@@ -25991,22 +26035,17 @@
                         "totals": {
                           "type": "object",
                           "properties": {
-                            "paise": {
+                            "revenue": {
                               "type": "integer",
                               "minimum": -9007199254740991,
                               "maximum": 9007199254740991
                             },
-                            "previousPaise": {
+                            "previousRevenue": {
                               "type": "integer",
                               "minimum": -9007199254740991,
                               "maximum": 9007199254740991
                             },
-                            "allTimePaise": {
-                              "type": "integer",
-                              "minimum": -9007199254740991,
-                              "maximum": 9007199254740991
-                            },
-                            "usdCents": {
+                            "allTimeRevenue": {
                               "type": "integer",
                               "minimum": -9007199254740991,
                               "maximum": 9007199254740991
@@ -26028,10 +26067,9 @@
                             }
                           },
                           "required": [
-                            "paise",
-                            "previousPaise",
-                            "allTimePaise",
-                            "usdCents",
+                            "revenue",
+                            "previousRevenue",
+                            "allTimeRevenue",
                             "payers",
                             "checkouts",
                             "checkoutsPaid"
@@ -26046,7 +26084,7 @@
                               "day": {
                                 "type": "string"
                               },
-                              "paise": {
+                              "revenue": {
                                 "type": "integer",
                                 "minimum": -9007199254740991,
                                 "maximum": 9007199254740991
@@ -26054,7 +26092,7 @@
                             },
                             "required": [
                               "day",
-                              "paise"
+                              "revenue"
                             ],
                             "additionalProperties": false
                           }
@@ -26068,7 +26106,8 @@
                                 "type": "string",
                                 "enum": [
                                   "season_pass",
-                                  "pro"
+                                  "pro",
+                                  "lifetime"
                                 ]
                               },
                               "active": {
@@ -26145,7 +26184,8 @@
                                 "type": "string",
                                 "enum": [
                                   "razorpay",
-                                  "polar"
+                                  "polar",
+                                  "dodo"
                                 ]
                               },
                               "providerPaymentId": {
@@ -26160,7 +26200,8 @@
                                     "type": "string",
                                     "enum": [
                                       "season_pass",
-                                      "pro"
+                                      "pro",
+                                      "lifetime"
                                     ]
                                   },
                                   {
@@ -26193,7 +26234,7 @@
                             "additionalProperties": false
                           }
                         },
-                        "razorpayConfigured": {
+                        "paymentsConfigured": {
                           "type": "boolean"
                         }
                       },
@@ -26204,7 +26245,7 @@
                         "activeSubscriptions",
                         "statuses",
                         "payments",
-                        "razorpayConfigured"
+                        "paymentsConfigured"
                       ],
                       "additionalProperties": false
                     }

@@ -45,7 +45,7 @@ export async function startCheckout(input: {
     product_cart: [{ product_id: productId, quantity: 1 }],
     customer: { email: input.email, name: input.name || input.email },
     metadata: { app: APP, checkout: input.checkoutId, userId: input.userId, plan: input.plan },
-    return_url: `${env.FRONTEND_URL}/billing?checkout=${input.checkoutId}`,
+    return_url: `${env.FRONTEND_URL}/billing?checkout=${input.checkoutId}&plan=${input.plan}`,
     cancel_url: `${env.FRONTEND_URL}/pricing`,
   });
   if (!session.checkout_url) throw new AppError(502, "CHECKOUT_FAILED", "The payment provider gave no checkout page");

@@ -27,6 +27,7 @@ import {
 } from "./modules/ats/ats.schemas.js";
 import { coverageQuery, coverageResponse } from "./modules/coverage/coverage.routes.js";
 import {
+  checkoutParams,
   checkoutResponse,
   createCheckoutBody,
   createRefundBody,
@@ -577,7 +578,7 @@ const paths: ZodOpenApiPathsObject = {
 
   "/v1/pricing": {
     get: op({
-      summary: "Prices for the visitor's country",
+      summary: "Prices of the plans for sale",
       tag: "Billing",
       auth: false,
       response: pricingResponse,
@@ -585,11 +586,19 @@ const paths: ZodOpenApiPathsObject = {
   },
   "/v1/checkouts": {
     post: op({
-      summary: "Start a checkout with the payment provider for the visitor's country",
+      summary: "Start a Dodo checkout for a plan",
       tag: "Billing",
       body: createCheckoutBody,
       response: checkoutResponse,
       status: 201,
+    }),
+  },
+  "/v1/checkouts/{checkoutId}/confirmation": {
+    post: op({
+      summary: "Check a checkout with Dodo after the buyer returns, and switch the plan on if it is paid",
+      tag: "Billing",
+      params: checkoutParams,
+      response: subscriptionResponse,
     }),
   },
   "/v1/subscription": {
@@ -602,14 +611,14 @@ const paths: ZodOpenApiPathsObject = {
   },
   "/v1/refunds/quote": {
     get: op({
-      summary: "What a refund of the latest payment would return, while it is within 24 hours",
+      summary: "What a refund of the latest payment would return, while it is within 7 days",
       tag: "Billing",
       response: refundQuoteResponse,
     }),
   },
   "/v1/refunds": {
     post: op({
-      summary: "Refund a payment made in the last 6 hours, less the payment provider's fee, and end its plan",
+      summary: "Refund a payment made in the last 7 days in full, and end its plan",
       tag: "Billing",
       body: createRefundBody,
       response: refundResponse,

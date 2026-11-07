@@ -38,7 +38,7 @@ export interface paths {
                                 image: string | null;
                                 username: string;
                                 /** @enum {string} */
-                                plan: "free" | "season_pass" | "pro";
+                                plan: "free" | "season_pass" | "pro" | "lifetime";
                                 isAnonymous: boolean;
                                 isAdmin: boolean;
                                 createdAt: string;
@@ -123,7 +123,7 @@ export interface paths {
                                 image: string | null;
                                 username: string;
                                 /** @enum {string} */
-                                plan: "free" | "season_pass" | "pro";
+                                plan: "free" | "season_pass" | "pro" | "lifetime";
                                 isAnonymous: boolean;
                                 isAdmin: boolean;
                                 createdAt: string;
@@ -269,7 +269,7 @@ export interface paths {
                         "application/json": {
                             data: {
                                 /** @enum {string} */
-                                plan: "free" | "season_pass" | "pro";
+                                plan: "free" | "season_pass" | "pro" | "lifetime";
                                 ownAiKey: boolean;
                                 periodStart: string;
                                 periodEnd: string;
@@ -6732,7 +6732,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Prices for the visitor's country */
+        /** Prices of the plans for sale */
         get: {
             parameters: {
                 query?: never;
@@ -6750,16 +6750,10 @@ export interface paths {
                     content: {
                         "application/json": {
                             data: {
-                                /** @enum {string} */
-                                region: "india" | "global";
-                                country: string | null;
-                                /** @enum {string} */
-                                provider: "razorpay" | "polar";
-                                checkoutOpen: boolean;
-                                /** @enum {string} */
-                                currency: "INR" | "USD";
-                                season_pass: number;
+                                /** @constant */
+                                currency: "USD";
                                 pro: number;
+                                lifetime: number;
                             };
                         };
                     };
@@ -6792,7 +6786,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Start a checkout with the payment provider for the visitor's country */
+        /** Start a Dodo checkout for a plan */
         post: {
             parameters: {
                 query?: never;
@@ -6804,7 +6798,7 @@ export interface paths {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        plan: "season_pass" | "pro";
+                        plan: "pro" | "lifetime";
                     };
                 };
             };
@@ -6817,26 +6811,78 @@ export interface paths {
                     content: {
                         "application/json": {
                             data: {
-                                /** @enum {string} */
-                                plan: "season_pass" | "pro";
-                                amount: number;
-                                /** @enum {string} */
-                                currency: "INR" | "USD";
-                                /** @constant */
-                                provider: "razorpay";
-                                keyId: string;
-                                orderId: string | null;
-                                razorpaySubscriptionId: string | null;
-                            } | {
-                                /** @enum {string} */
-                                plan: "season_pass" | "pro";
-                                amount: number;
-                                /** @enum {string} */
-                                currency: "INR" | "USD";
-                                /** @constant */
-                                provider: "polar";
+                                /** Format: uuid */
+                                checkoutId: string;
                                 /** Format: uri */
                                 url: string;
+                                /** @enum {string} */
+                                plan: "pro" | "lifetime";
+                                amount: number;
+                                /** @constant */
+                                currency: "USD";
+                            };
+                        };
+                    };
+                };
+                /** @description Error */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/checkouts/{checkoutId}/confirmation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Check a checkout with Dodo after the buyer returns, and switch the plan on if it is paid */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    checkoutId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                /** @enum {string} */
+                                plan: "free" | "season_pass" | "pro" | "lifetime";
+                                subscription: {
+                                    /** Format: uuid */
+                                    id: string;
+                                    /** @enum {string} */
+                                    plan: "season_pass" | "pro" | "lifetime";
+                                    /** @enum {string} */
+                                    status: "created" | "active" | "past_due" | "cancelled" | "expired";
+                                    currentPeriodEnd: string | null;
+                                    cancelledAt: string | null;
+                                    renews: boolean;
+                                } | null;
                             };
                         };
                     };
@@ -6884,12 +6930,12 @@ export interface paths {
                         "application/json": {
                             data: {
                                 /** @enum {string} */
-                                plan: "free" | "season_pass" | "pro";
+                                plan: "free" | "season_pass" | "pro" | "lifetime";
                                 subscription: {
                                     /** Format: uuid */
                                     id: string;
                                     /** @enum {string} */
-                                    plan: "season_pass" | "pro";
+                                    plan: "season_pass" | "pro" | "lifetime";
                                     /** @enum {string} */
                                     status: "created" | "active" | "past_due" | "cancelled" | "expired";
                                     currentPeriodEnd: string | null;
@@ -6932,12 +6978,12 @@ export interface paths {
                         "application/json": {
                             data: {
                                 /** @enum {string} */
-                                plan: "free" | "season_pass" | "pro";
+                                plan: "free" | "season_pass" | "pro" | "lifetime";
                                 subscription: {
                                     /** Format: uuid */
                                     id: string;
                                     /** @enum {string} */
-                                    plan: "season_pass" | "pro";
+                                    plan: "season_pass" | "pro" | "lifetime";
                                     /** @enum {string} */
                                     status: "created" | "active" | "past_due" | "cancelled" | "expired";
                                     currentPeriodEnd: string | null;
@@ -6971,7 +7017,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** What a refund of the latest payment would return, while it is within 24 hours */
+        /** What a refund of the latest payment would return, while it is within 7 days */
         get: {
             parameters: {
                 query?: never;
@@ -6992,13 +7038,9 @@ export interface paths {
                                 quote: {
                                     /** Format: uuid */
                                     paymentId: string;
-                                    plan: ("season_pass" | "pro") | null;
-                                    /** @enum {string} */
-                                    provider: "razorpay" | "polar";
-                                    /** @enum {string} */
-                                    currency: "INR" | "USD";
-                                    amountPaid: number;
-                                    fee: number;
+                                    plan: ("season_pass" | "pro" | "lifetime") | null;
+                                    /** @constant */
+                                    currency: "USD";
                                     refund: number;
                                     refundableUntil: string;
                                 } | null;
@@ -7035,7 +7077,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Refund a payment made in the last 6 hours, less the payment provider's fee, and end its plan */
+        /** Refund a payment made in the last 7 days in full, and end its plan */
         post: {
             parameters: {
                 query?: never;
@@ -7063,8 +7105,8 @@ export interface paths {
                                 /** Format: uuid */
                                 paymentId: string;
                                 refund: number;
-                                /** @enum {string} */
-                                currency: "INR" | "USD";
+                                /** @constant */
+                                currency: "USD";
                                 providerRefundId: string;
                             };
                         };
@@ -7121,12 +7163,12 @@ export interface paths {
                         "application/json": {
                             data: {
                                 /** @enum {string} */
-                                plan: "free" | "season_pass" | "pro";
+                                plan: "free" | "season_pass" | "pro" | "lifetime";
                                 subscription: {
                                     /** Format: uuid */
                                     id: string;
                                     /** @enum {string} */
-                                    plan: "season_pass" | "pro";
+                                    plan: "season_pass" | "pro" | "lifetime";
                                     /** @enum {string} */
                                     status: "created" | "active" | "past_due" | "cancelled" | "expired";
                                     currentPeriodEnd: string | null;
@@ -7186,7 +7228,7 @@ export interface paths {
                                     /** @enum {string} */
                                     kind: "promo" | "ambassador";
                                     /** @enum {string} */
-                                    plan: "season_pass" | "pro";
+                                    plan: "season_pass" | "pro" | "lifetime";
                                     months: number;
                                     maxRedemptions: number | null;
                                     expiresAt: string | null;
@@ -7270,7 +7312,7 @@ export interface paths {
                                     /** @enum {string} */
                                     kind: "promo" | "ambassador";
                                     /** @enum {string} */
-                                    plan: "season_pass" | "pro";
+                                    plan: "season_pass" | "pro" | "lifetime";
                                     months: number;
                                     maxRedemptions: number | null;
                                     expiresAt: string | null;
@@ -7359,7 +7401,7 @@ export interface paths {
                                     /** @enum {string} */
                                     kind: "promo" | "ambassador";
                                     /** @enum {string} */
-                                    plan: "season_pass" | "pro";
+                                    plan: "season_pass" | "pro" | "lifetime";
                                     months: number;
                                     maxRedemptions: number | null;
                                     expiresAt: string | null;
@@ -7445,8 +7487,8 @@ export interface paths {
                                     aiFailed: number;
                                     aiCostUsdMicros: number;
                                     previousAiCostUsdMicros: number;
-                                    revenuePaise: number;
-                                    previousRevenuePaise: number;
+                                    revenueCents: number;
+                                    previousRevenueCents: number;
                                     shareViews: number;
                                     previousShareViews: number;
                                 };
@@ -7479,7 +7521,7 @@ export interface paths {
                                     email: string;
                                     image: string | null;
                                     /** @enum {string} */
-                                    plan: "free" | "season_pass" | "pro";
+                                    plan: "free" | "season_pass" | "pro" | "lifetime";
                                     createdAt: string;
                                     providers: string[];
                                 }[];
@@ -7489,7 +7531,7 @@ export interface paths {
                                     name: string;
                                     email: string;
                                     /** @enum {string} */
-                                    plan: "free" | "season_pass" | "pro";
+                                    plan: "free" | "season_pass" | "pro" | "lifetime";
                                     planEndsAt: string | null;
                                     planPaid: boolean;
                                 }[];
@@ -7528,7 +7570,7 @@ export interface paths {
             parameters: {
                 query?: {
                     q?: string;
-                    plan?: "free" | "season_pass" | "pro";
+                    plan?: "free" | "season_pass" | "pro" | "lifetime";
                     status?: "active" | "suspended" | "guest";
                     page?: number;
                 };
@@ -7554,7 +7596,7 @@ export interface paths {
                                     image: string | null;
                                     username: string;
                                     /** @enum {string} */
-                                    plan: "free" | "season_pass" | "pro";
+                                    plan: "free" | "season_pass" | "pro" | "lifetime";
                                     isAnonymous: boolean;
                                     suspendedAt: string | null;
                                     createdAt: string;
@@ -7627,7 +7669,7 @@ export interface paths {
                                     image: string | null;
                                     username: string;
                                     /** @enum {string} */
-                                    plan: "free" | "season_pass" | "pro";
+                                    plan: "free" | "season_pass" | "pro" | "lifetime";
                                     isAnonymous: boolean;
                                     suspendedAt: string | null;
                                     createdAt: string;
@@ -7665,7 +7707,7 @@ export interface paths {
                                 };
                                 usage: {
                                     /** @enum {string} */
-                                    plan: "free" | "season_pass" | "pro";
+                                    plan: "free" | "season_pass" | "pro" | "lifetime";
                                     ownAiKey: boolean;
                                     periodStart: string;
                                     periodEnd: string;
@@ -7695,7 +7737,7 @@ export interface paths {
                                     /** Format: uuid */
                                     id: string;
                                     /** @enum {string} */
-                                    plan: "season_pass" | "pro";
+                                    plan: "season_pass" | "pro" | "lifetime";
                                     /** @enum {string} */
                                     status: "created" | "active" | "past_due" | "cancelled" | "expired";
                                     currentPeriodStart: string | null;
@@ -7713,7 +7755,7 @@ export interface paths {
                                     status: "created" | "captured" | "failed" | "refunded";
                                     method: string | null;
                                     /** @enum {string} */
-                                    provider: "razorpay" | "polar";
+                                    provider: "razorpay" | "polar" | "dodo";
                                     providerPaymentId: string | null;
                                     createdAt: string;
                                 }[];
@@ -7783,7 +7825,7 @@ export interface paths {
                                     image: string | null;
                                     username: string;
                                     /** @enum {string} */
-                                    plan: "free" | "season_pass" | "pro";
+                                    plan: "free" | "season_pass" | "pro" | "lifetime";
                                     isAnonymous: boolean;
                                     suspendedAt: string | null;
                                     createdAt: string;
@@ -7821,7 +7863,7 @@ export interface paths {
                                 };
                                 usage: {
                                     /** @enum {string} */
-                                    plan: "free" | "season_pass" | "pro";
+                                    plan: "free" | "season_pass" | "pro" | "lifetime";
                                     ownAiKey: boolean;
                                     periodStart: string;
                                     periodEnd: string;
@@ -7851,7 +7893,7 @@ export interface paths {
                                     /** Format: uuid */
                                     id: string;
                                     /** @enum {string} */
-                                    plan: "season_pass" | "pro";
+                                    plan: "season_pass" | "pro" | "lifetime";
                                     /** @enum {string} */
                                     status: "created" | "active" | "past_due" | "cancelled" | "expired";
                                     currentPeriodStart: string | null;
@@ -7869,7 +7911,7 @@ export interface paths {
                                     status: "created" | "captured" | "failed" | "refunded";
                                     method: string | null;
                                     /** @enum {string} */
-                                    provider: "razorpay" | "polar";
+                                    provider: "razorpay" | "polar" | "dodo";
                                     providerPaymentId: string | null;
                                     createdAt: string;
                                 }[];
@@ -8037,7 +8079,7 @@ export interface paths {
                                     image: string | null;
                                     username: string;
                                     /** @enum {string} */
-                                    plan: "free" | "season_pass" | "pro";
+                                    plan: "free" | "season_pass" | "pro" | "lifetime";
                                     isAnonymous: boolean;
                                     suspendedAt: string | null;
                                     createdAt: string;
@@ -8075,7 +8117,7 @@ export interface paths {
                                 };
                                 usage: {
                                     /** @enum {string} */
-                                    plan: "free" | "season_pass" | "pro";
+                                    plan: "free" | "season_pass" | "pro" | "lifetime";
                                     ownAiKey: boolean;
                                     periodStart: string;
                                     periodEnd: string;
@@ -8105,7 +8147,7 @@ export interface paths {
                                     /** Format: uuid */
                                     id: string;
                                     /** @enum {string} */
-                                    plan: "season_pass" | "pro";
+                                    plan: "season_pass" | "pro" | "lifetime";
                                     /** @enum {string} */
                                     status: "created" | "active" | "past_due" | "cancelled" | "expired";
                                     currentPeriodStart: string | null;
@@ -8123,7 +8165,7 @@ export interface paths {
                                     status: "created" | "captured" | "failed" | "refunded";
                                     method: string | null;
                                     /** @enum {string} */
-                                    provider: "razorpay" | "polar";
+                                    provider: "razorpay" | "polar" | "dodo";
                                     providerPaymentId: string | null;
                                     createdAt: string;
                                 }[];
@@ -8354,21 +8396,20 @@ export interface paths {
                             data: {
                                 days: number;
                                 totals: {
-                                    paise: number;
-                                    previousPaise: number;
-                                    allTimePaise: number;
-                                    usdCents: number;
+                                    revenue: number;
+                                    previousRevenue: number;
+                                    allTimeRevenue: number;
                                     payers: number;
                                     checkouts: number;
                                     checkoutsPaid: number;
                                 };
                                 byDay: {
                                     day: string;
-                                    paise: number;
+                                    revenue: number;
                                 }[];
                                 activeSubscriptions: {
                                     /** @enum {string} */
-                                    plan: "season_pass" | "pro";
+                                    plan: "season_pass" | "pro" | "lifetime";
                                     active: number;
                                 }[];
                                 statuses: {
@@ -8385,14 +8426,14 @@ export interface paths {
                                     status: "created" | "captured" | "failed" | "refunded";
                                     method: string | null;
                                     /** @enum {string} */
-                                    provider: "razorpay" | "polar";
+                                    provider: "razorpay" | "polar" | "dodo";
                                     providerPaymentId: string | null;
-                                    plan: ("season_pass" | "pro") | null;
+                                    plan: ("season_pass" | "pro" | "lifetime") | null;
                                     /** Format: uuid */
                                     userId: string;
                                     email: string;
                                 }[];
-                                razorpayConfigured: boolean;
+                                paymentsConfigured: boolean;
                             };
                         };
                     };
