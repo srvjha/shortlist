@@ -10,7 +10,7 @@ export const site = {
   contactEmail: 'support@shortlist.co.in',
   x: 'https://x.com/J_srv001',
   // Demo calls for colleges and teams; the Calendly event adds a Google Meet link.
-  calendly: 'https://calendly.com/srvjha',
+  calendly: 'https://calendly.com/srvjha/shortlist-demo',
 }
 
 // schema.org BreadcrumbList for a page under the home page, from [name, url] pairs.
