@@ -3,6 +3,7 @@ import { renderSections } from "./classic-body.js";
 import { contactParts, tex, visibleContent } from "./latex.js";
 import { applyLayout, nameGap, type ResumeLayout } from "./layout.js";
 import { sharedMacros } from "./macros.js";
+import { rupeeFallback } from "./shared-business.js";
 
 // Inspired by Awesome-CV: sans-serif type, accent-colored section titles, single column.
 export function renderModern(input: ResumeContent, layout?: ResumeLayout) {
@@ -19,6 +20,7 @@ export function renderModern(input: ResumeContent, layout?: ResumeLayout) {
 \usepackage{tabularx}
 \usepackage{fontspec}
 \setmainfont{texgyreheros}[Extension=.otf, UprightFont=*-regular, BoldFont=*-bold, ItalicFont=*-italic, BoldItalicFont=*-bolditalic]
+${rupeeFallback}
 
 \definecolor{accent}{HTML}{0F766E}
 \definecolor{muted}{HTML}{4B5563}

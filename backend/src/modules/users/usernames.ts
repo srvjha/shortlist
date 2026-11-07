@@ -50,6 +50,7 @@ const RESERVED = new Set([
   "public",
   "register",
   "resignation-letter-generator",
+  "resume-format",
   "resume",
   "resumes",
   "settings",

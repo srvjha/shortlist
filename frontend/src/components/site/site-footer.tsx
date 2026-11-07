@@ -9,6 +9,7 @@ const social =
 
 const product = [
   { to: '/templates', label: 'Templates' },
+  { to: '/resume-format', label: 'Resume format by role' },
   { to: '/ats-checker', label: 'ATS checker' },
   { to: '/cover-letter-generator', label: 'Cover letter generator' },
   {

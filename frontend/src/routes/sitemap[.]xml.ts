@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { docs } from '@/lib/docs'
+import { formatPages } from '@/lib/format-pages'
 import { guides } from '@/lib/guides'
 import { site } from '@/lib/site'
 import { templateCatalog } from '@/lib/templates'
@@ -13,6 +14,8 @@ const paths = [
   '/',
   '/templates',
   ...templateCatalog.map((template) => `/templates/${template.id}`),
+  '/resume-format',
+  ...formatPages.map((page) => `/resume-format/${page.slug}`),
   '/ats-checker',
   '/cover-letter-generator',
   '/resignation-letter-generator',
