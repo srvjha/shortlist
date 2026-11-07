@@ -183,6 +183,13 @@
       "when": 1793477905437,
       "tag": "0025_reports",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1794038153219,
+      "tag": "0026_dodo_plans",
+      "breakpoints": true
     }
   ]
 }
