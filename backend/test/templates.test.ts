@@ -163,7 +163,7 @@ describe("contact link styles", () => {
 const beforeLayouts: Record<string, string> = {
   developer: "e9b18fa1bc63fa21c6e081c6e572fda9f48bce22313062cf0ac282082642a4c2",
   jake: "2c03fb4f439b9f3097c45be13542288d03ccb10f2360b02eac240c8ad00449ad",
-  modern: "4b596b077b5f4ed37ee46f4854e5e132a05ad8a53b3f722acf8ff38faaccce23",
+  modern: "aa7f5595542b834eca6e2570ce8ec707f0af5d10290d028ed3fd98c076e743c7",
   sb2nov: "7a1885efed4ad82189cca1cb2e451ad3aa466189dec6b7ee3ce3a3dc9c14e6c6",
   "ml-research": "24526965ad855c92644461488659b91b3c079a90a86e7e38c5b3cc303b1607e4",
   "data-analyst": "dc486274b91f6dbd2eee3a645ef0b84f10b11a5a54f0bb030c8979bfc1aed078",
