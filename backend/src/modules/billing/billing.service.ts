@@ -167,7 +167,26 @@ const refundable = (userId: string, now: Date) =>
     gt(payments.capturedAt, new Date(now.getTime() - REFUND_WINDOW_MS)),
   );
 
+const STATUS_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+
+async function refundStatus(userId: string, now: Date) {
+  const [row] = await db
+    .select({ amount: payments.amount, requestedAt: payments.refundedAt, status: payments.status })
+    .from(payments)
+    .where(and(eq(payments.userId, userId), gt(payments.refundedAt, new Date(now.getTime() - STATUS_DAYS_MS))))
+    .orderBy(desc(payments.refundedAt))
+    .limit(1);
+  if (!row?.requestedAt) return null;
+  return {
+    amount: row.amount,
+    currency: CURRENCY,
+    requestedAt: row.requestedAt,
+    state: row.status === "refunded" ? ("refunded" as const) : ("pending" as const),
+  };
+}
+
 export async function getRefundQuote(userId: string, now = new Date()) {
+  const status = await refundStatus(userId, now);
   const [row] = await db
     .select({ id: payments.id, amount: payments.amount, capturedAt: payments.capturedAt, plan: subscriptions.plan })
     .from(payments)
@@ -175,9 +194,9 @@ export async function getRefundQuote(userId: string, now = new Date()) {
     .where(refundable(userId, now))
     .orderBy(desc(payments.capturedAt))
     .limit(1);
-  if (!row) return { quote: null, reason: null };
+  if (!row) return { quote: null, reason: null, status };
   const reason = await whyNotRefundable(userId, row.capturedAt!);
-  if (reason) return { quote: null, reason };
+  if (reason) return { quote: null, reason, status };
   return {
     quote: {
       paymentId: row.id,
@@ -187,6 +206,7 @@ export async function getRefundQuote(userId: string, now = new Date()) {
       refundableUntil: new Date(row.capturedAt!.getTime() + REFUND_WINDOW_MS),
     },
     reason: null,
+    status,
   };
 }
 
