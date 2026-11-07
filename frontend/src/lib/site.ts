@@ -9,6 +9,8 @@ export const site = {
   // Routed to the team's inbox by Cloudflare Email Routing.
   contactEmail: 'support@shortlist.co.in',
   x: 'https://x.com/J_srv001',
+  // Demo calls for colleges and teams; the Calendly event adds a Google Meet link.
+  calendly: 'https://calendly.com/srvjha',
 }
 
 // schema.org BreadcrumbList for a page under the home page, from [name, url] pairs.

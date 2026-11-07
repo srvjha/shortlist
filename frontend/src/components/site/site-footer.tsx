@@ -36,6 +36,34 @@ const help = [
 ] as const
 
 const heading = 'font-sans text-sm font-semibold'
+
+declare global {
+  interface Window {
+    Calendly?: { initPopupWidget: (options: { url: string }) => void }
+  }
+}
+
+// Calendly's script loads on the first click only, so pages don't pay for it. Without JS the link opens Calendly.
+async function openCalendly(event: React.MouseEvent<HTMLAnchorElement>) {
+  event.preventDefault()
+  if (!window.Calendly) {
+    const css = document.createElement('link')
+    css.rel = 'stylesheet'
+    css.href = 'https://assets.calendly.com/assets/external/widget.css'
+    document.head.append(css)
+    const script = document.createElement('script')
+    script.src = 'https://assets.calendly.com/assets/external/widget.js'
+    document.head.append(script)
+    await new Promise((resolve) => {
+      script.onload = resolve
+      script.onerror = resolve
+    })
+  }
+  const calendly = window.Calendly
+  if (calendly) calendly.initPopupWidget({ url: site.calendly })
+  else window.open(site.calendly, '_blank', 'noopener')
+}
+
 const list = 'mt-4 flex flex-col gap-2.5 text-sm text-muted-foreground'
 const link = 'transition-colors hover:text-foreground'
 
@@ -106,6 +134,11 @@ export function SiteFooter() {
                 </Link>
               </li>
             ))}
+            <li>
+              <a href={site.calendly} onClick={openCalendly} className={link}>
+                Book a demo
+              </a>
+            </li>
           </ul>
         </nav>
       </div>
