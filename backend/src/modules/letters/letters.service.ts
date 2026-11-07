@@ -3,7 +3,8 @@ import type { z } from "zod";
 import { db } from "../../db/index.js";
 import { aiRuns, letters, users } from "../../db/schema/index.js";
 import { track, trackServer } from "../../lib/analytics.js";
-import { AppError, NotFoundError } from "../../lib/errors.js";
+import { AppError, ConflictError, NotFoundError } from "../../lib/errors.js";
+import type { ResumeContent } from "../../schemas/resume-content.js";
 import { visibleContent } from "../../templates/latex.js";
 import { texToText } from "../ats/scoring.js";
 import { getJob } from "../jobs/jobs.service.js";
@@ -18,6 +19,18 @@ import type { createLetterBody, createPublicCoverLetterBody, updateLetterBody } 
 // Across every visitor with no account, on top of the limit per IP, so rotating IPs can't run up the AI bill.
 const PUBLIC_LETTERS_PER_DAY = 200;
 
+// A blank resume gives the model nothing to write from, and the letter would only apologise for that.
+export function hasResumeFacts(content: ResumeContent | null | undefined, text: string) {
+  if (!content) return text.trim().length > 0;
+  return content.sections.some(
+    (section) =>
+      ("entries" in section && section.entries.length > 0) ||
+      ("groups" in section && section.groups.length > 0) ||
+      ("links" in section && section.links.length > 0) ||
+      ("text" in section && section.text.length > 0),
+  );
+}
+
 async function coverLetterFor(userId: string, resumeId: string, jobId: string) {
   await assertAiQuota(userId, "letter");
   const resume = await getResume(userId, resumeId);
@@ -26,6 +39,7 @@ async function coverLetterFor(userId: string, resumeId: string, jobId: string) {
   const profile = (await getProfile(userId)).content;
   const content = resume.head.content && visibleContent(resume.head.content);
   const text = content ? JSON.stringify(content) : texToText(resume.head.texSource ?? "");
+  if (!hasResumeFacts(content, text)) throw new ConflictError("Add your experience to this resume first");
   const written = await writeCoverLetter({
     userId,
     resume: text,
