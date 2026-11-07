@@ -315,7 +315,7 @@ function Overview({ data }: { data: AdminOverview }) {
 
       <Section
         title="Plans running"
-        description="Everyone on Season Pass or Pro, the soonest to end first. Free passes come from you or a promo code."
+        description="Everyone on a paid plan, the soonest to end first. Free passes come from you or a promo code."
       >
         {data.runningPlans.length === 0 ? (
           <EmptyNote>Nobody is on a plan right now.</EmptyNote>

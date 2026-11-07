@@ -171,7 +171,7 @@ function ContactField({
       <FieldDescription>{description}</FieldDescription>
       {!paid && (
         <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
-          <Badge variant="secondary">Season Pass / Pro</Badge>
+          <Badge variant="secondary">Paid plans</Badge>
           Let visitors unlock them with a password.
           <Link
             to="/billing"
@@ -551,7 +551,7 @@ function CreateLinkForm({
             autoComplete="off"
             autoCapitalize="none"
             spellCheck={false}
-            placeholder="razorpay-backend"
+            placeholder="acme-backend"
             value={slug}
             aria-invalid={slugTooShort}
             onChange={(e) => setSlug(toSlugDraft(e.target.value))}

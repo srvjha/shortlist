@@ -224,7 +224,7 @@ function NameVersionDialog({
             <FieldLabel htmlFor="version-label">Name</FieldLabel>
             <Input
               id="version-label"
-              placeholder="Sent to Razorpay"
+              placeholder="Sent to Acme"
               value={label}
               onChange={(e) => setLabel(e.target.value)}
             />

@@ -209,7 +209,7 @@ export const analyticsQuery = (days: 7 | 30 | 90) =>
       ),
   })
 
-// Season Pass and Pro only; the API answers 402 on the free plan.
+// Paid plans only; the API answers 402 on the free plan.
 export const insightsQuery = (days: 7 | 30 | 90) =>
   queryOptions({
     queryKey: [...queryKeys.analytics(days), 'insights'],

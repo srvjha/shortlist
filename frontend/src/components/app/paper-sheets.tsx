@@ -100,7 +100,7 @@ export function LatexSheet({ className }: { className?: string }) {
         <span className="text-primary">\resumeSubheading</span>
       </p>
       <p className="whitespace-nowrap text-sheet-foreground/60">
-        {'  {Razorpay}{2025}'}
+        {'  {Acme Labs}{2025}'}
       </p>
       <p className="whitespace-nowrap">
         <span className="text-primary">\resumeItem</span>

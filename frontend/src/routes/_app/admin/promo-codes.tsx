@@ -277,7 +277,7 @@ function CreateCode({
           body: {
             code: form.code,
             kind: form.ambassador ? 'ambassador' : 'promo',
-            plan: 'season_pass',
+            plan: 'pro',
             months: Number(form.months),
             ...(form.maxRedemptions && {
               maxRedemptions: Number(form.maxRedemptions),
@@ -321,7 +321,7 @@ function CreateCode({
         />
       </div>
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="promo-months">Season Pass months</Label>
+        <Label htmlFor="promo-months">Pro months</Label>
         <Input
           id="promo-months"
           type="number"
