@@ -1,9 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("../src/lib/ai/generate.js", () => ({ generateStructured: vi.fn() }));
+const generateStructured = vi.hoisted(() => vi.fn());
+vi.mock("../src/lib/ai/generate.js", () => ({ generateStructured }));
 vi.mock("../src/db/index.js", () => ({ db: {} }));
 
-const { claimsByText } = await import("../src/modules/suggestions/claims.js");
+const { claimsByText, findUnsupportedClaims } = await import("../src/modules/suggestions/claims.js");
 
 describe("claimsByText", () => {
   it("keeps each quote with its own text, ignoring case and repeats", () => {
@@ -25,5 +26,18 @@ describe("claimsByText", () => {
       { index: 0, quote: "  " },
     ];
     expect(claimsByText(found, ["I led a team"])).toEqual([[]]);
+  });
+});
+
+describe("findUnsupportedClaims", () => {
+  it("drops a claim the model itself found the same evidence for", async () => {
+    const claim = (quote: string, sameMeaning: boolean) => ({ index: 0, quote, closestEvidence: null, sameMeaning });
+    generateStructured.mockResolvedValue({
+      data: { unsupported: [claim("worked with designers", true), claim("led a team", false)] },
+      runId: "run_1",
+    });
+    const found = await findUnsupportedClaims({ userId: null, sources: "s", texts: ["t"] });
+    expect(found.map((c) => c.quote)).toEqual(["led a team"]);
+    expect(generateStructured).toHaveBeenCalledWith(expect.objectContaining({ step: "verify", tier: "fast" }));
   });
 });
