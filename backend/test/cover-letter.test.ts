@@ -40,13 +40,19 @@ describe("coverLetterPrompt", () => {
 });
 
 describe("writeCoverLetter", () => {
-  beforeEach(() => generateStructured.mockReset());
+  beforeEach(() => {
+    generateStructured.mockReset();
+  });
 
-  const answer = (data: object) =>
-    generateStructured.mockResolvedValue({
-      data: { greeting: "Dear Hiring Manager,", company: null, role: null, name: null, ...data },
-      runId: "run_1",
-    });
+  const answer = (data: object, unsupported: { index: number; quote: string }[] = []) =>
+    generateStructured.mockImplementation(async ({ step }: { step: string }) =>
+      step === "verify"
+        ? { data: { unsupported }, runId: "run_2" }
+        : {
+            data: { greeting: "Dear Hiring Manager,", company: null, role: null, name: null, ...data },
+            runId: "run_1",
+          },
+    );
 
   it("counts against the letter quota on the fast tier and signs with the given name", async () => {
     answer({ paragraphs: ["I ran email campaigns."] });
@@ -82,6 +88,38 @@ describe("writeCoverLetter", () => {
     answer({ paragraphs: ["I would like to join Initech now."], company: "Initech" });
     const { flags } = await writeCoverLetter({ userId: null, resume: "r", jobText: "A posting.", facts });
     expect(flags).toEqual(["Initech"]);
+  });
+
+  it("flags a plain phrase the claim check finds, which the term check can't see", async () => {
+    const phrase = "my experience is in consumer marketing";
+    answer({ paragraphs: [`I ran email campaigns, and ${phrase}.`] }, [{ index: 0, quote: phrase }]);
+    const { flags } = await writeCoverLetter({ userId: null, resume: "r", jobText: "job", facts });
+    expect(flags).toEqual([phrase]);
+  });
+
+  it("drops a quote that isn't in the letter, since nobody could find it", async () => {
+    answer({ paragraphs: ["I ran email campaigns."] }, [{ index: 0, quote: "ten years of leadership" }]);
+    const { flags } = await writeCoverLetter({ userId: null, resume: "r", jobText: "job", facts });
+    expect(flags).toEqual([]);
+  });
+
+  it("doesn't hand back a letter it couldn't check", async () => {
+    answer({ paragraphs: ["I ran email campaigns."] });
+    const write = generateStructured.getMockImplementation()!;
+    generateStructured.mockImplementation(async (input: { step: string }) => {
+      if (input.step === "verify") throw new Error("model down");
+      return write(input);
+    });
+    await expect(writeCoverLetter({ userId: null, resume: "r", jobText: "job", facts })).rejects.toThrow("model down");
+  });
+
+  it("never charges the claim check to a plan limit, and keeps private values out of it", async () => {
+    answer({ paragraphs: ["Write to me at [email 1]."] });
+    await writeCoverLetter({ userId: "user_1", resume: "neha@example.com", jobText: "job", facts });
+    const check = generateStructured.mock.calls[1]![0];
+    expect(check.step).toBe("verify");
+    expect(check.quota).toBeUndefined();
+    expect(check.prompt).not.toContain("neha@example.com");
   });
 
   it("masks contact details before the model sees them and puts them back after", async () => {

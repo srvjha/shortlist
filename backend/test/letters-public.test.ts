@@ -41,16 +41,20 @@ describe("POST /v1/public/cover-letters", () => {
   beforeEach(() => {
     state.publicRunsToday = 0;
     generateStructured.mockReset();
-    generateStructured.mockResolvedValue({
-      data: {
-        greeting: "Dear Hiring Manager,",
-        paragraphs: ["I ran email campaigns."],
-        company: null,
-        role: null,
-        name: null,
-      },
-      runId: "run_1",
-    });
+    generateStructured.mockImplementation(async ({ step }: { step: string }) =>
+      step === "verify"
+        ? { data: { unsupported: [] }, runId: "run_2" }
+        : {
+            data: {
+              greeting: "Dear Hiring Manager,",
+              paragraphs: ["I ran email campaigns."],
+              company: null,
+              role: null,
+              name: null,
+            },
+            runId: "run_1",
+          },
+    );
   });
 
   it("writes a letter with no account and doesn't charge any quota", async () => {
