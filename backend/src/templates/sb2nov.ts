@@ -33,6 +33,8 @@ export function renderSb2nov(input: ResumeContent, layout?: ResumeLayout) {
 \setlist{itemsep=0pt, topsep=2pt}
 \titleformat{\section}{\vspace{-6pt}\raggedright\large\bfseries}{}{0em}{}[\color{black}\titlerule \vspace{-6pt}]
 ${sharedMacros}
+% The shared macros pull space back between roles, which assumes the default item spacing that this layout removes.
+\renewcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=0.15in, label={}, itemsep=5pt]}
 \begin{document}
 \begin{tabular*}{\textwidth}{l@{\extracolsep{\fill}}r}
   \textbf{\LARGE ${tex(basics.name)}} & ${contacts.slice(0, 2).join(" $|$ ")} \\${gap ? `[${gap}pt]` : ""}

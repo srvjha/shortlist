@@ -230,9 +230,7 @@ export const formatSamples: { slug: string; templateId: string; content: ResumeC
           "ML engineer with 3 years taking models from notebooks to production: training pipelines, model serving, monitoring and retraining on AWS and Kubernetes.",
         ),
         experience("Experience", [
-          // The Compact layout sets the next role tight against a one-line last bullet.
           {
-            spaceAfter: 6,
             ...exp("Fernleaf Lending", "ML Engineer", "Bengaluru", "2024-04", "present", [
               "Built the training pipeline for the credit risk model in **Kubeflow** and **MLflow**, so a retrain runs end to end in 3 hours instead of 2 days of manual steps",
               "Served 4 models behind **FastAPI** on EKS with p95 latency of 45 ms at about 1,200 requests a minute",
