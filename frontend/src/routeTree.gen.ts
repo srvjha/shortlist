@@ -52,6 +52,8 @@ import { Route as SiteDocsIndexRouteImport } from './routes/_site/docs/index'
 import { Route as SiteDocsSlugRouteImport } from './routes/_site/docs/$slug'
 import { Route as SiteGuidesIndexRouteImport } from './routes/_site/guides/index'
 import { Route as SiteGuidesSlugRouteImport } from './routes/_site/guides/$slug'
+import { Route as SiteResumeFormatIndexRouteImport } from './routes/_site/resume-format/index'
+import { Route as SiteResumeFormatSlugRouteImport } from './routes/_site/resume-format/$slug'
 import { Route as SiteTemplatesIndexRouteImport } from './routes/_site/templates/index'
 import { Route as SiteTemplatesTemplateIdRouteImport } from './routes/_site/templates/$templateId'
 import { Route as AppAdminUsersIndexRouteImport } from './routes/_app/admin/users/index'
@@ -274,6 +276,16 @@ const SiteGuidesSlugRoute = SiteGuidesSlugRouteImport.update({
   path: '/guides/$slug',
   getParentRoute: () => SiteRoute,
 } as any)
+const SiteResumeFormatIndexRoute = SiteResumeFormatIndexRouteImport.update({
+  id: '/resume-format/',
+  path: '/resume-format/',
+  getParentRoute: () => SiteRoute,
+} as any)
+const SiteResumeFormatSlugRoute = SiteResumeFormatSlugRouteImport.update({
+  id: '/resume-format/$slug',
+  path: '/resume-format/$slug',
+  getParentRoute: () => SiteRoute,
+} as any)
 const SiteTemplatesIndexRoute = SiteTemplatesIndexRouteImport.update({
   id: '/templates/',
   path: '/templates/',
@@ -332,12 +344,14 @@ export interface FileRoutesByFullPath {
   '/resumes/new': typeof AppResumesNewRoute
   '/docs/$slug': typeof SiteDocsSlugRoute
   '/guides/$slug': typeof SiteGuidesSlugRoute
+  '/resume-format/$slug': typeof SiteResumeFormatSlugRoute
   '/templates/$templateId': typeof SiteTemplatesTemplateIdRoute
   '/admin/': typeof AppAdminIndexRoute
   '/letters/': typeof AppLettersIndexRoute
   '/my-templates/': typeof AppMyTemplatesIndexRoute
   '/docs/': typeof SiteDocsIndexRoute
   '/guides/': typeof SiteGuidesIndexRoute
+  '/resume-format/': typeof SiteResumeFormatIndexRoute
   '/templates/': typeof SiteTemplatesIndexRoute
   '/admin/users/$userId': typeof AppAdminUsersUserIdRoute
   '/admin/users/': typeof AppAdminUsersIndexRoute
@@ -377,12 +391,14 @@ export interface FileRoutesByTo {
   '/resumes/new': typeof AppResumesNewRoute
   '/docs/$slug': typeof SiteDocsSlugRoute
   '/guides/$slug': typeof SiteGuidesSlugRoute
+  '/resume-format/$slug': typeof SiteResumeFormatSlugRoute
   '/templates/$templateId': typeof SiteTemplatesTemplateIdRoute
   '/admin': typeof AppAdminIndexRoute
   '/letters': typeof AppLettersIndexRoute
   '/my-templates': typeof AppMyTemplatesIndexRoute
   '/docs': typeof SiteDocsIndexRoute
   '/guides': typeof SiteGuidesIndexRoute
+  '/resume-format': typeof SiteResumeFormatIndexRoute
   '/templates': typeof SiteTemplatesIndexRoute
   '/admin/users/$userId': typeof AppAdminUsersUserIdRoute
   '/admin/users': typeof AppAdminUsersIndexRoute
@@ -427,12 +443,14 @@ export interface FileRoutesById {
   '/_app/resumes/new': typeof AppResumesNewRoute
   '/_site/docs/$slug': typeof SiteDocsSlugRoute
   '/_site/guides/$slug': typeof SiteGuidesSlugRoute
+  '/_site/resume-format/$slug': typeof SiteResumeFormatSlugRoute
   '/_site/templates/$templateId': typeof SiteTemplatesTemplateIdRoute
   '/_app/admin/': typeof AppAdminIndexRoute
   '/_app/letters/': typeof AppLettersIndexRoute
   '/_app/my-templates/': typeof AppMyTemplatesIndexRoute
   '/_site/docs/': typeof SiteDocsIndexRoute
   '/_site/guides/': typeof SiteGuidesIndexRoute
+  '/_site/resume-format/': typeof SiteResumeFormatIndexRoute
   '/_site/templates/': typeof SiteTemplatesIndexRoute
   '/_app/admin/users/$userId': typeof AppAdminUsersUserIdRoute
   '/_app/admin/users/': typeof AppAdminUsersIndexRoute
@@ -476,12 +494,14 @@ export interface FileRouteTypes {
     | '/resumes/new'
     | '/docs/$slug'
     | '/guides/$slug'
+    | '/resume-format/$slug'
     | '/templates/$templateId'
     | '/admin/'
     | '/letters/'
     | '/my-templates/'
     | '/docs/'
     | '/guides/'
+    | '/resume-format/'
     | '/templates/'
     | '/admin/users/$userId'
     | '/admin/users/'
@@ -521,12 +541,14 @@ export interface FileRouteTypes {
     | '/resumes/new'
     | '/docs/$slug'
     | '/guides/$slug'
+    | '/resume-format/$slug'
     | '/templates/$templateId'
     | '/admin'
     | '/letters'
     | '/my-templates'
     | '/docs'
     | '/guides'
+    | '/resume-format'
     | '/templates'
     | '/admin/users/$userId'
     | '/admin/users'
@@ -570,12 +592,14 @@ export interface FileRouteTypes {
     | '/_app/resumes/new'
     | '/_site/docs/$slug'
     | '/_site/guides/$slug'
+    | '/_site/resume-format/$slug'
     | '/_site/templates/$templateId'
     | '/_app/admin/'
     | '/_app/letters/'
     | '/_app/my-templates/'
     | '/_site/docs/'
     | '/_site/guides/'
+    | '/_site/resume-format/'
     | '/_site/templates/'
     | '/_app/admin/users/$userId'
     | '/_app/admin/users/'
@@ -893,6 +917,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SiteGuidesSlugRouteImport
       parentRoute: typeof SiteRoute
     }
+    '/_site/resume-format/': {
+      id: '/_site/resume-format/'
+      path: '/resume-format'
+      fullPath: '/resume-format/'
+      preLoaderRoute: typeof SiteResumeFormatIndexRouteImport
+      parentRoute: typeof SiteRoute
+    }
+    '/_site/resume-format/$slug': {
+      id: '/_site/resume-format/$slug'
+      path: '/resume-format/$slug'
+      fullPath: '/resume-format/$slug'
+      preLoaderRoute: typeof SiteResumeFormatSlugRouteImport
+      parentRoute: typeof SiteRoute
+    }
     '/_site/templates/': {
       id: '/_site/templates/'
       path: '/templates'
@@ -1020,8 +1058,10 @@ interface SiteRouteChildren {
   SiteTermsRoute: typeof SiteTermsRoute
   SiteIndexRoute: typeof SiteIndexRoute
   SiteGuidesSlugRoute: typeof SiteGuidesSlugRoute
+  SiteResumeFormatSlugRoute: typeof SiteResumeFormatSlugRoute
   SiteTemplatesTemplateIdRoute: typeof SiteTemplatesTemplateIdRoute
   SiteGuidesIndexRoute: typeof SiteGuidesIndexRoute
+  SiteResumeFormatIndexRoute: typeof SiteResumeFormatIndexRoute
   SiteTemplatesIndexRoute: typeof SiteTemplatesIndexRoute
 }
 
@@ -1035,8 +1075,10 @@ const SiteRouteChildren: SiteRouteChildren = {
   SiteTermsRoute: SiteTermsRoute,
   SiteIndexRoute: SiteIndexRoute,
   SiteGuidesSlugRoute: SiteGuidesSlugRoute,
+  SiteResumeFormatSlugRoute: SiteResumeFormatSlugRoute,
   SiteTemplatesTemplateIdRoute: SiteTemplatesTemplateIdRoute,
   SiteGuidesIndexRoute: SiteGuidesIndexRoute,
+  SiteResumeFormatIndexRoute: SiteResumeFormatIndexRoute,
   SiteTemplatesIndexRoute: SiteTemplatesIndexRoute,
 }
 
