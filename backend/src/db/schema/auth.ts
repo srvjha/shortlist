@@ -2,7 +2,7 @@ import { sql } from "drizzle-orm";
 import { boolean, check, index, pgEnum, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { createdAt, timestamps } from "./columns.js";
 
-export const userPlan = pgEnum("user_plan", ["free", "season_pass", "pro"]);
+export const userPlan = pgEnum("user_plan", ["free", "season_pass", "pro", "lifetime"]);
 
 export const users = pgTable(
   "users",

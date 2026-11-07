@@ -16,6 +16,7 @@ export const planLimits: Record<Plan, Record<QuotaKind | "resumes", number>> = {
   free: { resumes: 1000, tailor: 1, edit: 50, import: 20, draft: 1, job: 10, ats: 20, review: 0 },
   season_pass: { resumes: 1000, tailor: 40, edit: 1000, import: 20, draft: 30, job: 100, ats: 200, review: 100 },
   pro: { resumes: 1000, tailor: 60, edit: 1000, import: 20, draft: 30, job: 100, ats: 200, review: 100 },
+  lifetime: { resumes: 1000, tailor: 60, edit: 1000, import: 20, draft: 30, job: 100, ats: 200, review: 100 },
 };
 
 // A new Free account can tailor 5 resumes in its first 7 days, counted from sign-up, then gets the monthly limit.
