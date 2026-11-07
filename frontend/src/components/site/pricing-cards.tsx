@@ -8,18 +8,12 @@ import { useSession } from '@/lib/auth-client'
 import type { Pricing } from '@/lib/api/types'
 import { formatMoney } from '@/lib/format'
 import { plans } from '@/lib/plans'
-import {
-  comingSoon,
-  paymentLine,
-  priceNote,
-  priceOf,
-  usePricing,
-} from '@/lib/pricing'
+import { paymentLine, priceNote, priceOf, usePricing } from '@/lib/pricing'
 import { cn } from '@/lib/utils'
 
 type Plan = (typeof plans)[number]
 
-function PlanCta({ plan, open }: { plan: Plan; open: boolean }) {
+function PlanCta({ plan }: { plan: Plan }) {
   const featured = 'featured' in plan && plan.featured
   const { data: session } = useSession()
   const { checkout, me } = useCheckout({ enabled: !!session })
@@ -35,12 +29,6 @@ function PlanCta({ plan, open }: { plan: Plan; open: boolean }) {
         <Link to="/login" search={{ mode: 'signup' }}>
           {plan.cta}
         </Link>
-      </Button>
-    )
-  if (!open)
-    return (
-      <Button {...style} disabled>
-        {comingSoon}
       </Button>
     )
   // Signed out: sign up, then land on billing with this plan picked.
@@ -129,9 +117,9 @@ export function PricingCards({
                 )}
               </p>
               <p className="mt-2 text-sm text-muted-foreground">
-                {plan.id === 'free' ? plan.note : priceNote(plan.id, pricing)}
+                {plan.id === 'free' ? plan.note : priceNote(plan.id)}
               </p>
-              <PlanCta plan={plan} open={pricing.checkoutOpen} />
+              <PlanCta plan={plan} />
               <div className="mt-8 border-t pt-6">
                 <p className="text-sm font-medium">{plan.listTitle}</p>
                 <ul className="mt-4 flex flex-col gap-3">
@@ -151,18 +139,7 @@ export function PricingCards({
         })}
       </ul>
       <p className="mt-6 text-center text-sm text-muted-foreground">
-        {paymentLine(pricing)} Changed your mind? Ask for a refund within 6
-        hours.
-      </p>
-      <p className="mt-2 text-center text-xs text-muted-foreground">
-        <a
-          href="https://db-ip.com"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="underline-offset-4 hover:underline"
-        >
-          IP Geolocation by DB-IP
-        </a>
+        {paymentLine} Changed your mind? Ask for a refund within 7 days.
       </p>
     </div>
   )

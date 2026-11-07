@@ -5,7 +5,6 @@ import { toast } from '@/lib/toast'
 import { z } from 'zod'
 import { ConfirmDialog } from '@/components/app/confirm-dialog'
 import { PageHeader } from '@/components/app/page-header'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -34,7 +33,7 @@ import {
   formatMoney,
   planLabels,
 } from '@/lib/format'
-import { comingSoon, priceNote, priceOf, usePricing } from '@/lib/pricing'
+import { priceNote, priceOf, usePricing } from '@/lib/pricing'
 import { site } from '@/lib/site'
 import { cn } from '@/lib/utils'
 
@@ -42,10 +41,10 @@ export const Route = createFileRoute('/_app/billing')({
   // A plan from the pricing page or a sign-in redirect, shown highlighted.
   // `code` comes from a shared promo or ambassador link and fills in the code box.
   validateSearch: z.object({
-    plan: z.enum(['season_pass', 'pro']).optional(),
+    plan: z.enum(['pro', 'lifetime']).optional().catch(undefined),
     code: z.string().max(40).optional(),
-    // Polar sends the buyer back here after paying.
-    checkout: z.literal('done').optional(),
+    // Dodo sends the buyer back here after paying, with the id of their checkout.
+    checkout: z.uuid().optional().catch(undefined),
   }),
   head: () => ({ meta: [{ title: `Plans and billing | ${site.name}` }] }),
   loader: ({ context }) => {
@@ -66,12 +65,7 @@ function BillingPage() {
         description="Your plan, what you've used this month, and upgrades."
       />
       {me ? (
-        <Billing
-          me={me}
-          highlight={plan}
-          code={code}
-          paid={checkout === 'done'}
-        />
+        <Billing me={me} highlight={plan} code={code} returnedFrom={checkout} />
       ) : (
         <Skeleton className="h-80" />
       )}
@@ -81,14 +75,14 @@ function BillingPage() {
 
 const paidPlans = [
   {
-    id: 'season_pass',
-    name: 'Season Pass',
-    body: 'One payment for 6 months. 40 AI-tailored resumes a month and unlimited AI edits.',
-  },
-  {
     id: 'pro',
     name: 'Pro',
-    body: 'The same AI limits as the Season Pass, paid month by month.',
+    body: '60 AI-tailored resumes a month and unlimited AI edits, paid month by month.',
+  },
+  {
+    id: 'lifetime',
+    name: 'Lifetime',
+    body: 'The same AI limits as Pro, for one payment.',
   },
 ] as const
 
@@ -124,27 +118,27 @@ function Billing({
   me,
   highlight,
   code,
-  paid,
+  returnedFrom,
 }: {
   me: Me
-  highlight?: 'season_pass' | 'pro'
+  highlight?: 'pro' | 'lifetime'
   code?: string
-  paid?: boolean
+  returnedFrom?: string
 }) {
   const { data: usage } = useQuery(usageQuery)
   const { data: subscription } = useQuery(subscriptionQuery)
-  const { checkout, waiting, refresh, waitForPlan } = useCheckout()
+  const { checkout, waiting, refresh, confirmReturn } = useCheckout()
   const navigate = Route.useNavigate()
   const pricing = usePricing()
   useEffect(() => {
-    if (!paid) return
-    waitForPlan()
+    if (!returnedFrom) return
+    confirmReturn(returnedFrom, highlight)
     // So a reload doesn't announce the payment again.
     void navigate({
       search: (prev) => ({ ...prev, checkout: undefined }),
       replace: true,
     })
-  }, [paid])
+  }, [returnedFrom])
   const [confirmCancel, setConfirmCancel] = useState(false)
   const { data: refundQuote, error: refundQuoteError } =
     useQuery(refundQuoteQuery)
@@ -185,13 +179,15 @@ function Billing({
             {waiting && <Spinner />}
           </CardTitle>
           <CardDescription>
-            {activeSub?.currentPeriodEnd
-              ? activeSub.status === 'cancelled'
-                ? `Cancelled. Active until ${formatDate(activeSub.currentPeriodEnd)}.`
-                : activeSub.renews
-                  ? `Renews on ${formatDate(activeSub.currentPeriodEnd)}.`
-                  : `Active until ${formatDate(activeSub.currentPeriodEnd)}.`
-              : 'Usage resets on the 1st of every month.'}
+            {activeSub?.plan === 'lifetime'
+              ? 'One payment. Nothing renews.'
+              : activeSub?.currentPeriodEnd
+                ? activeSub.status === 'cancelled'
+                  ? `Cancelled. Active until ${formatDate(activeSub.currentPeriodEnd)}.`
+                  : activeSub.renews
+                    ? `Renews on ${formatDate(activeSub.currentPeriodEnd)}.`
+                    : `Active until ${formatDate(activeSub.currentPeriodEnd)}.`
+                : 'Usage resets on the 1st of every month.'}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -291,7 +287,7 @@ function Billing({
             open={confirmRefund}
             onOpenChange={setConfirmRefund}
             title={`Refund ${formatMoney(quote.refund, quote.currency)}?`}
-            description={`You paid ${formatMoney(quote.amountPaid, quote.currency)}${quote.provider === 'polar' ? ' before tax. Polar' : '. Razorpay'} keeps ${formatMoney(quote.fee, quote.currency)} as its payment fee${quote.provider === 'polar' ? ', and any tax you paid is returned with the rest' : ' (including GST)'}, so ${formatMoney(quote.refund, quote.currency)} goes back to your original payment method in 5 to 7 working days. Your ${quote.plan ? planLabels[quote.plan] : 'plan'} ends now. Your resumes are not deleted.`}
+            description={`Everything you paid, including any tax, goes back to your original payment method in 5 to 7 working days. Your ${quote.plan ? planLabels[quote.plan] : 'plan'} ends now. Your resumes are not deleted.`}
             confirmLabel={`Refund ${formatMoney(quote.refund, quote.currency)}`}
             cancelLabel="Keep my plan"
             destructive
@@ -300,47 +296,41 @@ function Billing({
         )}
       </Card>
 
-      {me.plan === 'free' && (
+      {me.plan !== 'lifetime' && (
         <div className="grid gap-4 sm:grid-cols-2">
-          {paidPlans.map((plan) => (
-            <Card
-              key={plan.id}
-              className={cn(
-                highlight === plan.id && 'border-primary ring-1 ring-primary',
-              )}
-            >
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  {plan.name}
-                  {plan.id === 'season_pass' && <Badge>Best value</Badge>}
-                </CardTitle>
-                <CardDescription>
-                  {priceOf(plan.id, pricing)}{' '}
-                  {plan.id === 'season_pass' ? 'for 6 months' : 'a month'}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="text-sm text-muted-foreground">
-                {plan.body}
-                {plan.id === 'pro' && ` ${priceNote('pro', pricing)}`}
-              </CardContent>
-              <CardFooter>
-                <Button
-                  variant={plan.id === 'season_pass' ? 'default' : 'outline'}
-                  onClick={() => checkout.mutate(plan.id)}
-                  disabled={checkout.isPending || !pricing.checkoutOpen}
-                >
-                  {checkout.isPending && checkout.variables === plan.id && (
-                    <Spinner data-icon="inline-start" />
-                  )}
-                  {!pricing.checkoutOpen
-                    ? comingSoon
-                    : plan.id === 'season_pass'
-                      ? 'Get the Season Pass'
-                      : 'Go Pro'}
-                </Button>
-              </CardFooter>
-            </Card>
-          ))}
+          {paidPlans
+            .filter((plan) => me.plan === 'free' || plan.id === 'lifetime')
+            .map((plan) => (
+              <Card
+                key={plan.id}
+                className={cn(
+                  highlight === plan.id && 'border-primary ring-1 ring-primary',
+                )}
+              >
+                <CardHeader>
+                  <CardTitle>{plan.name}</CardTitle>
+                  <CardDescription>
+                    {priceOf(plan.id, pricing)}{' '}
+                    {plan.id === 'lifetime' ? 'once' : 'a month'}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="text-sm text-muted-foreground">
+                  {plan.body} {priceNote(plan.id)}
+                </CardContent>
+                <CardFooter>
+                  <Button
+                    variant={plan.id === 'pro' ? 'default' : 'outline'}
+                    onClick={() => checkout.mutate(plan.id)}
+                    disabled={checkout.isPending}
+                  >
+                    {checkout.isPending && checkout.variables === plan.id && (
+                      <Spinner data-icon="inline-start" />
+                    )}
+                    {plan.id === 'lifetime' ? 'Get Lifetime' : 'Go Pro'}
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))}
         </div>
       )}
 

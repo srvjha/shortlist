@@ -53,7 +53,7 @@ import { site } from '@/lib/site'
 const searchSchema = z.object({
   // 'billing' and 'plan' only exist so old links still land on the right page.
   tab: z.enum(['account', 'billing', 'ai', 'data']).optional(),
-  plan: z.enum(['season_pass', 'pro']).optional(),
+  plan: z.enum(['pro', 'lifetime']).optional().catch(undefined),
 })
 
 export const Route = createFileRoute('/_app/settings')({

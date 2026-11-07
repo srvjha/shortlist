@@ -1,6 +1,6 @@
 // Shared by the pricing page and the landing page.
-// Keep these numbers in step with planLimits in backend/src/modules/usage/quotas.ts. Paid plan prices depend on the
-// visitor's country and come from the API (see lib/pricing.ts).
+// Keep these numbers in step with planLimits in backend/src/modules/usage/quotas.ts. Paid plan prices come from the API
+// (see lib/pricing.ts).
 export const plans = [
   {
     id: 'free',
@@ -20,16 +20,15 @@ export const plans = [
     ],
   },
   {
-    id: 'season_pass',
-    name: 'Season Pass',
-    forWhom: 'For a busy job search, when you apply to new roles every week.',
-    period: '/ 6 months',
-    cta: 'Get the Season Pass',
+    id: 'pro',
+    name: 'Pro',
+    forWhom: 'For an active job search, paid month by month.',
+    period: '/ month',
+    cta: 'Choose Pro',
     featured: true,
-    badge: 'Best value',
     listTitle: 'Everything in Free, plus:',
     features: [
-      '40 resumes tailored to a job description each month',
+      '60 resumes tailored to a job description each month',
       'Unlimited AI edits (fair use)',
       '30 resumes a month written by AI from your notes',
       'AI review in the ATS checker, with your top fixes',
@@ -38,11 +37,12 @@ export const plans = [
     ],
   },
   {
-    id: 'pro',
-    name: 'Pro',
-    forWhom: 'For a longer job search, paid month by month.',
-    period: '/ month',
-    cta: 'Choose Pro',
+    id: 'lifetime',
+    name: 'Lifetime',
+    forWhom: 'For every job search from now on, with one payment.',
+    period: 'once',
+    cta: 'Get Lifetime',
+    badge: 'Best value',
     listTitle: 'Everything in Free, plus:',
     features: [
       '60 resumes tailored to a job description each month',

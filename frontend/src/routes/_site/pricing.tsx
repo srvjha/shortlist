@@ -86,8 +86,8 @@ function priceRow(pricing: Pricing): (typeof comparison)[number] {
     label: 'Price',
     values: [
       'Free',
-      `${priceOf('season_pass', pricing)} once, for 6 months`,
-      `${priceOf('pro', pricing)} ${pricing.provider === 'razorpay' ? 'a month' : 'for a month, paid once'}`,
+      `${priceOf('pro', pricing)} a month`,
+      `${priceOf('lifetime', pricing)} once`,
     ],
   }
 }
@@ -250,7 +250,7 @@ function PricingPage() {
                     key={plan.id}
                     className={cn(
                       'font-semibold text-foreground',
-                      plan.id === 'season_pass' && 'bg-primary/5',
+                      plan.id === 'pro' && 'bg-primary/5',
                     )}
                   >
                     {plan.name}
@@ -269,7 +269,7 @@ function PricingPage() {
                       key={plans[index].id}
                       className={cn(
                         'whitespace-normal text-muted-foreground',
-                        plans[index].id === 'season_pass' && 'bg-primary/5',
+                        plans[index].id === 'pro' && 'bg-primary/5',
                       )}
                     >
                       {value}

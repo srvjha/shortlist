@@ -120,10 +120,10 @@ export const fetchPublicProfile = createServerFn({ method: 'GET' })
     ),
   )
 
-// Prices for the visitor's country. Pages render on this server, so the API is told the visitor's IP.
+// Prices of the plans for sale.
 export const fetchPricing = createServerFn({ method: 'GET' }).handler(
   async () => {
-    const outcome = await call<Pricing>('/v1/pricing', forwardedHeaders())
+    const outcome = await call<Pricing>('/v1/pricing', {})
     return outcome.status === 'ok' ? outcome.data : null
   },
 )

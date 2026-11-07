@@ -55,7 +55,7 @@ import { fixInstruction } from '@/lib/ats'
 import { formatDate } from '@/lib/format'
 import { plans } from '@/lib/plans'
 import { panelStorage } from '@/lib/panel-storage'
-import { comingSoon, priceNote, priceOf, usePricing } from '@/lib/pricing'
+import { priceNote, priceOf, usePricing } from '@/lib/pricing'
 import { CoverageReport } from './coverage-report'
 import { FeedbackCard } from './feedback-card'
 import { SuggestionReview } from './suggestion-review'
@@ -773,7 +773,7 @@ export function AiPanel({
   )
 }
 
-const seasonPass = plans.find((plan) => plan.id === 'season_pass')!
+const pro = plans.find((plan) => plan.id === 'pro')!
 
 // Shown in place of the Tailor button once a Free account has no tailored resumes left.
 function TailorUpgrade() {
@@ -786,18 +786,17 @@ function TailorUpgrade() {
           You've used your free tailored resumes
         </p>
         <p className="text-sm text-muted-foreground">
-          The Season Pass gives you 40 tailored resumes a month and unlimited AI
-          edits, for {priceOf('season_pass', pricing)} {seasonPass.period}.{' '}
-          {priceNote('season_pass', pricing)}
+          Pro gives you 60 tailored resumes a month and unlimited AI edits, for{' '}
+          {priceOf('pro', pricing)} {pro.period}. {priceNote('pro')}
         </p>
       </div>
       <div className="flex flex-wrap gap-2">
         <Button
-          onClick={() => checkout.mutate('season_pass')}
-          disabled={checkout.isPending || !pricing.checkoutOpen}
+          onClick={() => checkout.mutate('pro')}
+          disabled={checkout.isPending}
         >
           {checkout.isPending && <Spinner data-icon="inline-start" />}
-          {pricing.checkoutOpen ? seasonPass.cta : comingSoon}
+          {pro.cta}
         </Button>
         <Button variant="ghost" asChild>
           <Link to="/billing">See all plans</Link>
