@@ -65,6 +65,7 @@ export type BillingEvent =
     }
   | { type: "failed"; checkoutSessionId: string }
   | { type: "refunded"; paymentId: string; full: boolean }
+  | { type: "refund_failed"; paymentId: string; refundId: string }
   | {
       type: "subscription";
       subscriptionId: string;
@@ -139,6 +140,12 @@ export function dodoEvents({ type = "", data }: DodoWebhook): BillingEvent[] {
     // A refund made by hand in the dashboard has no tag; webhooks.ts ignores any payment that isn't ours.
     if (tag && tag !== APP) return [];
     return [{ type: "refunded", paymentId: refund.payment_id, full: !refund.is_partial }];
+  }
+  if (type === "refund.failed") {
+    const refund = data as Refund;
+    const tag = refund.metadata?.app;
+    if (tag && tag !== APP) return [];
+    return [{ type: "refund_failed", paymentId: refund.payment_id, refundId: refund.refund_id }];
   }
   return [];
 }

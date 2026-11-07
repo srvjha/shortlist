@@ -214,6 +214,18 @@ describe("translating Dodo events", () => {
   });
 });
 
+describe("a refund Dodo failed", () => {
+  const failed = {
+    type: "refund.failed",
+    data: { payment_id: "pay_1", refund_id: "ref_1", metadata: { app: "shortlist" } },
+  };
+
+  it("is translated, and left alone when it belongs to another app", () => {
+    expect(dodoEvents(failed)).toEqual([{ type: "refund_failed", paymentId: "pay_1", refundId: "ref_1" }]);
+    expect(dodoEvents({ ...failed, data: { ...failed.data, metadata: { app: "thumbai" } } })).toEqual([]);
+  });
+});
+
 describe("handling a delivery", () => {
   it("records the event id inside the same transaction as its effects", async () => {
     await handleEvents("evt_1", [{ type: "failed", checkoutSessionId: "cks_1" }], {});

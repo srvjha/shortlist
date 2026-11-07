@@ -4,7 +4,7 @@ import { payments, subscriptions, webhookEvents } from "../../db/schema/index.js
 import { NotFoundError } from "../../lib/errors.js";
 import { logger } from "../../lib/logger.js";
 import { cancelSubscription, getSubscription, recomputePlan } from "./billing.service.js";
-import { track } from "../../lib/analytics.js";
+import { captureError, track } from "../../lib/analytics.js";
 import { type BillingEvent, CURRENCY, dodo, paymentEvents, prices, subscriptionEvents } from "./dodo.js";
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
@@ -176,6 +176,24 @@ async function onRefund(tx: Tx, event: Extract<BillingEvent, { type: "refunded" 
   await recomputePlan(row.userId, tx);
 }
 
+// ponytail: this only tells an admin (Admin > API errors in PostHog, and the payload on the payment row). The user
+// has already lost the plan to the refund claim, so someone has to retry the refund in Dodo or give the plan back by
+// hand. Reopen the claim and restore the plan here if refunds ever fail more than rarely.
+async function onRefundFailed(tx: Tx, event: Extract<BillingEvent, { type: "refund_failed" }>, raw: unknown) {
+  const [row] = await tx
+    .update(payments)
+    .set({ raw })
+    .where(eq(payments.providerPaymentId, event.paymentId))
+    .returning({
+      id: payments.id,
+      userId: payments.userId,
+    });
+  if (!row) return null;
+  const details = { paymentId: row.id, refundId: event.refundId };
+  logger.error(details, "Dodo failed a refund");
+  return () => captureError(new Error("Dodo failed a refund"), { ...details, user_id: row.userId });
+}
+
 async function apply(tx: Tx, event: BillingEvent, raw: unknown) {
   switch (event.type) {
     case "paid":
@@ -190,6 +208,8 @@ async function apply(tx: Tx, event: BillingEvent, raw: unknown) {
     case "refunded":
       await onRefund(tx, event);
       return null;
+    case "refund_failed":
+      return onRefundFailed(tx, event, raw);
     case "subscription":
       await onSubscription(tx, event);
       return null;
