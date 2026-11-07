@@ -487,9 +487,9 @@ export const docs: DocPage[] = [
         title: 'How many you get',
         body: (
           <p>
-            Free includes one AI-written resume per account, to try it. Season
-            Pass and Pro include 30 a month, and with your own AI key there is
-            no limit. Writing and editing resumes yourself is always free.
+            Free includes one AI-written resume per account, to try it. Pro and
+            Lifetime include 30 a month, and with your own AI key there is no
+            limit. Writing and editing resumes yourself is always free.
           </p>
         ),
       },
@@ -1190,11 +1190,10 @@ export const docs: DocPage[] = [
             </li>
             <li>
               <b>Phone and email</b>: hidden by default, so strangers can't
-              scrape them. Choose <b>Shown</b> to show them to everyone. On
-              Season Pass or Pro, <b>Password</b> lets anyone read the resume
-              but only people with the contact password see your phone and
-              email, on the page and in the PDF. If your plan ends, they stay
-              hidden.
+              scrape them. Choose <b>Shown</b> to show them to everyone. On a
+              paid plan, <b>Password</b> lets anyone read the resume but only
+              people with the contact password see your phone and email, on the
+              page and in the PDF. If your plan ends, they stay hidden.
             </li>
             <li>
               <b>List on my public profile</b>: show it on your profile page, or
@@ -1223,13 +1222,13 @@ export const docs: DocPage[] = [
         title: 'Detailed analytics',
         body: (
           <p>
-            With the Season Pass or Pro, the <b>Analytics</b> page also shows
-            which weekdays and hours your links get opened, in your time zone,
-            and compares your links side by side: views, how often someone
-            opened the same link again on the same day, its top source and its
-            views per day. <b>Download CSV</b> saves every view in the chosen
-            range. Visitors stay anonymous: we can't tell you who opened a link
-            or which company they work for.
+            On a paid plan, the <b>Analytics</b> page also shows which weekdays
+            and hours your links get opened, in your time zone, and compares
+            your links side by side: views, how often someone opened the same
+            link again on the same day, its top source and its views per day.{' '}
+            <b>Download CSV</b> saves every view in the chosen range. Visitors
+            stay anonymous: we can't tell you who opened a link or which company
+            they work for.
           </p>
         ),
       },
@@ -1251,7 +1250,7 @@ export const docs: DocPage[] = [
     title: 'Plans and limits',
     group: 'Account',
     summary:
-      'Writing, downloading and sharing are free. Plans only raise AI limits.',
+      'Free gets you started with one resume. Paid plans remove the limits on resumes and PDFs and raise AI limits.',
     sections: [
       {
         id: 'plans',
@@ -1271,21 +1270,21 @@ export const docs: DocPage[] = [
               <tbody>
                 <tr>
                   <td>Free</td>
-                  <td>₹0</td>
-                  <td>5 in the first week, then 1 a month</td>
-                  <td>50 a month</td>
-                  <td>Free</td>
-                </tr>
-                <tr>
-                  <td>Season Pass</td>
-                  <td>₹499 once, for 6 months</td>
-                  <td>40 a month</td>
-                  <td>1,000 a month</td>
+                  <td>$0</td>
+                  <td>1</td>
+                  <td>1</td>
                   <td>Free</td>
                 </tr>
                 <tr>
                   <td>Pro</td>
-                  <td>₹129 a month</td>
+                  <td>$12 a month</td>
+                  <td>60 a month</td>
+                  <td>1,000 a month</td>
+                  <td>Free</td>
+                </tr>
+                <tr>
+                  <td>Lifetime</td>
+                  <td>$90 once</td>
                   <td>60 a month</td>
                   <td>1,000 a month</td>
                   <td>Free</td>
@@ -1300,9 +1299,11 @@ export const docs: DocPage[] = [
         title: 'Free on every plan',
         body: (
           <p>
-            Unlimited resumes you write yourself, every template, both editors,
-            PDF downloads, share links and analytics, version history, the ATS
-            checker and importing from a file.
+            Every template, both editors, share links and analytics, version
+            history, the ATS checker, importing from a file, .tex and JSON
+            downloads, and cover and resignation letters. The Free plan includes
+            1 resume and 3 PDF downloads; paid plans have no limit on either. A
+            version you already downloaded is free to download again.
           </p>
         ),
       },
@@ -1327,16 +1328,18 @@ export const docs: DocPage[] = [
           <ul>
             <li>Tailoring a resume to a job counts as one tailored resume.</li>
             <li>
-              Chat requests, bullet edits and LaTeX fixes count as AI edits.
+              Chat requests and bullet edits count as AI edits. AI fixes for
+              LaTeX that won't compile have their own monthly cap, 5 on Free.
             </li>
             <li>
               Imports are free on every plan, with a fair-use cap that only
               stops abuse.
             </li>
             <li>
-              Limits reset at the start of each calendar month. With{' '}
-              <DocLink slug="own-ai-key">your own AI key</DocLink>, none of them
-              apply.
+              On Free, tailored resumes, AI edits and AI-written resumes are
+              once per account. Other limits reset at the start of each calendar
+              month. With <DocLink slug="own-ai-key">your own AI key</DocLink>,
+              no AI limit applies.
             </li>
           </ul>
         ),
@@ -1346,13 +1349,12 @@ export const docs: DocPage[] = [
         title: 'Billing',
         body: (
           <p>
-            The Season Pass is one payment and never renews on its own. In
-            India, Pro renews monthly until you cancel, and stays active until
-            the end of the month you paid for; outside India, Pro is one payment
-            for a month and doesn't renew. Payments are handled by Razorpay in
-            India and by Polar elsewhere; we never see your card or UPI details.
-            To upgrade, see what you have used, or cancel Pro, open{' '}
-            <b>Plans and billing</b> in the sidebar.
+            Pro renews monthly until you cancel, and stays active until the end
+            of the month you paid for. Lifetime is one payment and never renews,
+            with the same monthly limits as Pro. A Season Pass you already have
+            runs until its end date. Payments are handled by Dodo Payments; we
+            never see your card details. To upgrade, see what you have used, or
+            cancel Pro, open <b>Plans and billing</b> in the sidebar.
           </p>
         ),
       },

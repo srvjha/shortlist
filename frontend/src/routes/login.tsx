@@ -112,7 +112,7 @@ function LoginPage() {
               </h1>
               <p className="text-muted-foreground">
                 {isSignup
-                  ? 'Unlimited resumes, free. Use an account you already have, no password needed.'
+                  ? 'Start free. Use an account you already have, no password needed.'
                   : 'Welcome back. Use the same account you signed up with.'}
               </p>
             </div>
