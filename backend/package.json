@@ -21,6 +21,7 @@
     "start:worker": "node --env-file-if-exists=.env dist/worker.js",
     "openapi": "tsx --env-file-if-exists=.env src/scripts/write-openapi.ts",
     "dodo:products": "tsx --env-file-if-exists=.env src/scripts/dodo-products.ts",
+    "previews": "tsx src/scripts/render-template-previews.ts",
     "migrate": "node --env-file-if-exists=.env dist/scripts/migrate.js",
     "seed": "node --env-file-if-exists=.env dist/db/seed.js",
     "test": "vitest run",

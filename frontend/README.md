@@ -67,7 +67,7 @@ src/
 - Light mode is a cool paper grey, not white; dark mode is a green-tinted charcoal. Tokens live in `src/styles.css`.
 - Accent is fountain-pen teal; the highlighter color marks AI changes. No purple.
 - Fonts: Source Serif 4 for headings, Hanken Grotesk for the interface, JetBrains Mono in the LaTeX editor.
-- Template previews in `public/templates` are real renders from the backend's templates.
+- Template previews in `public/templates` are real renders from the backend's templates, made with `pnpm previews` in `backend/` from the made-up people in `src/templates/preview-resumes.ts`.
 - UI work follows the `ui-ux-pro-max` skill's checks (contrast, focus states, touch targets, empty states).
 
 ## Analytics
