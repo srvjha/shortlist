@@ -10,6 +10,11 @@ const social =
 const product = [
   { to: '/templates', label: 'Templates' },
   { to: '/ats-checker', label: 'ATS checker' },
+  { to: '/cover-letter-generator', label: 'Cover letter generator' },
+  {
+    to: '/resignation-letter-generator',
+    label: 'Resignation letter generator',
+  },
   { to: '/pricing', label: 'Pricing' },
   { to: '/login', label: 'Sign in' },
 ] as const
