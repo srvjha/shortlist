@@ -121,7 +121,12 @@ export async function generateStructured<S extends z.ZodType>(
         { err: { name, message, stack }, status, step: input.step, model: base.model },
         "AI generation failed",
       );
-      captureError(err, { step: input.step, model: base.model, status: status ?? null, user_id: input.userId ?? "public" });
+      captureError(err, {
+        step: input.step,
+        model: base.model,
+        status: status ?? null,
+        user_id: input.userId ?? "public",
+      });
     }
     // The model ran and answered, but not in the schema's shape; its tokens are still spent.
     const spent = NoObjectGeneratedError.isInstance(err) && err.usage ? tokenUsage(err.usage) : undefined;
