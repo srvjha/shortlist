@@ -308,7 +308,7 @@ export const adminSystemQuery = queryOptions({
 
 export type AdminUsersSearch = {
   q?: string
-  plan?: 'free' | 'season_pass' | 'pro'
+  plan?: 'free' | 'season_pass' | 'pro' | 'lifetime'
   status?: 'active' | 'suspended' | 'guest'
   page?: number
 }

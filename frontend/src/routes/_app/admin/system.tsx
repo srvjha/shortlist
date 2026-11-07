@@ -156,7 +156,7 @@ function SystemReport({ data }: { data: AdminSystem }) {
           />
           <Check
             state={data.lastWebhookAt ? 'ok' : 'off'}
-            label="Razorpay webhooks"
+            label="Dodo webhooks"
             detail={
               data.lastWebhookAt
                 ? `Last delivery ${formatDateTime(data.lastWebhookAt)}`

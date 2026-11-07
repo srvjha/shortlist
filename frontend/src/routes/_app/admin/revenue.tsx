@@ -24,7 +24,6 @@ import { adminRevenueQuery } from '@/lib/api/queries'
 import type { AdminRevenue } from '@/lib/api/types'
 import {
   formatDateTime,
-  formatInr,
   formatMoney,
   formatNumber,
   percent,
@@ -67,19 +66,21 @@ const statusLabels: Record<string, string> = {
   created: 'Abandoned or pending',
 }
 
+const formatUsd = (cents: number) => formatMoney(cents, 'USD')
+
 function RevenueReport({ data }: { data: AdminRevenue }) {
   const { totals } = data
-  const active = (plan: 'season_pass' | 'pro') =>
+  const active = (plan: 'season_pass' | 'pro' | 'lifetime') =>
     data.activeSubscriptions.find((row) => row.plan === plan)?.active ?? 0
 
   return (
     <div className="flex flex-col gap-10">
-      {!data.razorpayConfigured && (
+      {!data.paymentsConfigured && (
         <Alert>
           <AlertTitle>Payments are off</AlertTitle>
           <AlertDescription>
-            Razorpay keys aren't set on the server, so nobody can buy a plan
-            yet. Plans you give from a user's page still work.
+            Dodo keys and products aren't set on the server, so nobody can buy a
+            plan yet. Plans you give from a user's page still work.
           </AlertDescription>
         </Alert>
       )}
@@ -87,17 +88,14 @@ function RevenueReport({ data }: { data: AdminRevenue }) {
       <StatGrid>
         <Stat
           label="Revenue"
-          value={formatInr(totals.paise)}
-          current={totals.paise}
-          previous={totals.previousPaise}
-          format={formatInr}
-          {...(totals.usdCents > 0 && {
-            hint: `plus ${formatMoney(totals.usdCents, 'USD')} through Polar`,
-          })}
+          value={formatUsd(totals.revenue)}
+          current={totals.revenue}
+          previous={totals.previousRevenue}
+          format={formatUsd}
         />
         <Stat
           label="All time"
-          value={formatInr(totals.allTimePaise)}
+          value={formatUsd(totals.allTimeRevenue)}
           hint={`from ${formatNumber(totals.payers)} ${totals.payers === 1 ? 'person' : 'people'}`}
         />
         <Stat
@@ -107,24 +105,26 @@ function RevenueReport({ data }: { data: AdminRevenue }) {
         />
         <Stat
           label="Active paid plans"
-          value={formatNumber(active('season_pass') + active('pro'))}
-          hint={`${formatNumber(active('season_pass'))} Season Pass, ${formatNumber(active('pro'))} Pro`}
+          value={formatNumber(
+            active('season_pass') + active('pro') + active('lifetime'),
+          )}
+          hint={`${formatNumber(active('pro'))} Pro, ${formatNumber(active('lifetime'))} Lifetime, ${formatNumber(active('season_pass'))} Season Pass`}
         />
       </StatGrid>
 
       <div className="grid gap-10 lg:grid-cols-3">
         <Section title="Revenue per day" className="lg:col-span-2">
-          {totals.paise === 0 ? (
+          {totals.revenue === 0 ? (
             <EmptyNote>No revenue in this period.</EmptyNote>
           ) : (
             <TrendChart
               data={data.byDay.map((day) => ({
                 day: day.day,
-                value: day.paise,
+                value: day.revenue,
               }))}
               color={seriesColor.revenue}
               unit={['earned', 'earned']}
-              format={formatInr}
+              format={formatUsd}
             />
           )}
         </Section>

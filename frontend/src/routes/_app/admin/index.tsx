@@ -6,7 +6,7 @@ import {
   CircleDollarSignIcon,
   EyeIcon,
   FileTextIcon,
-  IndianRupeeIcon,
+  DollarSignIcon,
   SparklesIcon,
   TriangleAlertIcon,
   UserPlusIcon,
@@ -35,7 +35,7 @@ import { adminOverviewQuery } from '@/lib/api/queries'
 import type { AdminOverview } from '@/lib/api/types'
 import { cn } from '@/lib/utils'
 import {
-  formatInr,
+  formatMoney,
   formatNumber,
   formatUsd,
   initials,
@@ -93,6 +93,7 @@ const planColors: Record<string, string> = {
   free: 'var(--muted-foreground)',
   season_pass: 'var(--viz-1)',
   pro: 'var(--viz-2)',
+  lifetime: 'var(--viz-3)',
 }
 
 const providerColors: Record<string, string> = {
@@ -238,12 +239,12 @@ function Overview({ data }: { data: AdminOverview }) {
           hint="What the AI provider charged"
         />
         <Kpi
-          icon={IndianRupeeIcon}
+          icon={DollarSignIcon}
           color={seriesColor.revenue}
           label="Revenue"
-          value={formatInr(totals.revenuePaise)}
-          current={totals.revenuePaise}
-          previous={totals.previousRevenuePaise}
+          value={formatMoney(totals.revenueCents, 'USD')}
+          current={totals.revenueCents}
+          previous={totals.previousRevenueCents}
           hint="Paid in this range, minus refunds"
         />
       </KpiGroup>
