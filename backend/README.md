@@ -47,7 +47,7 @@ src/
   config/env.ts        validated env vars   openapi.ts         API spec from Zod schemas
   db/                  Drizzle schema, client, seed
   jobs/                maintenance tasks the worker runs
-  lib/                 auth, ai (models, pricing), latex, storage, analytics (PostHog), razorpay, errors
+  lib/                 auth, ai (models, pricing), latex, storage, analytics (PostHog), errors
   middleware/          requireAuth, requireAdmin, validate, rate limits, request metrics, errors
   modules/<name>/      routes -> controller -> service, plus Zod schemas
   schemas/             resume content schema shared by every module
@@ -78,7 +78,7 @@ under `/api/auth/*` (session cookie). Errors always look like `{ "error": { "cod
 | Jobs and AI           | `/v1/jobs`, `/v1/resumes/:id/suggestions`, `/v1/resumes/:id/suggestions/:id`, `/v1/resumes/:id/coverage`                             |
 | Sharing               | `/v1/resumes/:id/share-links`, `/v1/share-links/:id`, `/v1/share-links/:id/stats`, `GET /v1/analytics`                               |
 | Public                | `GET /v1/public/users/:username`, `/v1/public/users/:username/resumes/:slug` (+ `/pdf`)                                              |
-| Billing               | `POST /v1/checkouts`, `GET/DELETE /v1/subscription`, `POST /v1/webhooks/razorpay`                                                    |
+| Billing               | `POST /v1/checkouts`, `GET/DELETE /v1/subscription`, `POST /v1/webhooks/dodo`                                                       |
 | Admin                 | `/v1/admin/overview`, `/users`, `/users/:id` (+ `/sessions`, `/subscriptions`), `/ai`, `/revenue`, `/content`, `/traffic`, `/system` |
 
 ## Admin
@@ -86,7 +86,7 @@ under `/api/auth/*` (session cookie). Errors always look like `{ "error": { "cod
 `/v1/admin/*` is open only to signed-in users whose email is in `ADMIN_EMAILS` and verified by their sign-in
 provider (`src/middleware/require-admin.ts`, tested in `test/admin.test.ts`). Admins can suspend and restore
 accounts (a suspended user can't start a session), sign a user out everywhere, and give a Season Pass or Pro for
-free. Plans paid through Razorpay are cancelled or refunded in Razorpay, not here, so nobody keeps being billed.
+free. Plans paid through Dodo are cancelled or refunded in Dodo, not here, so nobody keeps being billed.
 
 The traffic report queries PostHog with HogQL using `POSTHOG_PERSONAL_API_KEY`, and caches results in memory for
 five minutes because PostHog rate-limits its query API. Admin actions are sent to PostHog as `admin_*` events.
@@ -107,9 +107,10 @@ Every variable is listed in `.env.example`. Where to get them:
 | `POSTHOG_KEY`, `POSTHOG_HOST`                                             | PostHog, Settings, Project, the project token and your region's ingest host                                                                 |
 | `POSTHOG_PERSONAL_API_KEY`, `POSTHOG_PROJECT_ID`                          | PostHog, Settings, Personal API keys, scopes `query:read` and `session_recording:read`; the ID is in the URL                                |
 | `ADMIN_EMAILS`                                                            | Comma-separated emails allowed into `/admin`                                                                                                |
-| `RAZORPAY_KEY_ID/SECRET`                                                  | Razorpay dashboard, API keys                                                                                                                |
-| `RAZORPAY_PRO_PLAN_ID`                                                    | Razorpay dashboard, Subscriptions, create a monthly plan (₹129)                                                                             |
-| `RAZORPAY_WEBHOOK_SECRET`                                                 | Razorpay dashboard, Webhooks, URL `<BETTER_AUTH_URL>/v1/webhooks/razorpay` with the events listed in `.env.example`                         |
+| `DODO_PAYMENTS_API_KEY`                                                  | Dodo dashboard, Developer, API Keys (test and live mode have separate keys) |
+| `DODO_PAYMENTS_ENVIRONMENT`                                              | `test_mode` or `live_mode`, matching the key |
+| `DODO_PAYMENTS_WEBHOOK_KEY`                                              | Dodo dashboard, Developer, Webhooks, URL `<BETTER_AUTH_URL>/v1/webhooks/dodo`; events listed in `.env.example` |
+| `DODO_PRODUCT_PRO`, `DODO_PRODUCT_LIFETIME`                              | Printed by `pnpm dodo:products` |
 | `JINA_API_KEY`                                                            | Optional, jina.ai, raises the limit for fetching job posts by URL                                                                           |
 
 ## Deploy to the VPS

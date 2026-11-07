@@ -31,7 +31,7 @@ with a link that tells you who opened it.
 - **Plans.** Free: unlimited resumes you write yourself, 1 AI-tailored resume a month, 50 AI edits a month and
   1 AI draft. An AI request that suggests no changes is not counted. Season Pass (₹499 for 6 months, 40 tailored
   a month) and Pro (₹129 a month, 60) raise the AI limits. The app shows what is left in the sidebar and the AI
-  panel, and every plan button opens Razorpay checkout directly.
+  panel, and every plan button opens Dodo checkout directly.
 - **Public site.** A page per template, resume guides and docs, all in the sitemap for search engines.
 - **Admin dashboard** at `/admin` for the emails in `ADMIN_EMAILS`: product numbers, users (with suspend, sign
   out and free plans), AI cost, revenue, content, PostHog traffic and system health.
@@ -82,7 +82,7 @@ shortlist.co.in  ->  Vercel (frontend)
 api.shortlist.co.in  ->  VPS: shared Caddy (HTTPS)  ->  shortlist-api  ->  Postgres
                                                            |-> compiler (isolated, no internet)
                                                            |-> Cloudflare R2 (PDFs, uploads, backups)
-                                                           |-> OpenAI, PostHog, Razorpay
+                                                           |-> OpenAI, PostHog, Dodo
                          worker (scheduled cleanup), backup (nightly, encrypted, to R2)
 ```
 
