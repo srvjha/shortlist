@@ -78,7 +78,7 @@ under `/api/auth/*` (session cookie). Errors always look like `{ "error": { "cod
 | Jobs and AI           | `/v1/jobs`, `/v1/resumes/:id/suggestions`, `/v1/resumes/:id/suggestions/:id`, `/v1/resumes/:id/coverage`                             |
 | Sharing               | `/v1/resumes/:id/share-links`, `/v1/share-links/:id`, `/v1/share-links/:id/stats`, `GET /v1/analytics`                               |
 | Public                | `GET /v1/public/users/:username`, `/v1/public/users/:username/resumes/:slug` (+ `/pdf`)                                              |
-| Billing               | `POST /v1/checkouts`, `GET/DELETE /v1/subscription`, `POST /v1/webhooks/dodo`                                                       |
+| Billing               | `POST /v1/checkouts`, `GET/DELETE /v1/subscription`, `POST /v1/webhooks/dodo`                                                        |
 | Admin                 | `/v1/admin/overview`, `/users`, `/users/:id` (+ `/sessions`, `/subscriptions`), `/ai`, `/revenue`, `/content`, `/traffic`, `/system` |
 
 ## Admin
@@ -107,10 +107,10 @@ Every variable is listed in `.env.example`. Where to get them:
 | `POSTHOG_KEY`, `POSTHOG_HOST`                                             | PostHog, Settings, Project, the project token and your region's ingest host                                                                 |
 | `POSTHOG_PERSONAL_API_KEY`, `POSTHOG_PROJECT_ID`                          | PostHog, Settings, Personal API keys, scopes `query:read` and `session_recording:read`; the ID is in the URL                                |
 | `ADMIN_EMAILS`                                                            | Comma-separated emails allowed into `/admin`                                                                                                |
-| `DODO_PAYMENTS_API_KEY`                                                  | Dodo dashboard, Developer, API Keys (test and live mode have separate keys) |
-| `DODO_PAYMENTS_ENVIRONMENT`                                              | `test_mode` or `live_mode`, matching the key |
-| `DODO_PAYMENTS_WEBHOOK_KEY`                                              | Dodo dashboard, Developer, Webhooks, URL `<BETTER_AUTH_URL>/v1/webhooks/dodo`; events listed in `.env.example` |
-| `DODO_PRODUCT_PRO`, `DODO_PRODUCT_LIFETIME`                              | Printed by `pnpm dodo:products` |
+| `DODO_PAYMENTS_API_KEY`                                                   | Dodo dashboard, Developer, API Keys (test and live mode have separate keys)                                                                 |
+| `DODO_PAYMENTS_ENVIRONMENT`                                               | `test_mode` or `live_mode`, matching the key                                                                                                |
+| `DODO_PAYMENTS_WEBHOOK_KEY`                                               | Dodo dashboard, Developer, Webhooks, URL `<BETTER_AUTH_URL>/v1/webhooks/dodo`; events listed in `.env.example`                              |
+| `DODO_PRODUCT_PRO`, `DODO_PRODUCT_LIFETIME`                               | Printed by `pnpm dodo:products`                                                                                                             |
 | `JINA_API_KEY`                                                            | Optional, jina.ai, raises the limit for fetching job posts by URL                                                                           |
 
 ## Deploy to the VPS

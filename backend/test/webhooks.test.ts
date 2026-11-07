@@ -242,7 +242,9 @@ describe("Lifetime", () => {
     await handleEvents("evt_1", [paid], {});
     const period = state.sets.find((set) => set.currentPeriodEnd)!;
     expect(period.status).toBe("active");
-    expect((period.currentPeriodEnd as Date).getFullYear()).toBe((period.currentPeriodStart as Date).getFullYear() + 100);
+    expect((period.currentPeriodEnd as Date).getFullYear()).toBe(
+      (period.currentPeriodStart as Date).getFullYear() + 100,
+    );
     expect(state.sets).toContainEqual({ plan: "lifetime" });
   });
 

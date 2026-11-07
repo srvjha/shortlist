@@ -66,16 +66,20 @@ billingRouter.post(
 // Mounted before express.json() in app.ts: the signature is computed over the raw body.
 export const paymentWebhookRouter = Router();
 
-paymentWebhookRouter.post("/v1/webhooks/dodo", express.raw({ type: "application/json", limit: "1mb" }), async (req, res) => {
-  const body = req.body as Buffer;
-  const event = Buffer.isBuffer(body)
-    ? readDodoWebhook(body, {
-        "webhook-id": req.get("webhook-id") ?? "",
-        "webhook-signature": req.get("webhook-signature") ?? "",
-        "webhook-timestamp": req.get("webhook-timestamp") ?? "",
-      })
-    : null;
-  if (!event) throw new AppError(400, "INVALID_SIGNATURE", "Webhook signature verification failed");
-  await handleEvents(req.get("webhook-id"), dodoEvents(event), event);
-  res.status(200).json({ data: { received: true } });
-});
+paymentWebhookRouter.post(
+  "/v1/webhooks/dodo",
+  express.raw({ type: "application/json", limit: "1mb" }),
+  async (req, res) => {
+    const body = req.body as Buffer;
+    const event = Buffer.isBuffer(body)
+      ? readDodoWebhook(body, {
+          "webhook-id": req.get("webhook-id") ?? "",
+          "webhook-signature": req.get("webhook-signature") ?? "",
+          "webhook-timestamp": req.get("webhook-timestamp") ?? "",
+        })
+      : null;
+    if (!event) throw new AppError(400, "INVALID_SIGNATURE", "Webhook signature verification failed");
+    await handleEvents(req.get("webhook-id"), dodoEvents(event), event);
+    res.status(200).json({ data: { received: true } });
+  },
+);
