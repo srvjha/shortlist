@@ -112,7 +112,7 @@ export function Hero() {
         </Button>
       </div>
       <p className="mt-4 text-base text-muted-foreground">
-        Free plan: 1 tailored resume, 1 AI edit and 3 PDF downloads. No card
+        Free plan: 1 tailored resume, 1 AI edit and 5 PDF downloads. No card
         needed.
       </p>
       <HowItWorksVideo />

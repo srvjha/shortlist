@@ -124,14 +124,14 @@ describe("resume cap", () => {
 
 describe("PDF downloads", () => {
   it("counts up to the limit, then refuses a new version", async () => {
-    for (const version of ["v1", "v2", "v3"]) await recordPdfDownload("user_1", version);
+    for (let i = 1; i <= FREE_PDF_DOWNLOADS; i++) await recordPdfDownload("user_1", `v${i}`);
     expect(state.inserted).toHaveLength(FREE_PDF_DOWNLOADS);
-    await expect(recordPdfDownload("user_1", "v4")).rejects.toMatchObject({ status: 402, code: "QUOTA_EXCEEDED" });
+    await expect(recordPdfDownload("user_1", "next")).rejects.toMatchObject({ status: 402, code: "QUOTA_EXCEEDED" });
     expect(state.inserted).toHaveLength(FREE_PDF_DOWNLOADS);
   });
 
   it("doesn't count the same version twice, even with none left", async () => {
-    state.downloaded = ["v1", "v2", "v3"];
+    state.downloaded = Array.from({ length: FREE_PDF_DOWNLOADS }, (_, i) => `v${i + 1}`);
     state.currentVersionSeen = true;
     await expect(recordPdfDownload("user_1", "v1")).resolves.toBeUndefined();
     expect(state.inserted).toHaveLength(0);
@@ -139,7 +139,7 @@ describe("PDF downloads", () => {
 
   it("lets only the allowed number through when requests run at once", async () => {
     const results = await Promise.allSettled(
-      ["v1", "v2", "v3", "v4", "v5"].map((version) => recordPdfDownload("user_1", version)),
+      Array.from({ length: FREE_PDF_DOWNLOADS + 2 }, (_, i) => recordPdfDownload("user_1", `v${i + 1}`)),
     );
     expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(FREE_PDF_DOWNLOADS);
     expect(state.inserted).toHaveLength(FREE_PDF_DOWNLOADS);

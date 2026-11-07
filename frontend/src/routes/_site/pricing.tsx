@@ -41,7 +41,7 @@ const comparison: { label: string; values: [string, string, string] }[] = [
   },
   {
     label: 'PDF downloads',
-    values: ['3', 'Unlimited', 'Unlimited'],
+    values: ['5', 'Unlimited', 'Unlimited'],
   },
   {
     label: '.tex and JSON downloads',
@@ -107,7 +107,7 @@ function priceRow(pricing: Pricing): (typeof comparison)[number] {
 const faqs = [
   {
     q: 'Is the free plan really free?',
-    a: 'Yes, with no card and no time limit. You get 1 resume with every template, and you can keep editing it by hand for as long as you like. You also get 1 tailored resume, 1 AI edit, 1 AI-written resume and 3 PDF downloads, the ATS checker, and cover and resignation letters. Those AI allowances are once per account, not monthly, because each AI request costs us money to run.',
+    a: 'Yes, with no card and no time limit. You get 1 resume with every template, and you can keep editing it by hand for as long as you like. You also get 1 tailored resume, 1 AI edit, 1 AI-written resume and 5 PDF downloads, the ATS checker, and cover and resignation letters. Those AI allowances are once per account, not monthly, because each AI request costs us money to run.',
   },
   {
     q: 'What is the difference between Basic and Pro?',
@@ -123,7 +123,7 @@ const faqs = [
   },
   {
     q: 'What counts as a PDF download?',
-    a: 'On Free, each version of your resume you download as a PDF counts once, up to 3. Downloading the same version again is free, and so is previewing it. Paid plans have no limit, and .tex and JSON downloads are open to everyone.',
+    a: 'On Free, each version of your resume you download as a PDF counts once, up to 5. Downloading the same version again is free, and so is previewing it. Paid plans have no limit, and .tex and JSON downloads are open to everyone.',
   },
   {
     q: 'Does importing my old resume cost anything?',

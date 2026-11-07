@@ -16,7 +16,7 @@ export const plans = [
       '1 resume tailored to a job description',
       '1 AI edit',
       '1 resume written by AI from your notes',
-      '3 PDF downloads',
+      '5 PDF downloads',
       'The ATS checker, and importing your old resume',
       '30 AI cover letters a month, and unlimited resignation letters',
     ],

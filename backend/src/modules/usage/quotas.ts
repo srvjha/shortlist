@@ -28,7 +28,7 @@ const onceOnFree: readonly QuotaKind[] = ["tailor", "edit", "draft"];
 const countsForAllTime = (plan: Plan, kind: QuotaKind) => plan === "free" && onceOnFree.includes(kind);
 
 // PDF downloads on Free, for all time. Paid plans aren't counted at all.
-export const FREE_PDF_DOWNLOADS = 3;
+export const FREE_PDF_DOWNLOADS = 5;
 
 const stepsFor: Record<QuotaKind, (typeof aiRuns.$inferSelect)["step"][]> = {
   tailor: ["rewrite"],

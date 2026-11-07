@@ -1302,7 +1302,7 @@ export const docs: DocPage[] = [
             Every template, both editors, share links and analytics, version
             history, the ATS checker, importing from a file, .tex and JSON
             downloads, and cover and resignation letters. The Free plan includes
-            1 resume and 3 PDF downloads; paid plans have no limit on either. A
+            1 resume and 5 PDF downloads; paid plans have no limit on either. A
             version you already downloaded is free to download again.
           </p>
         ),
