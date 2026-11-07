@@ -700,6 +700,7 @@ const stepLabels: Record<string, string> = {
   draft: 'Write from notes',
   ats_match: 'ATS job match',
   ats_review: 'ATS AI review',
+  cover_letter: 'Cover letter',
   project_link: 'Project from a link',
 }
 

@@ -41,6 +41,8 @@ export const publicLimiter = limiter(minute, 120);
 export const compileLimiter = limiter(minute, 30);
 export const aiLimiter = limiter(minute, 10);
 export const atsLimiter = limiter(10 * minute, 10);
+// Each request is a real AI call on our key, for anyone with no account.
+export const publicLetterLimiter = limiter(60 * minute, 3);
 // Slows anyone guessing promo codes.
 export const redeemLimiter = limiter(10 * minute, 10);
 export const reportLimiter = limiter(10 * minute, 5);

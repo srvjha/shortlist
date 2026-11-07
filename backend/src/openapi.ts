@@ -74,6 +74,16 @@ import {
   updateCustomTemplateBody,
 } from "./modules/custom-templates/custom-templates.schemas.js";
 import { createJobBody, jobListResponse, jobParams, jobResponse } from "./modules/jobs/jobs.schemas.js";
+import {
+  createLetterBody,
+  createPublicCoverLetterBody,
+  letterListResponse,
+  letterParams,
+  letterPdfQuery,
+  letterResponse,
+  publicCoverLetterResponse,
+  updateLetterBody,
+} from "./modules/letters/letters.schemas.js";
 import { createPreviewBody, resumeExportQuery, resumePdfQuery } from "./modules/pdfs/pdfs.schemas.js";
 import { profileResponse, putProfileBody } from "./modules/profiles/profiles.schemas.js";
 import {
@@ -486,6 +496,46 @@ const paths: ZodOpenApiPathsObject = {
       params: resumeParams,
       query: coverageQuery,
       response: coverageResponse,
+    }),
+  },
+  "/v1/letters": {
+    get: op({ summary: "List your saved letters", tag: "Letters", response: letterListResponse }),
+    post: op({
+      summary: "Write a cover letter from a resume and a job, or save a resignation letter",
+      tag: "Letters",
+      body: createLetterBody,
+      response: letterResponse,
+      status: 201,
+    }),
+  },
+  "/v1/letters/{letterId}": {
+    get: op({ summary: "Get a letter", tag: "Letters", params: letterParams, response: letterResponse }),
+    patch: op({
+      summary: "Edit a letter",
+      tag: "Letters",
+      params: letterParams,
+      body: updateLetterBody,
+      response: letterResponse,
+    }),
+    delete: op({ summary: "Delete a letter", tag: "Letters", params: letterParams, noContent: true }),
+  },
+  "/v1/letters/{letterId}/pdf": {
+    get: op({
+      summary: "A letter as a PDF in its resume's template. Doesn't count toward any resume limit.",
+      tag: "Letters",
+      params: letterParams,
+      query: letterPdfQuery,
+      pdf: true,
+    }),
+  },
+  "/v1/public/cover-letters": {
+    post: op({
+      summary: "Write a cover letter from pasted text (not stored, 3 per hour)",
+      tag: "Letters",
+      auth: false,
+      body: createPublicCoverLetterBody,
+      response: publicCoverLetterResponse,
+      status: 201,
     }),
   },
   "/v1/resumes/{resumeId}/ats-reports": {
