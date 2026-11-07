@@ -14,7 +14,7 @@ export const Route = createFileRoute('/_site/privacy')({
   component: () => (
     <LegalPage
       title="Privacy policy"
-      updated={new Date('2026-10-05T00:00:00+05:30')}
+      updated={new Date('2026-11-07T00:00:00+05:30')}
     >
       <p>
         A resume holds a lot of personal information. This page explains what{' '}
@@ -45,18 +45,8 @@ export const Route = createFileRoute('/_site/privacy')({
           referring site. We never store IP addresses.
         </li>
         <li>
-          Payment records from Razorpay, or from Polar for payments made outside
-          India. We never see or store your card or UPI details.
-        </li>
-        <li>
-          The country your IP address is in, looked up when you view prices or
-          pay, so we can show your country's prices and send you to the right
-          payment provider. The IP address itself is not stored. IP Geolocation
-          by{' '}
-          <a href="https://db-ip.com" target="_blank" rel="noopener noreferrer">
-            DB-IP
-          </a>
-          .
+          Payment records from Dodo Payments, our merchant of record. We never
+          see or store your card details.
         </li>
       </ul>
       <h2>How AI features use your data</h2>
