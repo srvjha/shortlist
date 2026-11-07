@@ -172,14 +172,26 @@ async function onSubscription(tx: Tx, event: Extract<BillingEvent, { type: "subs
 // A recurring Basic is left alone: it is cancelled at Dodo for a refund, and that event ends it.
 async function onRefund(tx: Tx, event: Extract<BillingEvent, { type: "refunded" }>) {
   const [row] = await tx.select().from(payments).where(eq(payments.providerPaymentId, event.paymentId)).limit(1);
-  if (!row || !event.full) return;
+  // A self-serve refund has already ended its plan here.
+  if (!row || !event.full || row.status === "refunded") return;
 
-  await tx.update(payments).set({ status: "refunded" }).where(eq(payments.id, row.id));
+  // A self-serve request Dodo couldn't pay (refundedAt set, see refundByHand) ends its plan even though it renews
+  // through Dodo; other renewing plans are left to their subscription events.
+  const requested = row.refundedAt !== null;
+  await tx
+    .update(payments)
+    .set({ status: "refunded", ...(requested && { refundedAmount: row.amount }) })
+    .where(eq(payments.id, row.id));
   if (!row.subscriptionId) return;
   await tx
     .update(subscriptions)
     .set({ status: "expired", currentPeriodEnd: new Date() })
-    .where(and(eq(subscriptions.id, row.subscriptionId), isNull(subscriptions.providerSubscriptionId)));
+    .where(
+      and(
+        eq(subscriptions.id, row.subscriptionId),
+        requested ? undefined : isNull(subscriptions.providerSubscriptionId),
+      ),
+    );
   await recomputePlan(row.userId, tx);
 }
 
