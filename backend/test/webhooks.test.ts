@@ -350,6 +350,33 @@ describe("Pro", () => {
     });
   });
 
+  it("ends a renewing plan when a refund we couldn't pay is done in the dashboard", async () => {
+    state.selects = [
+      [
+        {
+          id: "pay_row",
+          userId: "user_1",
+          subscriptionId: CHECKOUT,
+          status: "captured",
+          refundedAt: new Date(),
+          amount: 120,
+        },
+      ],
+      [],
+    ];
+    await handleEvents("evt_6", [{ type: "refunded", paymentId: "pay_1", full: true }], {});
+    expect(state.sets).toContainEqual({ status: "refunded", refundedAmount: 120 });
+    expect(state.sets.some((set) => set.status === "expired")).toBe(true);
+  });
+
+  it("leaves a payment it already refunded alone", async () => {
+    state.selects = [
+      [{ id: "pay_row", userId: "user_1", subscriptionId: CHECKOUT, status: "refunded", refundedAt: new Date() }],
+    ];
+    await handleEvents("evt_7", [{ type: "refunded", paymentId: "pay_1", full: true }], {});
+    expect(state.sets).toEqual([]);
+  });
+
   it("doesn't revive a plan already ended here", async () => {
     state.selects = [[row("pro", "expired")]];
     await handleEvents("evt_4", [event], {});
