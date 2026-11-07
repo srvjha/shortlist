@@ -2,8 +2,11 @@ import { randomUUID } from "node:crypto";
 import { and, desc, eq, gt, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 import { db } from "../../db/index.js";
 import { payments, subscriptions, users } from "../../db/schema/index.js";
-import { ConflictError, ForbiddenError, NotFoundError } from "../../lib/errors.js";
-import { track } from "../../lib/analytics.js";
+import { AppError, ConflictError, ForbiddenError, NotFoundError } from "../../lib/errors.js";
+import { captureError, track } from "../../lib/analytics.js";
+import { sendEmail } from "../../lib/email.js";
+import { logger } from "../../lib/logger.js";
+import { env } from "../../config/env.js";
 import { runsSince } from "../usage/quotas.js";
 import { APP, CURRENCY, dodo, type PaidPlan, prices, startCheckout } from "./dodo.js";
 
@@ -190,6 +193,44 @@ export async function getRefundQuote(userId: string, now = new Date()) {
 // Leaves updated_at alone: the admin revenue view dates a captured payment by it.
 const keepUpdatedAt = sql`${payments.updatedAt}`;
 
+// Dodo pays refunds from the Dodo balance, and a new payment only joins it after a hold of a few days.
+const lowBalance = (error: unknown) =>
+  error instanceof Error && "status" in error && error.status === 409 && /insufficient funds/i.test(error.message);
+
+// The claim stays, so the request is on record and can't be made twice. The plan keeps running, already cancelled at
+// Dodo, until an admin refunds the payment in the Dodo dashboard; the refund webhook then ends it.
+async function refundByHand(
+  userId: string,
+  row: typeof payments.$inferSelect,
+  subscriptionId?: string | null,
+): Promise<never> {
+  const details = {
+    paymentId: row.id,
+    providerPaymentId: row.providerPaymentId,
+    subscriptionId: subscriptionId ?? null,
+  };
+  logger.error(details, "Refund needs doing by hand: Dodo balance too low");
+  captureError(new Error("Refund needs doing by hand"), { ...details, user_id: userId });
+  sendEmail({
+    to: env.ADMIN_EMAILS,
+    subject: "Refund to do by hand: Dodo balance too low",
+    text: [
+      "Dodo refused a self-serve refund because the balance was too low. The subscription is already cancelled.",
+      "Refund this payment in the Dodo dashboard (Transactions > Payments) within 4 to 5 working days.",
+      "",
+      `Dodo payment: ${row.providerPaymentId}`,
+      `Amount before tax: $${(row.amount / 100).toFixed(2)}`,
+      `User: ${env.FRONTEND_URL}/admin/users/${userId}`,
+    ].join("\n"),
+  }).catch((err: unknown) => logger.error({ err, ...details }, "Could not email the refund alert"));
+  track(userId, "refund_delayed", { amount_usd: row.amount / 100 });
+  throw new AppError(
+    503,
+    "REFUND_DELAYED",
+    "We couldn't send your refund automatically, but your request is saved. We'll refund you within 4 to 5 working days, and your bank may take a few more days to show it.",
+  );
+}
+
 export async function requestRefund(userId: string, paymentId: string, now = new Date()) {
   // Claimed before the provider is called, so a double click or a second tab gets a conflict, not a second refund.
   const [row] = await db
@@ -239,6 +280,7 @@ export async function requestRefund(userId: string, paymentId: string, now = new
           .then((payment) => payment.refunds.find((refund) => refund.reason === note && refund.status !== "failed"))
           .catch(() => undefined)
       : undefined;
+    if (!ours && lowBalance(error)) return refundByHand(userId, row, subscription?.providerSubscriptionId);
     if (!ours) {
       await release();
       throw error;

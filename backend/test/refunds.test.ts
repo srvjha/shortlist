@@ -47,7 +47,9 @@ vi.mock("../src/modules/usage/quotas.js", async (original) => ({
   ...(await original<typeof import("../src/modules/usage/quotas.js")>()),
   runsSince: async (_userId: string, kind: string) => state.used[kind] ?? 0,
 }));
-vi.mock("../src/lib/analytics.js", () => ({ track: vi.fn() }));
+vi.mock("../src/lib/analytics.js", () => ({ track: vi.fn(), captureError: vi.fn() }));
+const sendEmail = vi.hoisted(() => vi.fn());
+vi.mock("../src/lib/email.js", () => ({ sendEmail }));
 const remote = vi.hoisted(() => ({ payment: vi.fn(), update: vi.fn(), refund: vi.fn() }));
 vi.mock("../src/modules/billing/dodo.js", async (original) => ({
   ...(await original<typeof import("../src/modules/billing/dodo.js")>()),
@@ -83,6 +85,7 @@ beforeEach(() => {
   remote.payment.mockReset().mockResolvedValue(paid);
   remote.update.mockReset().mockResolvedValue({});
   remote.refund.mockReset().mockResolvedValue({ refund_id: "rfnd_1" });
+  sendEmail.mockReset().mockResolvedValue(true);
 });
 
 describe("the refund window", () => {
@@ -131,6 +134,16 @@ describe("requesting a refund", () => {
     remote.refund.mockRejectedValue(new Error("refused"));
     await expect(requestRefund("user_1", claimed.id)).rejects.toThrow("refused");
     expect(state.updates).toBe(2);
+  });
+
+  it("keeps the request and tells an admin when the Dodo balance is too low to pay it", async () => {
+    state.claims = [[claimed]];
+    remote.refund.mockRejectedValue(Object.assign(new Error("409 Insufficient funds in wallet"), { status: 409 }));
+    await expect(requestRefund("user_1", claimed.id)).rejects.toMatchObject({ status: 503, code: "REFUND_DELAYED" });
+    expect(state.updates).toBe(1);
+    expect(sendEmail).toHaveBeenCalledWith(
+      expect.objectContaining({ text: expect.stringContaining("pay_1") as unknown }),
+    );
   });
 
   it("refuses a payment already refunded at Dodo, and frees the claim", async () => {
