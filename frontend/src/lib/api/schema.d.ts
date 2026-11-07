@@ -7412,6 +7412,14 @@ export interface paths {
                                     refundableUntil: string;
                                 } | null;
                                 reason: string | null;
+                                status: {
+                                    amount: number;
+                                    /** @constant */
+                                    currency: "USD";
+                                    requestedAt: string;
+                                    /** @enum {string} */
+                                    state: "pending" | "refunded";
+                                } | null;
                             };
                         };
                     };

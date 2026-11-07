@@ -22679,11 +22679,50 @@
                             "string",
                             "null"
                           ]
+                        },
+                        "status": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "amount": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991
+                                },
+                                "currency": {
+                                  "type": "string",
+                                  "const": "USD"
+                                },
+                                "requestedAt": {
+                                  "type": "string"
+                                },
+                                "state": {
+                                  "type": "string",
+                                  "enum": [
+                                    "pending",
+                                    "refunded"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "amount",
+                                "currency",
+                                "requestedAt",
+                                "state"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
                         }
                       },
                       "required": [
                         "quote",
-                        "reason"
+                        "reason",
+                        "status"
                       ],
                       "additionalProperties": false
                     }

@@ -51,6 +51,15 @@ export const refundQuoteResponse = z.object({
     })
     .nullable(),
   reason: z.string().nullable(),
+  // The latest refund asked for in the last 30 days. Pending means it's saved and we still have to send it.
+  status: z
+    .object({
+      amount: z.number().int(),
+      currency: z.literal("USD"),
+      requestedAt: z.date(),
+      state: z.enum(["pending", "refunded"]),
+    })
+    .nullable(),
 });
 
 export const createRefundBody = z.object({ paymentId: z.uuid() });
