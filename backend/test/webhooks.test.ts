@@ -105,6 +105,7 @@ const paid: BillingEvent = {
   subscriptionId: null,
   paymentId: "pay_1",
   method: "card",
+  amount: null,
 };
 const firstPayment = { id: "pay_row", amount: 9_000, status: "created", createdAt: new Date() };
 const row = (plan: string, status = "created") => ({ id: CHECKOUT, userId: "user_1", plan, status });
@@ -205,6 +206,24 @@ describe("translating Dodo events", () => {
     expect(
       dodoEvents({ type: "payment.succeeded", data: { payment_id: "pay_2", subscription_id: "sub_1", metadata: {} } }),
     ).toMatchObject([{ type: "paid", paymentId: "pay_2", subscriptionId: "sub_1", checkout: null }]);
+  });
+
+  it("reads what was paid before tax, in dollars when the buyer paid in another currency", () => {
+    const succeeded = (data: object) =>
+      dodoEvents({ type: "payment.succeeded", data: { payment_id: "pay_1", metadata: tagged, ...data } });
+    expect(succeeded({ currency: "USD", total_amount: 130, tax: 10 })).toMatchObject([{ amount: 120 }]);
+    expect(
+      succeeded({
+        currency: "INR",
+        total_amount: 11_800,
+        settlement_currency: "USD",
+        settlement_amount: 141,
+        settlement_tax: 21,
+      }),
+    ).toMatchObject([{ amount: 120 }]);
+    expect(succeeded({ currency: "INR", total_amount: 11_800, settlement_currency: "INR" })).toMatchObject([
+      { amount: null },
+    ]);
   });
 
   it("treats only a partial refund as partial", () => {
@@ -308,6 +327,12 @@ describe("Pro", () => {
     state.selects = [[row("pro", "active")], [{ ...firstPayment, amount: 1_200 }], [{ plan: "pro" }]];
     await handleEvents("evt_2", [{ ...paid, subscriptionId: "sub_1" }], {});
     expect(state.sets.some((set) => set.currentPeriodEnd)).toBe(false);
+  });
+
+  it("records a discounted first payment at what was paid", async () => {
+    state.selects = [[row("pro")], [{ ...firstPayment, amount: 1_200 }], [{ plan: "pro" }]];
+    await handleEvents("evt_5", [{ ...paid, amount: 120 }], {});
+    expect(state.sets[0]).toMatchObject({ status: "captured", amount: 120 });
   });
 
   it("records a renewal as a new payment at the Pro price", async () => {

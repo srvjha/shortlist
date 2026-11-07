@@ -74,12 +74,19 @@ async function onPaid(tx: Tx, event: Extract<BillingEvent, { type: "paid" }>, ra
     .where(and(eq(payments.subscriptionId, subscription.id), inArray(payments.status, ["created", "failed"])))
     .orderBy(asc(payments.createdAt))
     .limit(1);
-  const amount = first?.amount ?? prices[subscription.plan === "lifetime" ? "lifetime" : "pro"];
+  const amount = event.amount ?? first?.amount ?? prices[subscription.plan === "lifetime" ? "lifetime" : "pro"];
 
   if (first) {
     await tx
       .update(payments)
-      .set({ status: "captured", capturedAt: now, providerPaymentId: event.paymentId, method: event.method, raw })
+      .set({
+        status: "captured",
+        capturedAt: now,
+        providerPaymentId: event.paymentId,
+        method: event.method,
+        amount,
+        raw,
+      })
       .where(eq(payments.id, first.id));
   } else {
     // A later charge on the subscription, or a repeat of one already recorded (which this leaves alone).
