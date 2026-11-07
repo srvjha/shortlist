@@ -359,6 +359,28 @@ function NewResumePage() {
     if (!title) setTitle(next.name.replace(/\.[^.]+$/, ''))
   }
 
+  // Checked here, not only by the API, so nobody fills in the form or spends an import to be turned away at the end.
+  if (usage && usage.resumes.used >= usage.resumes.limit && !create.isPending)
+    return (
+      <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-5 py-8 sm:px-8">
+        <PageHeader title="New resume" />
+        <Alert>
+          <SparklesIcon />
+          <AlertTitle>The Free plan includes 1 resume</AlertTitle>
+          <AlertDescription>
+            Nothing is locked: you can keep editing the one you have. Pro and
+            Lifetime include unlimited resumes.{' '}
+            <Link to="/pricing" className="underline underline-offset-4">
+              See plans
+            </Link>
+          </AlertDescription>
+        </Alert>
+        <Button variant="outline" className="self-start" asChild>
+          <Link to="/workspace">Back to my resume</Link>
+        </Button>
+      </div>
+    )
+
   return (
     <div
       className={cn(
@@ -574,10 +596,10 @@ function NewResumePage() {
                         You've used your free AI-written resume
                       </AlertTitle>
                       <AlertDescription>
-                        Season Pass and Pro include more, or add your own AI key
-                        in Settings for unlimited.{' '}
+                        Pro and Lifetime include more, or add your own AI key in
+                        Settings for unlimited.{' '}
                         <Link
-                          to="/billing"
+                          to="/pricing"
                           className="underline underline-offset-4"
                         >
                           See plans

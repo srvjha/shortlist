@@ -198,6 +198,13 @@ function Billing({
                 used={usage.resumes.used}
                 limit={usage.resumes.limit}
               />
+              {usage.pdf && (
+                <UsageRow
+                  label="PDF downloads"
+                  used={usage.pdf.used}
+                  limit={usage.pdf.limit}
+                />
+              )}
               {usage.ownAiKey ? (
                 <p className="text-sm text-muted-foreground">
                   AI requests run on your own key, so tailoring, edits and
@@ -206,12 +213,18 @@ function Billing({
               ) : (
                 <>
                   <UsageRow
-                    label="AI-tailored resumes this month"
+                    label={
+                      usage.plan === 'free'
+                        ? 'AI-tailored resumes'
+                        : 'AI-tailored resumes this month'
+                    }
                     used={usage.tailor.used}
                     limit={usage.tailor.limit}
                   />
                   <UsageRow
-                    label="AI edits this month"
+                    label={
+                      usage.plan === 'free' ? 'AI edits' : 'AI edits this month'
+                    }
                     used={usage.edit.used}
                     limit={usage.edit.limit}
                   />

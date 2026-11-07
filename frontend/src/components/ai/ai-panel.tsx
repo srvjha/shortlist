@@ -44,7 +44,7 @@ import { useCheckout } from '@/hooks/use-checkout'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { api, errorMessage, unwrap } from '@/lib/api/client'
 import { useWriteCoverLetter } from '@/hooks/use-write-cover-letter'
-import { aiErrorMessage } from '@/lib/api/errors'
+import { aiErrorMessage, upgradeAction } from '@/lib/api/errors'
 import {
   jobsQuery,
   queryKeys,
@@ -54,7 +54,6 @@ import {
 } from '@/lib/api/queries'
 import type { ResumeContent, Suggestion } from '@/lib/api/types'
 import { fixInstruction } from '@/lib/ats'
-import { formatDate } from '@/lib/format'
 import { plans } from '@/lib/plans'
 import { panelStorage } from '@/lib/panel-storage'
 import { priceNote, priceOf, usePricing } from '@/lib/pricing'
@@ -96,7 +95,8 @@ export function NewJobForm({
       )
       onCreated(job.id)
     },
-    onError: (error) => toast.error(aiErrorMessage(error)),
+    onError: (error) =>
+      toast.error(aiErrorMessage(error), upgradeAction(error)),
   })
 
   return (
@@ -344,12 +344,16 @@ export function AiPanel({
     onError: (error) => {
       // A quota error means the counts shown are stale; refetch so the upgrade card appears.
       queryClient.invalidateQueries({ queryKey: queryKeys.usage })
-      toast.error(aiErrorMessage(error))
+      toast.error(aiErrorMessage(error), upgradeAction(error))
     },
   })
   const tailorsLeft =
     usage?.plan === 'free' && !usage.ownAiKey
       ? Math.max(0, usage.tailor.limit - usage.tailor.used)
+      : null
+  const editsLeft =
+    usage?.plan === 'free' && !usage.ownAiKey
+      ? Math.max(0, usage.edit.limit - usage.edit.used)
       : null
 
   const ats = useMutation({
@@ -582,9 +586,8 @@ export function AiPanel({
                 </p>
                 {usage && tailorsLeft !== null && (
                   <p className="text-xs text-muted-foreground tabular-nums">
-                    {usage.trialEndsAt
-                      ? `${tailorsLeft} of ${usage.tailor.limit} tailored resumes left in your first week, until ${formatDate(usage.trialEndsAt)}`
-                      : `${tailorsLeft} of ${usage.tailor.limit} tailored resume left this month`}
+                    {tailorsLeft} of {usage.tailor.limit} free tailored resume
+                    left
                   </p>
                 )}
               </div>
@@ -618,7 +621,7 @@ export function AiPanel({
                   />
                 </Field>
                 {tailorsLeft === 0 ? (
-                  <TailorUpgrade />
+                  <UpgradeCard title="You've used your free tailored resume" />
                 ) : (
                   <Button
                     disabled={!jobId}
@@ -703,7 +706,12 @@ export function AiPanel({
         )}
       </div>
 
-      {!reviewing && !suggest.isPending && !atsOpen && (
+      {!reviewing && !suggest.isPending && !atsOpen && editsLeft === 0 && (
+        <div className="shrink-0 border-t p-3">
+          <UpgradeCard title="You've used your free AI edit" />
+        </div>
+      )}
+      {!reviewing && !suggest.isPending && !atsOpen && editsLeft !== 0 && (
         <form
           className="shrink-0 border-t p-3"
           onSubmit={(event) => {
@@ -730,9 +738,9 @@ export function AiPanel({
             <div className="flex items-center justify-between gap-2">
               <span className="text-xs text-muted-foreground tabular-nums">
                 Nothing changes until you apply it
-                {usage?.plan === 'free' &&
-                  !usage.ownAiKey &&
-                  ` · ${Math.max(0, usage.edit.limit - usage.edit.used)} of ${usage.edit.limit} AI edits left`}
+                {editsLeft !== null &&
+                  usage &&
+                  ` · ${editsLeft} of ${usage.edit.limit} free AI edit left`}
               </span>
               <Button
                 type="submit"
@@ -790,16 +798,14 @@ export function AiPanel({
 
 const pro = plans.find((plan) => plan.id === 'pro')!
 
-// Shown in place of the Tailor button once a Free account has no tailored resumes left.
-function TailorUpgrade() {
+// Shown in place of the Tailor button or the chat box once a Free account has none left.
+function UpgradeCard({ title }: { title: string }) {
   const { checkout } = useCheckout()
   const pricing = usePricing()
   return (
     <div className="flex flex-col gap-3 rounded-lg border border-primary/30 bg-primary/5 p-4">
       <div className="flex flex-col gap-1">
-        <p className="text-sm font-semibold">
-          You've used your free tailored resumes
-        </p>
+        <p className="text-sm font-semibold">{title}</p>
         <p className="text-sm text-muted-foreground">
           Pro gives you 60 tailored resumes a month and unlimited AI edits, for{' '}
           {priceOf('pro', pricing)} {pro.period}. {priceNote('pro')}

@@ -1,3 +1,5 @@
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { Link } from '@tanstack/react-router'
 import { ChevronDownIcon, DownloadIcon } from 'lucide-react'
 import { toast } from '@/lib/toast'
 import { Button } from '@/components/ui/button'
@@ -14,6 +16,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { errorMessage } from '@/lib/api/client'
+import { upgradeAction } from '@/lib/api/errors'
+import { queryKeys, usageQuery } from '@/lib/api/queries'
 import { downloadFile, fetchFile } from '@/lib/download'
 
 export function DownloadMenu({
@@ -27,6 +31,11 @@ export function DownloadMenu({
   structured: boolean
   saveFirst: () => Promise<void>
 }) {
+  const queryClient = useQueryClient()
+  const { data: usage } = useQuery(usageQuery)
+  const pdfsLeft = usage?.pdf
+    ? Math.max(0, usage.pdf.limit - usage.pdf.used)
+    : null
   async function download(path: string, extension: string) {
     try {
       await saveFirst()
@@ -35,7 +44,9 @@ export function DownloadMenu({
         `${title.trim() || 'resume'}.${extension}`,
       )
     } catch (error) {
-      toast.error(errorMessage(error))
+      toast.error(errorMessage(error), upgradeAction(error))
+    } finally {
+      queryClient.invalidateQueries({ queryKey: queryKeys.usage })
     }
   }
   async function copyLatex() {
@@ -74,7 +85,12 @@ export function DownloadMenu({
               path: 'pdf?download=true',
               extension: 'pdf',
               label: 'PDF',
-              hint: 'Ready to send or upload to job portals',
+              hint:
+                pdfsLeft === null
+                  ? 'Ready to send or upload to job portals'
+                  : pdfsLeft === 0
+                    ? 'No free downloads left. A version you already downloaded is still free.'
+                    : `${pdfsLeft} of ${usage?.pdf?.limit} free downloads left. Downloading a version again is free.`,
             },
             {
               path: 'tex',
@@ -113,6 +129,13 @@ export function DownloadMenu({
               Paste it straight into Overleaf
             </span>
           </DropdownMenuItem>
+          {pdfsLeft === 0 && (
+            <DropdownMenuItem asChild>
+              <Link to="/pricing" className="font-medium text-primary">
+                See plans for unlimited PDFs
+              </Link>
+            </DropdownMenuItem>
+          )}
         </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>

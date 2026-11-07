@@ -122,21 +122,24 @@ function UsageCard() {
   return (
     <div className="flex flex-col gap-2 rounded-lg border bg-card p-3 text-sm">
       <p className="font-medium tabular-nums">
-        {left} of {usage.tailor.limit} AI-tailored resumes left this month
+        {left} of {usage.tailor.limit} free tailored resume left
       </p>
       <Progress
         value={(left / usage.tailor.limit) * 100}
-        aria-label="AI-tailored resumes left this month"
+        aria-label="Free tailored resumes left"
       />
       <p className="tabular-nums">
         {Math.max(0, usage.edit.limit - usage.edit.used)} of {usage.edit.limit}{' '}
-        AI edits left
+        free AI edit left
       </p>
-      <p className="text-xs text-muted-foreground">
-        Resumes you write yourself are always free and unlimited.
-      </p>
+      {usage.pdf && (
+        <p className="tabular-nums">
+          {Math.max(0, usage.pdf.limit - usage.pdf.used)} of {usage.pdf.limit}{' '}
+          free PDF downloads left
+        </p>
+      )}
       <Button size="sm" variant="outline" asChild>
-        <Link to="/billing">Get 40 a month with Season Pass</Link>
+        <Link to="/pricing">See plans</Link>
       </Button>
     </div>
   )
