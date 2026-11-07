@@ -22483,7 +22483,7 @@
         }
       },
       "delete": {
-        "summary": "Cancel Pro at the end of the billing period",
+        "summary": "Cancel Basic at the end of the billing period",
         "tags": [
           "Billing"
         ],
