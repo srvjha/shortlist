@@ -26,7 +26,7 @@ import {
   subscriptionQuery,
   usageQuery,
 } from '@/lib/api/queries'
-import type { Me } from '@/lib/api/types'
+import type { Me, ResponseData } from '@/lib/api/types'
 import {
   formatDate,
   formatDateTime,
@@ -144,6 +144,7 @@ function Billing({
     useQuery(refundQuoteQuery)
   const quote = refundQuote?.quote
   const refundBlocked = refundQuote?.reason
+  const refundStatus = refundQuote?.status
   const [confirmRefund, setConfirmRefund] = useState(false)
 
   const refund = useMutation({
@@ -246,8 +247,10 @@ function Billing({
         {((activeSub?.renews && activeSub.status === 'active') ||
           quote ||
           refundBlocked ||
+          refundStatus ||
           refundQuoteError) && (
           <CardFooter className="flex flex-col items-start gap-3">
+            {refundStatus && <RefundStatus status={refundStatus} />}
             <div className="flex flex-wrap gap-2">
               {activeSub?.renews && activeSub.status === 'active' && (
                 <Button
@@ -413,5 +416,57 @@ function RedeemCode({
         </form>
       </CardContent>
     </Card>
+  )
+}
+
+type RefundState = ResponseData<'/v1/refunds/quote', 'get'>['status']
+
+// Where a refund is: we only know when it's asked for and when we've sent it; the bank's part is an estimate.
+function RefundStatus({ status }: { status: NonNullable<RefundState> }) {
+  const sent = status.state === 'refunded'
+  const steps = [
+    {
+      label: 'Requested',
+      note: formatDateTime(status.requestedAt),
+      done: true,
+    },
+    {
+      label: 'Refund sent',
+      note: sent ? 'Sent to your card' : 'Within 4 to 5 working days',
+      done: sent,
+    },
+    {
+      label: 'In your account',
+      note: '5 to 7 working days after it is sent',
+      done: false,
+    },
+  ]
+  return (
+    <div role="status" className="w-full rounded-lg border bg-muted/40 p-4">
+      <p className="font-medium">
+        Refund of {formatMoney(status.amount, status.currency)}{' '}
+        {sent ? 'sent' : 'requested'}
+      </p>
+      <ol className="mt-4 grid grid-cols-3 gap-3 text-sm">
+        {steps.map((step) => (
+          <li key={step.label} className="flex flex-col gap-1.5">
+            <span
+              aria-hidden
+              className={cn(
+                'h-1.5 rounded-full',
+                step.done ? 'bg-primary' : 'bg-border',
+              )}
+            />
+            <span className="font-medium">
+              {step.label}
+              <span className="sr-only">
+                {step.done ? ', done' : ', not yet'}
+              </span>
+            </span>
+            <span className="text-muted-foreground">{step.note}</span>
+          </li>
+        ))}
+      </ol>
+    </div>
   )
 }
