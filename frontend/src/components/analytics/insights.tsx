@@ -58,7 +58,7 @@ function Heading({ children }: { children: React.ReactNode }) {
       <h2 id="insights" className="font-sans text-base font-semibold">
         {children}
       </h2>
-      <Badge variant="secondary">Season Pass / Pro</Badge>
+      <Badge variant="secondary">Paid plans</Badge>
     </div>
   )
 }
@@ -419,7 +419,7 @@ function LockedInsights() {
               <li>Download every view as a CSV</li>
             </ul>
             <Button asChild>
-              <Link to="/billing">See Season Pass and Pro</Link>
+              <Link to="/pricing">See plans</Link>
             </Button>
           </div>
         </div>

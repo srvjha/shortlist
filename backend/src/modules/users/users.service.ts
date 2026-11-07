@@ -13,7 +13,7 @@ import {
 } from "../../db/schema/index.js";
 import { ConflictError, NotFoundError } from "../../lib/errors.js";
 import { logger } from "../../lib/logger.js";
-import { providerOf } from "../billing/providers/index.js";
+import { dodo } from "../billing/dodo.js";
 import { storage } from "../../lib/storage.js";
 import { isReservedUsername, isUsernameTaken, usernameCooldownEnd } from "./usernames.js";
 
@@ -86,11 +86,11 @@ export async function deleteMe(userId: string) {
     .from(subscriptions)
     .where(and(eq(subscriptions.userId, userId), eq(subscriptions.plan, "pro"), eq(subscriptions.status, "active")));
   for (const { provider, remoteId } of activePro) {
-    if (!provider || !remoteId) continue;
+    if (provider !== "dodo" || !remoteId) continue;
     // Stop future charges; a failure here must not block deletion.
-    await Promise.resolve(providerOf(provider).cancel(remoteId, false)).catch((err) =>
-      logger.error({ err, remoteId }, "Could not cancel subscription during account deletion"),
-    );
+    await Promise.resolve()
+      .then(() => dodo().subscriptions.update(remoteId, { status: "cancelled" }))
+      .catch((err) => logger.error({ err, remoteId }, "Could not cancel subscription during account deletion"));
   }
   await storage.deletePrefix(`users/${userId}/`);
   await db.delete(users).where(eq(users.id, userId));

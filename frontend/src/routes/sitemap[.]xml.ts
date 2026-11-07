@@ -14,6 +14,8 @@ const paths = [
   '/templates',
   ...templateCatalog.map((template) => `/templates/${template.id}`),
   '/ats-checker',
+  '/cover-letter-generator',
+  '/resignation-letter-generator',
   '/guides',
   ...guides.map((guide) => `/guides/${guide.slug}`),
   '/pricing',

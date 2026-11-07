@@ -16,7 +16,7 @@ function Heading() {
       <h3 id="ai-review" className="font-sans text-lg font-semibold">
         AI review
       </h3>
-      <Badge variant="secondary">Season Pass / Pro</Badge>
+      <Badge variant="secondary">Paid plans</Badge>
     </div>
   )
 }
@@ -192,7 +192,7 @@ function LockedReview({ signedIn }: { signedIn: boolean }) {
         </ul>
         <Button asChild>
           {signedIn ? (
-            <Link to="/billing">See Season Pass and Pro</Link>
+            <Link to="/pricing">See plans</Link>
           ) : (
             <Link to="/pricing">See plans</Link>
           )}

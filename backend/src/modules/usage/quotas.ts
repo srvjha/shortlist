@@ -1,35 +1,45 @@
 import { and, count, eq, gt, gte, inArray, isNull, lt, or, sql } from "drizzle-orm";
 import { db } from "../../db/index.js";
-import { aiRuns, resumes, users } from "../../db/schema/index.js";
+import { aiRuns, pdfDownloads, resumes, users } from "../../db/schema/index.js";
 import { AppError, NotFoundError } from "../../lib/errors.js";
 import { hasUserAiKey } from "../ai-keys/ai-keys.service.js";
 
 export type Plan = (typeof users.$inferSelect)["plan"];
-export type QuotaKind = "tailor" | "edit" | "import" | "draft" | "job" | "ats" | "review";
+export type QuotaKind = "tailor" | "edit" | "fix" | "import" | "draft" | "job" | "ats" | "review" | "letter";
 
-// Monthly AI limits per plan; resumes are unlimited on every plan (1000 = unlimited). Paid limits are fair-use caps.
-// Imports are free on every plan; the cap only stops abuse. Job descriptions are parsed once per posting, then reused.
-// Free gets one resume written from notes per account (counted for all time), to see it work once.
+// Monthly AI limits per plan (1000 resumes = unlimited; paid limits are fair-use caps). On Free, the kinds in
+// `onceOnFree` count for all time instead of per month: enough to see each feature work once.
+// Fixing LaTeX that won't compile has its own cap, so a broken resume can't leave someone stuck with no edit left.
+// Imports only have a cap to stop abuse. Job descriptions are parsed once per posting, then reused.
 // ATS checks with a job description have their own cap, so they never use up the AI edits people see.
 // The AI resume review is paid only; free is 0 and is turned away by assertPaidPlan before the quota.
-export const planLimits: Record<Plan, Record<QuotaKind | "resumes", number>> = {
-  free: { resumes: 1000, tailor: 1, edit: 50, import: 20, draft: 1, job: 10, ats: 20, review: 0 },
-  season_pass: { resumes: 1000, tailor: 40, edit: 1000, import: 20, draft: 30, job: 100, ats: 200, review: 100 },
-  pro: { resumes: 1000, tailor: 60, edit: 1000, import: 20, draft: 30, job: 100, ats: 200, review: 100 },
+const paid = { resumes: 1000, edit: 1000, fix: 200, import: 20, draft: 30, job: 100, ats: 200, review: 100 };
+export const planLimits: Record<Plan, Record<Exclude<QuotaKind, "letter"> | "resumes", number>> = {
+  free: { resumes: 1, tailor: 1, edit: 1, fix: 5, import: 20, draft: 1, job: 10, ats: 20, review: 0 },
+  season_pass: { ...paid, tailor: 40 },
+  pro: { ...paid, tailor: 60 },
+  lifetime: { ...paid, tailor: 60 },
 };
 
-// A new Free account can tailor 5 resumes in its first 7 days, counted from sign-up, then gets the monthly limit.
-const TRIAL_DAYS = 7;
-const TRIAL_TAILORS = 5;
+// AI cover letters are free on every plan, so this fair-use cap is the same for all of them.
+const LETTER_LIMIT = 30;
+
+const onceOnFree: readonly QuotaKind[] = ["tailor", "edit", "draft"];
+const countsForAllTime = (plan: Plan, kind: QuotaKind) => plan === "free" && onceOnFree.includes(kind);
+
+// PDF downloads on Free, for all time. Paid plans aren't counted at all.
+export const FREE_PDF_DOWNLOADS = 3;
 
 const stepsFor: Record<QuotaKind, (typeof aiRuns.$inferSelect)["step"][]> = {
   tailor: ["rewrite"],
-  edit: ["chat_edit", "inline_edit", "fix_compile", "project_link"],
+  edit: ["chat_edit", "inline_edit", "project_link"],
+  fix: ["fix_compile"],
   import: ["import"],
   draft: ["draft"],
   job: ["jd_parse"],
   ats: ["ats_match"],
   review: ["ats_review"],
+  letter: ["cover_letter"],
 };
 
 // Calendar month in UTC.
@@ -47,25 +57,10 @@ type Step = (typeof aiRuns.$inferInsert)["step"];
 // A reserved run whose request crashed before recording a result stops counting after this long.
 const PENDING_TTL = sql`now() - interval '10 minutes'`;
 
-async function accountOf(userId: string, executor: Executor = db) {
-  const [user] = await executor
-    .select({ plan: users.plan, createdAt: users.createdAt })
-    .from(users)
-    .where(eq(users.id, userId))
-    .limit(1);
-  if (!user) throw new NotFoundError("User");
-  return user;
-}
-
 async function planOf(userId: string, executor: Executor = db): Promise<Plan> {
-  return (await accountOf(userId, executor)).plan;
-}
-
-// When a Free account's tailoring trial ends, or null once it has ended (or on a paid plan).
-export function trialEndsAt(account: { plan: Plan; createdAt: Date }, now = new Date()) {
-  if (account.plan !== "free") return null;
-  const end = new Date(account.createdAt.getTime() + TRIAL_DAYS * 24 * 60 * 60 * 1000);
-  return end > now ? end : null;
+  const [user] = await executor.select({ plan: users.plan }).from(users).where(eq(users.id, userId)).limit(1);
+  if (!user) throw new NotFoundError("User");
+  return user.plan;
 }
 
 // `allTime` counts every run, for allowances given once per account rather than per month.
@@ -132,58 +127,79 @@ export async function reserveAiRun(userId: string, kind: QuotaKind, step: Step) 
   });
 }
 
+const freeLimitMessages: Partial<Record<QuotaKind, string>> = {
+  tailor: "You've used your free tailored resume. Pro includes 60 a month, or add your own AI key.",
+  edit: "You've used your free AI edit. Pro includes unlimited AI edits, or add your own AI key.",
+  draft: "You've used your free AI-written resume. Pro includes 30 a month, or add your own AI key.",
+};
+
 async function checkQuota(userId: string, kind: QuotaKind, executor: Executor = db) {
-  const account = await accountOf(userId, executor);
-  const { plan } = account;
-  const trial = kind === "tailor" ? trialEndsAt(account) : null;
-  const limit = trial ? TRIAL_TAILORS : planLimits[plan][kind];
-  const once = kind === "draft" && plan === "free";
-  // A trial counts every tailor since sign-up, so it doesn't start over on the 1st of the month.
-  const used = await usedThisPeriod(userId, kind, once || Boolean(trial), executor);
-  if (used >= limit && trial) {
-    throw quotaError(
-      `You've used all ${TRIAL_TAILORS} tailored resumes in your first week. The Season Pass includes 40 a month`,
-      limit,
-      used,
-    );
-  }
-  if (used >= limit && once) {
-    throw quotaError(
-      "You've used your free AI-written resume. Season Pass and Pro include more, or add your own AI key.",
-      limit,
-      used,
-    );
-  }
-  if (used >= limit) {
-    throw quotaError(`You've used all ${limit} ${kind} requests for this month`, limit, used, periodEnd());
-  }
+  const plan = await planOf(userId, executor);
+  const limit = kind === "letter" ? LETTER_LIMIT : planLimits[plan][kind];
+  const allTime = countsForAllTime(plan, kind);
+  const used = await usedThisPeriod(userId, kind, allTime, executor);
+  if (used < limit) return;
+  if (allTime) throw quotaError(freeLimitMessages[kind]!, limit, used);
+  const what = kind === "letter" ? "AI cover letters" : `${kind} requests`;
+  throw quotaError(`You've used all ${limit} ${what} for this month`, limit, used, periodEnd());
 }
 
-// Premium features (extra link controls, detailed analytics) need Season Pass or Pro.
+// Premium features (extra link controls, detailed analytics) need a paid plan.
 export async function assertPaidPlan(userId: string, feature: string) {
   if ((await planOf(userId)) === "free")
-    throw new AppError(402, "PLAN_REQUIRED", `${feature} is part of Season Pass and Pro`);
+    throw new AppError(402, "PLAN_REQUIRED", `${feature} is part of Pro and Lifetime`);
 }
 
 export async function assertResumeQuota(userId: string) {
   const limit = planLimits[await planOf(userId)].resumes;
   const used = await activeResumes(userId);
   if (used >= limit)
-    throw quotaError(`You've reached the limit of ${limit} resumes. Delete some you no longer need.`, limit, used);
+    throw quotaError(
+      limit === 1
+        ? "The Free plan includes 1 resume, and you can keep editing yours. Pro includes unlimited resumes."
+        : `You've reached the limit of ${limit} resumes. Delete some you no longer need.`,
+      limit,
+      used,
+    );
+}
+
+// Counts a Free account's download of one version once, under the same per-user lock as the AI quotas, so parallel
+// requests can't slip past the limit. Downloading the same version again is free.
+export async function recordPdfDownload(userId: string, versionId: string) {
+  await db.transaction(async (tx) => {
+    await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${`pdf-quota:${userId}`}))`);
+    if ((await planOf(userId, tx)) !== "free") return;
+    const counted = eq(pdfDownloads.userId, userId);
+    const [seen] = await tx
+      .select({ versionId: pdfDownloads.versionId })
+      .from(pdfDownloads)
+      .where(and(counted, eq(pdfDownloads.versionId, versionId)))
+      .limit(1);
+    if (seen) return;
+    const [row] = await tx.select({ value: count() }).from(pdfDownloads).where(counted);
+    const used = row?.value ?? 0;
+    if (used >= FREE_PDF_DOWNLOADS) {
+      throw quotaError(
+        `You've used your ${FREE_PDF_DOWNLOADS} free PDF downloads. Pro and Lifetime include unlimited downloads.`,
+        FREE_PDF_DOWNLOADS,
+        used,
+      );
+    }
+    await tx.insert(pdfDownloads).values({ userId, versionId });
+  });
 }
 
 export async function getUsage(userId: string) {
-  const account = await accountOf(userId);
-  const { plan } = account;
+  const plan = await planOf(userId);
   const limits = planLimits[plan];
-  const trial = trialEndsAt(account);
-  const [tailor, edit, importCount, draft, resumeCount, ownAiKey] = await Promise.all([
-    usedThisPeriod(userId, "tailor", Boolean(trial)),
-    usedThisPeriod(userId, "edit"),
+  const [tailor, edit, importCount, draft, resumeCount, ownAiKey, pdf] = await Promise.all([
+    usedThisPeriod(userId, "tailor", countsForAllTime(plan, "tailor")),
+    usedThisPeriod(userId, "edit", countsForAllTime(plan, "edit")),
     usedThisPeriod(userId, "import"),
-    usedThisPeriod(userId, "draft", plan === "free"),
+    usedThisPeriod(userId, "draft", countsForAllTime(plan, "draft")),
     activeResumes(userId),
     hasUserAiKey(userId),
+    db.select({ value: count() }).from(pdfDownloads).where(eq(pdfDownloads.userId, userId)),
   ]);
   return {
     plan,
@@ -191,10 +207,10 @@ export async function getUsage(userId: string) {
     periodStart: periodStart(),
     periodEnd: periodEnd(),
     resumes: { used: resumeCount, limit: limits.resumes },
-    tailor: { used: tailor, limit: trial ? TRIAL_TAILORS : limits.tailor },
-    trialEndsAt: trial,
+    tailor: { used: tailor, limit: limits.tailor },
     edit: { used: edit, limit: limits.edit },
     import: { used: importCount, limit: limits.import },
     draft: { used: draft, limit: limits.draft },
+    pdf: plan === "free" ? { used: pdf[0]?.value ?? 0, limit: FREE_PDF_DOWNLOADS } : null,
   };
 }

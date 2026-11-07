@@ -585,8 +585,8 @@ function GrantPlanDialog({
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {
-  const [plan, setPlan] = useState<'season_pass' | 'pro'>('season_pass')
-  const [months, setMonths] = useState('6')
+  const [plan, setPlan] = useState<'season_pass' | 'pro'>('pro')
+  const [months, setMonths] = useState('1')
   const grant = useAdminAction(
     userId,
     () =>

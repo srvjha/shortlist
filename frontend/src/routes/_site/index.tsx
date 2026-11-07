@@ -5,6 +5,7 @@ import { JobAndShare } from '@/components/landing/job-and-share'
 import {
   Faq,
   FinalCta,
+  Letters,
   PlanPicker,
   TemplateFinder,
 } from '@/components/landing/sections'
@@ -33,7 +34,7 @@ const structuredData = {
       description,
       applicationCategory: 'BusinessApplication',
       operatingSystem: 'Web',
-      offers: { '@type': 'Offer', price: '0', priceCurrency: 'INR' },
+      offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
     },
   ],
 }
@@ -78,6 +79,7 @@ function LandingPage() {
       <JobAndShare />
       <TemplateFinder />
       <Bento />
+      <Letters />
       <PlanPicker pricing={pricing} />
       <Faq />
       <FinalCta />

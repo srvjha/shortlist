@@ -38,7 +38,7 @@ export interface paths {
                                 image: string | null;
                                 username: string;
                                 /** @enum {string} */
-                                plan: "free" | "season_pass" | "pro";
+                                plan: "free" | "season_pass" | "pro" | "lifetime";
                                 isAnonymous: boolean;
                                 isAdmin: boolean;
                                 createdAt: string;
@@ -123,7 +123,7 @@ export interface paths {
                                 image: string | null;
                                 username: string;
                                 /** @enum {string} */
-                                plan: "free" | "season_pass" | "pro";
+                                plan: "free" | "season_pass" | "pro" | "lifetime";
                                 isAnonymous: boolean;
                                 isAdmin: boolean;
                                 createdAt: string;
@@ -269,7 +269,7 @@ export interface paths {
                         "application/json": {
                             data: {
                                 /** @enum {string} */
-                                plan: "free" | "season_pass" | "pro";
+                                plan: "free" | "season_pass" | "pro" | "lifetime";
                                 ownAiKey: boolean;
                                 periodStart: string;
                                 periodEnd: string;
@@ -281,7 +281,6 @@ export interface paths {
                                     used: number;
                                     limit: number;
                                 };
-                                trialEndsAt: string | null;
                                 edit: {
                                     used: number;
                                     limit: number;
@@ -294,6 +293,10 @@ export interface paths {
                                     used: number;
                                     limit: number;
                                 };
+                                pdf: {
+                                    used: number;
+                                    limit: number;
+                                } | null;
                             };
                         };
                     };
@@ -1254,7 +1257,7 @@ export interface paths {
                                     id: string;
                                     createdAt: string;
                                     /** @enum {string} */
-                                    step: "import" | "jd_parse" | "plan" | "rewrite" | "verify" | "inline_edit" | "chat_edit" | "fix_compile" | "draft" | "ats_match" | "ats_review" | "project_link";
+                                    step: "import" | "jd_parse" | "plan" | "rewrite" | "verify" | "inline_edit" | "chat_edit" | "fix_compile" | "draft" | "ats_match" | "ats_review" | "project_link" | "cover_letter";
                                     /** @enum {string} */
                                     status: "pending" | "succeeded" | "failed";
                                     model: string;
@@ -1396,7 +1399,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Opening times, cities and per-link activity (Season Pass and Pro) */
+        /** Opening times, cities and per-link activity (paid plans) */
         get: {
             parameters: {
                 query?: {
@@ -1460,7 +1463,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Every view in the range, for export (Season Pass and Pro) */
+        /** Every view in the range, for export (paid plans) */
         get: {
             parameters: {
                 query?: {
@@ -5836,6 +5839,370 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/letters": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List your saved letters */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                /** Format: uuid */
+                                id: string;
+                                /** @enum {string} */
+                                kind: "cover" | "resignation";
+                                title: string;
+                                resumeId: string | null;
+                                jobId: string | null;
+                                createdAt: string;
+                                updatedAt: string;
+                            }[];
+                        };
+                    };
+                };
+                /** @description Error */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /** Write a cover letter from a resume and a job, or save a resignation letter */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /** @constant */
+                        kind: "cover";
+                        /** Format: uuid */
+                        resumeId: string;
+                        /** Format: uuid */
+                        jobId: string;
+                    } | {
+                        /** @constant */
+                        kind: "resignation";
+                        title: string;
+                        body: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description OK */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                /** Format: uuid */
+                                id: string;
+                                /** @enum {string} */
+                                kind: "cover" | "resignation";
+                                title: string;
+                                body: string;
+                                flags: string[];
+                                resumeId: string | null;
+                                jobId: string | null;
+                                createdAt: string;
+                                updatedAt: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Error */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/letters/{letterId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a letter */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    letterId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                /** Format: uuid */
+                                id: string;
+                                /** @enum {string} */
+                                kind: "cover" | "resignation";
+                                title: string;
+                                body: string;
+                                flags: string[];
+                                resumeId: string | null;
+                                jobId: string | null;
+                                createdAt: string;
+                                updatedAt: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Error */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        /** Delete a letter */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    letterId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description No content */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Error */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        /** Edit a letter */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    letterId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        title?: string;
+                        body?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                /** Format: uuid */
+                                id: string;
+                                /** @enum {string} */
+                                kind: "cover" | "resignation";
+                                title: string;
+                                body: string;
+                                flags: string[];
+                                resumeId: string | null;
+                                jobId: string | null;
+                                createdAt: string;
+                                updatedAt: string;
+                            };
+                        };
+                    };
+                };
+                /** @description Error */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/v1/letters/{letterId}/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A letter as a PDF in its resume's template. Doesn't count toward any resume limit. */
+        get: {
+            parameters: {
+                query?: {
+                    download?: string;
+                };
+                header?: never;
+                path: {
+                    letterId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description PDF */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/pdf": string;
+                    };
+                };
+                /** @description Error */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/public/cover-letters": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Write a cover letter from pasted text (not stored, 3 per hour) */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        resumeText: string;
+                        jobDescription: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description OK */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                body: string;
+                                flags: string[];
+                            };
+                        };
+                    };
+                };
+                /** @description Error */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/resumes/{resumeId}/ats-reports": {
         parameters: {
             query?: never;
@@ -5976,7 +6343,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** AI review of resume text: verdict, strengths, top fixes and job fit (Season Pass and Pro, not stored) */
+        /** AI review of resume text: verdict, strengths, top fixes and job fit (paid plans, not stored) */
         post: {
             parameters: {
                 query?: never;
@@ -6732,7 +7099,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Prices for the visitor's country */
+        /** Prices of the plans for sale */
         get: {
             parameters: {
                 query?: never;
@@ -6750,16 +7117,10 @@ export interface paths {
                     content: {
                         "application/json": {
                             data: {
-                                /** @enum {string} */
-                                region: "india" | "global";
-                                country: string | null;
-                                /** @enum {string} */
-                                provider: "razorpay" | "polar";
-                                checkoutOpen: boolean;
-                                /** @enum {string} */
-                                currency: "INR" | "USD";
-                                season_pass: number;
+                                /** @constant */
+                                currency: "USD";
                                 pro: number;
+                                lifetime: number;
                             };
                         };
                     };
@@ -6792,7 +7153,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Start a checkout with the payment provider for the visitor's country */
+        /** Start a Dodo checkout for a plan */
         post: {
             parameters: {
                 query?: never;
@@ -6804,7 +7165,7 @@ export interface paths {
                 content: {
                     "application/json": {
                         /** @enum {string} */
-                        plan: "season_pass" | "pro";
+                        plan: "pro" | "lifetime";
                     };
                 };
             };
@@ -6817,26 +7178,78 @@ export interface paths {
                     content: {
                         "application/json": {
                             data: {
-                                /** @enum {string} */
-                                plan: "season_pass" | "pro";
-                                amount: number;
-                                /** @enum {string} */
-                                currency: "INR" | "USD";
-                                /** @constant */
-                                provider: "razorpay";
-                                keyId: string;
-                                orderId: string | null;
-                                razorpaySubscriptionId: string | null;
-                            } | {
-                                /** @enum {string} */
-                                plan: "season_pass" | "pro";
-                                amount: number;
-                                /** @enum {string} */
-                                currency: "INR" | "USD";
-                                /** @constant */
-                                provider: "polar";
+                                /** Format: uuid */
+                                checkoutId: string;
                                 /** Format: uri */
                                 url: string;
+                                /** @enum {string} */
+                                plan: "pro" | "lifetime";
+                                amount: number;
+                                /** @constant */
+                                currency: "USD";
+                            };
+                        };
+                    };
+                };
+                /** @description Error */
+                default: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/checkouts/{checkoutId}/confirmation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Check a checkout with Dodo after the buyer returns, and switch the plan on if it is paid */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    checkoutId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            data: {
+                                /** @enum {string} */
+                                plan: "free" | "season_pass" | "pro" | "lifetime";
+                                subscription: {
+                                    /** Format: uuid */
+                                    id: string;
+                                    /** @enum {string} */
+                                    plan: "season_pass" | "pro" | "lifetime";
+                                    /** @enum {string} */
+                                    status: "created" | "active" | "past_due" | "cancelled" | "expired";
+                                    currentPeriodEnd: string | null;
+                                    cancelledAt: string | null;
+                                    renews: boolean;
+                                } | null;
                             };
                         };
                     };
@@ -6884,12 +7297,12 @@ export interface paths {
                         "application/json": {
                             data: {
                                 /** @enum {string} */
-                                plan: "free" | "season_pass" | "pro";
+                                plan: "free" | "season_pass" | "pro" | "lifetime";
                                 subscription: {
                                     /** Format: uuid */
                                     id: string;
                                     /** @enum {string} */
-                                    plan: "season_pass" | "pro";
+                                    plan: "season_pass" | "pro" | "lifetime";
                                     /** @enum {string} */
                                     status: "created" | "active" | "past_due" | "cancelled" | "expired";
                                     currentPeriodEnd: string | null;
@@ -6932,12 +7345,12 @@ export interface paths {
                         "application/json": {
                             data: {
                                 /** @enum {string} */
-                                plan: "free" | "season_pass" | "pro";
+                                plan: "free" | "season_pass" | "pro" | "lifetime";
                                 subscription: {
                                     /** Format: uuid */
                                     id: string;
                                     /** @enum {string} */
-                                    plan: "season_pass" | "pro";
+                                    plan: "season_pass" | "pro" | "lifetime";
                                     /** @enum {string} */
                                     status: "created" | "active" | "past_due" | "cancelled" | "expired";
                                     currentPeriodEnd: string | null;
@@ -6971,7 +7384,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** What a refund of the latest payment would return, while it is within 24 hours */
+        /** What a refund of the latest payment would return, while it is within 7 days */
         get: {
             parameters: {
                 query?: never;
@@ -6992,13 +7405,9 @@ export interface paths {
                                 quote: {
                                     /** Format: uuid */
                                     paymentId: string;
-                                    plan: ("season_pass" | "pro") | null;
-                                    /** @enum {string} */
-                                    provider: "razorpay" | "polar";
-                                    /** @enum {string} */
-                                    currency: "INR" | "USD";
-                                    amountPaid: number;
-                                    fee: number;
+                                    plan: ("season_pass" | "pro" | "lifetime") | null;
+                                    /** @constant */
+                                    currency: "USD";
                                     refund: number;
                                     refundableUntil: string;
                                 } | null;
@@ -7035,7 +7444,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Refund a payment made in the last 6 hours, less the payment provider's fee, and end its plan */
+        /** Refund a payment made in the last 7 days in full, and end its plan */
         post: {
             parameters: {
                 query?: never;
@@ -7063,8 +7472,8 @@ export interface paths {
                                 /** Format: uuid */
                                 paymentId: string;
                                 refund: number;
-                                /** @enum {string} */
-                                currency: "INR" | "USD";
+                                /** @constant */
+                                currency: "USD";
                                 providerRefundId: string;
                             };
                         };
@@ -7121,12 +7530,12 @@ export interface paths {
                         "application/json": {
                             data: {
                                 /** @enum {string} */
-                                plan: "free" | "season_pass" | "pro";
+                                plan: "free" | "season_pass" | "pro" | "lifetime";
                                 subscription: {
                                     /** Format: uuid */
                                     id: string;
                                     /** @enum {string} */
-                                    plan: "season_pass" | "pro";
+                                    plan: "season_pass" | "pro" | "lifetime";
                                     /** @enum {string} */
                                     status: "created" | "active" | "past_due" | "cancelled" | "expired";
                                     currentPeriodEnd: string | null;
@@ -7186,7 +7595,7 @@ export interface paths {
                                     /** @enum {string} */
                                     kind: "promo" | "ambassador";
                                     /** @enum {string} */
-                                    plan: "season_pass" | "pro";
+                                    plan: "season_pass" | "pro" | "lifetime";
                                     months: number;
                                     maxRedemptions: number | null;
                                     expiresAt: string | null;
@@ -7242,7 +7651,7 @@ export interface paths {
                          */
                         kind?: "promo" | "ambassador";
                         /**
-                         * @default season_pass
+                         * @default pro
                          * @enum {string}
                          */
                         plan?: "season_pass" | "pro";
@@ -7270,7 +7679,7 @@ export interface paths {
                                     /** @enum {string} */
                                     kind: "promo" | "ambassador";
                                     /** @enum {string} */
-                                    plan: "season_pass" | "pro";
+                                    plan: "season_pass" | "pro" | "lifetime";
                                     months: number;
                                     maxRedemptions: number | null;
                                     expiresAt: string | null;
@@ -7359,7 +7768,7 @@ export interface paths {
                                     /** @enum {string} */
                                     kind: "promo" | "ambassador";
                                     /** @enum {string} */
-                                    plan: "season_pass" | "pro";
+                                    plan: "season_pass" | "pro" | "lifetime";
                                     months: number;
                                     maxRedemptions: number | null;
                                     expiresAt: string | null;
@@ -7445,8 +7854,8 @@ export interface paths {
                                     aiFailed: number;
                                     aiCostUsdMicros: number;
                                     previousAiCostUsdMicros: number;
-                                    revenuePaise: number;
-                                    previousRevenuePaise: number;
+                                    revenueCents: number;
+                                    previousRevenueCents: number;
                                     shareViews: number;
                                     previousShareViews: number;
                                 };
@@ -7479,7 +7888,7 @@ export interface paths {
                                     email: string;
                                     image: string | null;
                                     /** @enum {string} */
-                                    plan: "free" | "season_pass" | "pro";
+                                    plan: "free" | "season_pass" | "pro" | "lifetime";
                                     createdAt: string;
                                     providers: string[];
                                 }[];
@@ -7489,7 +7898,7 @@ export interface paths {
                                     name: string;
                                     email: string;
                                     /** @enum {string} */
-                                    plan: "free" | "season_pass" | "pro";
+                                    plan: "free" | "season_pass" | "pro" | "lifetime";
                                     planEndsAt: string | null;
                                     planPaid: boolean;
                                 }[];
@@ -7528,7 +7937,7 @@ export interface paths {
             parameters: {
                 query?: {
                     q?: string;
-                    plan?: "free" | "season_pass" | "pro";
+                    plan?: "free" | "season_pass" | "pro" | "lifetime";
                     status?: "active" | "suspended" | "guest";
                     page?: number;
                 };
@@ -7554,7 +7963,7 @@ export interface paths {
                                     image: string | null;
                                     username: string;
                                     /** @enum {string} */
-                                    plan: "free" | "season_pass" | "pro";
+                                    plan: "free" | "season_pass" | "pro" | "lifetime";
                                     isAnonymous: boolean;
                                     suspendedAt: string | null;
                                     createdAt: string;
@@ -7627,7 +8036,7 @@ export interface paths {
                                     image: string | null;
                                     username: string;
                                     /** @enum {string} */
-                                    plan: "free" | "season_pass" | "pro";
+                                    plan: "free" | "season_pass" | "pro" | "lifetime";
                                     isAnonymous: boolean;
                                     suspendedAt: string | null;
                                     createdAt: string;
@@ -7665,7 +8074,7 @@ export interface paths {
                                 };
                                 usage: {
                                     /** @enum {string} */
-                                    plan: "free" | "season_pass" | "pro";
+                                    plan: "free" | "season_pass" | "pro" | "lifetime";
                                     ownAiKey: boolean;
                                     periodStart: string;
                                     periodEnd: string;
@@ -7677,7 +8086,6 @@ export interface paths {
                                         used: number;
                                         limit: number;
                                     };
-                                    trialEndsAt: string | null;
                                     edit: {
                                         used: number;
                                         limit: number;
@@ -7690,12 +8098,16 @@ export interface paths {
                                         used: number;
                                         limit: number;
                                     };
+                                    pdf: {
+                                        used: number;
+                                        limit: number;
+                                    } | null;
                                 };
                                 subscriptions: {
                                     /** Format: uuid */
                                     id: string;
                                     /** @enum {string} */
-                                    plan: "season_pass" | "pro";
+                                    plan: "season_pass" | "pro" | "lifetime";
                                     /** @enum {string} */
                                     status: "created" | "active" | "past_due" | "cancelled" | "expired";
                                     currentPeriodStart: string | null;
@@ -7713,7 +8125,7 @@ export interface paths {
                                     status: "created" | "captured" | "failed" | "refunded";
                                     method: string | null;
                                     /** @enum {string} */
-                                    provider: "razorpay" | "polar";
+                                    provider: "razorpay" | "polar" | "dodo";
                                     providerPaymentId: string | null;
                                     createdAt: string;
                                 }[];
@@ -7783,7 +8195,7 @@ export interface paths {
                                     image: string | null;
                                     username: string;
                                     /** @enum {string} */
-                                    plan: "free" | "season_pass" | "pro";
+                                    plan: "free" | "season_pass" | "pro" | "lifetime";
                                     isAnonymous: boolean;
                                     suspendedAt: string | null;
                                     createdAt: string;
@@ -7821,7 +8233,7 @@ export interface paths {
                                 };
                                 usage: {
                                     /** @enum {string} */
-                                    plan: "free" | "season_pass" | "pro";
+                                    plan: "free" | "season_pass" | "pro" | "lifetime";
                                     ownAiKey: boolean;
                                     periodStart: string;
                                     periodEnd: string;
@@ -7833,7 +8245,6 @@ export interface paths {
                                         used: number;
                                         limit: number;
                                     };
-                                    trialEndsAt: string | null;
                                     edit: {
                                         used: number;
                                         limit: number;
@@ -7846,12 +8257,16 @@ export interface paths {
                                         used: number;
                                         limit: number;
                                     };
+                                    pdf: {
+                                        used: number;
+                                        limit: number;
+                                    } | null;
                                 };
                                 subscriptions: {
                                     /** Format: uuid */
                                     id: string;
                                     /** @enum {string} */
-                                    plan: "season_pass" | "pro";
+                                    plan: "season_pass" | "pro" | "lifetime";
                                     /** @enum {string} */
                                     status: "created" | "active" | "past_due" | "cancelled" | "expired";
                                     currentPeriodStart: string | null;
@@ -7869,7 +8284,7 @@ export interface paths {
                                     status: "created" | "captured" | "failed" | "refunded";
                                     method: string | null;
                                     /** @enum {string} */
-                                    provider: "razorpay" | "polar";
+                                    provider: "razorpay" | "polar" | "dodo";
                                     providerPaymentId: string | null;
                                     createdAt: string;
                                 }[];
@@ -8037,7 +8452,7 @@ export interface paths {
                                     image: string | null;
                                     username: string;
                                     /** @enum {string} */
-                                    plan: "free" | "season_pass" | "pro";
+                                    plan: "free" | "season_pass" | "pro" | "lifetime";
                                     isAnonymous: boolean;
                                     suspendedAt: string | null;
                                     createdAt: string;
@@ -8075,7 +8490,7 @@ export interface paths {
                                 };
                                 usage: {
                                     /** @enum {string} */
-                                    plan: "free" | "season_pass" | "pro";
+                                    plan: "free" | "season_pass" | "pro" | "lifetime";
                                     ownAiKey: boolean;
                                     periodStart: string;
                                     periodEnd: string;
@@ -8087,7 +8502,6 @@ export interface paths {
                                         used: number;
                                         limit: number;
                                     };
-                                    trialEndsAt: string | null;
                                     edit: {
                                         used: number;
                                         limit: number;
@@ -8100,12 +8514,16 @@ export interface paths {
                                         used: number;
                                         limit: number;
                                     };
+                                    pdf: {
+                                        used: number;
+                                        limit: number;
+                                    } | null;
                                 };
                                 subscriptions: {
                                     /** Format: uuid */
                                     id: string;
                                     /** @enum {string} */
-                                    plan: "season_pass" | "pro";
+                                    plan: "season_pass" | "pro" | "lifetime";
                                     /** @enum {string} */
                                     status: "created" | "active" | "past_due" | "cancelled" | "expired";
                                     currentPeriodStart: string | null;
@@ -8123,7 +8541,7 @@ export interface paths {
                                     status: "created" | "captured" | "failed" | "refunded";
                                     method: string | null;
                                     /** @enum {string} */
-                                    provider: "razorpay" | "polar";
+                                    provider: "razorpay" | "polar" | "dodo";
                                     providerPaymentId: string | null;
                                     createdAt: string;
                                 }[];
@@ -8354,21 +8772,20 @@ export interface paths {
                             data: {
                                 days: number;
                                 totals: {
-                                    paise: number;
-                                    previousPaise: number;
-                                    allTimePaise: number;
-                                    usdCents: number;
+                                    revenue: number;
+                                    previousRevenue: number;
+                                    allTimeRevenue: number;
                                     payers: number;
                                     checkouts: number;
                                     checkoutsPaid: number;
                                 };
                                 byDay: {
                                     day: string;
-                                    paise: number;
+                                    revenue: number;
                                 }[];
                                 activeSubscriptions: {
                                     /** @enum {string} */
-                                    plan: "season_pass" | "pro";
+                                    plan: "season_pass" | "pro" | "lifetime";
                                     active: number;
                                 }[];
                                 statuses: {
@@ -8385,14 +8802,14 @@ export interface paths {
                                     status: "created" | "captured" | "failed" | "refunded";
                                     method: string | null;
                                     /** @enum {string} */
-                                    provider: "razorpay" | "polar";
+                                    provider: "razorpay" | "polar" | "dodo";
                                     providerPaymentId: string | null;
-                                    plan: ("season_pass" | "pro") | null;
+                                    plan: ("season_pass" | "pro" | "lifetime") | null;
                                     /** Format: uuid */
                                     userId: string;
                                     email: string;
                                 }[];
-                                razorpayConfigured: boolean;
+                                paymentsConfigured: boolean;
                             };
                         };
                     };

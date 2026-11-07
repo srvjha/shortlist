@@ -1,17 +1,11 @@
+import { randomUUID } from "node:crypto";
 import { and, desc, eq, gt, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 import { db } from "../../db/index.js";
 import { payments, subscriptions, users } from "../../db/schema/index.js";
-import { AppError, ConflictError, ForbiddenError, NotFoundError } from "../../lib/errors.js";
+import { ConflictError, ForbiddenError, NotFoundError } from "../../lib/errors.js";
 import { track } from "../../lib/analytics.js";
 import { runsSince } from "../usage/quotas.js";
-import {
-  type Charge,
-  type Currency,
-  type PaidPlan,
-  type ProviderRefund,
-  providerOf,
-  routeFor,
-} from "./providers/index.js";
+import { APP, CURRENCY, dodo, type PaidPlan, prices, startCheckout } from "./dodo.js";
 
 type Plan = (typeof users.$inferSelect)["plan"];
 
@@ -27,7 +21,8 @@ export async function recomputePlan(userId: string, executor: Pick<typeof db, "s
         gt(subscriptions.currentPeriodEnd, new Date()),
       ),
     );
-  const plan: Plan = active.some((s) => s.plan === "pro") ? "pro" : active.length > 0 ? "season_pass" : "free";
+  const has = (plan: Plan) => active.some((s) => s.plan === plan);
+  const plan: Plan = has("lifetime") ? "lifetime" : has("pro") ? "pro" : active.length > 0 ? "season_pass" : "free";
   await executor.update(users).set({ plan }).where(eq(users.id, userId));
   return plan;
 }
@@ -35,7 +30,7 @@ export async function recomputePlan(userId: string, executor: Pick<typeof db, "s
 // A plan given for free, by an admin or a promo code; it runs for `months` from now.
 export async function grantPlan(
   userId: string,
-  plan: "season_pass" | "pro",
+  plan: "season_pass" | "pro" | "lifetime",
   months: number,
   executor: Pick<typeof db, "insert"> = db,
 ) {
@@ -56,56 +51,43 @@ export async function assertNotGuest(userId: string, executor: Pick<typeof db, "
     throw new ForbiddenError("Create an account first, so your plan isn't deleted with this guest account");
 }
 
-const currencyOf = (currency: string): Currency => (currency === "USD" ? "USD" : "INR");
+export const pricing = () => ({ currency: CURRENCY, ...prices });
 
-export function pricingFor(country: string | null) {
-  const { provider, ...route } = routeFor(country);
-  return { ...route, provider: provider.id };
-}
-
-export async function createCheckout(userId: string, plan: PaidPlan, country: string | null = null) {
-  const route = routeFor(country);
-  if (!route.checkoutOpen)
-    throw new AppError(503, "CHECKOUT_UNAVAILABLE", "Payments from your country are coming soon");
+export async function createCheckout(userId: string, plan: PaidPlan) {
   await assertNotGuest(userId);
-  const { provider, currency } = route;
-  const amount = route[plan];
-  track(userId, "checkout_started", { plan, provider: provider.id });
-
-  if (plan === "pro" && provider.id === "razorpay") {
-    const [existing] = await db
-      .select({ id: subscriptions.id })
-      .from(subscriptions)
-      .where(and(eq(subscriptions.userId, userId), eq(subscriptions.plan, "pro"), eq(subscriptions.status, "active")))
-      .limit(1);
-    if (existing) throw new ConflictError("You already have an active Pro subscription");
+  const current = await db
+    .select({ plan: subscriptions.plan })
+    .from(subscriptions)
+    .where(
+      and(
+        eq(subscriptions.userId, userId),
+        inArray(subscriptions.status, ["active", "cancelled", "past_due"]),
+        gt(subscriptions.currentPeriodEnd, new Date()),
+      ),
+    );
+  if (current.some((s) => s.plan === "lifetime")) throw new ConflictError("You already have the Lifetime plan");
+  if (plan === "pro" && current.some((s) => s.plan === "pro")) {
+    throw new ConflictError("You already have an active Pro plan");
   }
+  track(userId, "checkout_started", { plan, provider: "dodo" });
 
-  const [user] = await db.select({ email: users.email }).from(users).where(eq(users.id, userId));
-  const started = await provider.startCheckout({ userId, email: user!.email, plan, amount, currency });
+  const [user] = await db.select({ email: users.email, name: users.name }).from(users).where(eq(users.id, userId));
+  const checkoutId = randomUUID();
+  const session = await startCheckout({ checkoutId, userId, email: user!.email, name: user!.name, plan });
+  const amount = prices[plan];
+  // Written after the session exists, but before the buyer can reach its page and pay.
   await db.transaction(async (tx) => {
-    const [subscription] = await tx
-      .insert(subscriptions)
-      .values({
-        userId,
-        plan,
-        status: "created",
-        provider: provider.id,
-        providerSubscriptionId: started.subscriptionId,
-      })
-      .returning();
-    if (started.checkoutId) {
-      await tx.insert(payments).values({
-        userId,
-        subscriptionId: subscription!.id,
-        provider: provider.id,
-        providerCheckoutId: started.checkoutId,
-        amount,
-        currency,
-      });
-    }
+    await tx.insert(subscriptions).values({ id: checkoutId, userId, plan, status: "created", provider: "dodo" });
+    await tx.insert(payments).values({
+      userId,
+      subscriptionId: checkoutId,
+      provider: "dodo",
+      providerCheckoutId: session.sessionId,
+      amount,
+      currency: CURRENCY,
+    });
   });
-  return { ...started.client, plan, amount, currency };
+  return { checkoutId, url: session.url, plan, amount, currency: CURRENCY };
 }
 
 export async function getSubscription(userId: string) {
@@ -117,7 +99,7 @@ export async function getSubscription(userId: string) {
       status: subscriptions.status,
       currentPeriodEnd: subscriptions.currentPeriodEnd,
       cancelledAt: subscriptions.cancelledAt,
-      // Only a plan billed by a provider subscription renews; passes, Polar's Pro month and given plans run out.
+      // Only a plan billed by a provider subscription renews; passes and given plans run out, and Lifetime never ends.
       renews: sql<boolean>`${subscriptions.providerSubscriptionId} is not null`,
     })
     .from(subscriptions)
@@ -127,7 +109,7 @@ export async function getSubscription(userId: string) {
   return { plan: user!.plan, subscription: subscription ?? null };
 }
 
-// Cancels Pro at the end of the current billing period. Season Pass simply runs out.
+// Cancels Pro at the end of the current billing period. A Season Pass runs out, and Lifetime has nothing to cancel.
 export async function cancelSubscription(userId: string) {
   const [subscription] = await db
     .select()
@@ -138,14 +120,13 @@ export async function cancelSubscription(userId: string) {
         eq(subscriptions.userId, userId),
         eq(subscriptions.plan, "pro"),
         eq(subscriptions.status, "active"),
+        eq(subscriptions.provider, "dodo"),
         isNotNull(subscriptions.providerSubscriptionId),
       ),
     )
     .limit(1);
-  if (!subscription?.providerSubscriptionId || !subscription.provider) {
-    throw new NotFoundError("Active Pro subscription");
-  }
-  await providerOf(subscription.provider).cancel(subscription.providerSubscriptionId, true);
+  if (!subscription?.providerSubscriptionId) throw new NotFoundError("Active Pro subscription");
+  await dodo().subscriptions.update(subscription.providerSubscriptionId, { cancel_at_next_billing_date: true });
   await db
     .update(subscriptions)
     .set({ status: "cancelled", cancelledAt: new Date() })
@@ -153,7 +134,7 @@ export async function cancelSubscription(userId: string) {
   return getSubscription(userId);
 }
 
-export const REFUND_WINDOW_MS = 6 * 60 * 60 * 1000;
+export const REFUND_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 // A refund is for trying the plan and not liking it, not for using it fully and getting the money back.
 export const REFUND_USE_LIMIT = 3;
 
@@ -173,26 +154,10 @@ async function whyNotRefundable(userId: string, since: Date) {
     : null;
 }
 
-// The amount paid minus exactly what the provider kept for it.
-export function refundableAmount(charge: Charge) {
-  if (!charge.captured || charge.refunded) {
-    throw new ConflictError("This payment has already been refunded");
-  }
-  if (charge.fee === null) {
-    throw new AppError(
-      503,
-      "REFUND_FEE_UNAVAILABLE",
-      "The payment provider hasn't reported its fee for this payment yet, so the refund can't be worked out. Try again in a few minutes.",
-    );
-  }
-  const refund = charge.amount - charge.fee;
-  if (refund <= 0) throw new ConflictError("Nothing is left to refund after the payment provider's fee");
-  return refund;
-}
-
 const refundable = (userId: string, now: Date) =>
   and(
     eq(payments.userId, userId),
+    eq(payments.provider, "dodo"),
     eq(payments.status, "captured"),
     isNull(payments.refundedAt),
     isNotNull(payments.providerPaymentId),
@@ -201,14 +166,7 @@ const refundable = (userId: string, now: Date) =>
 
 export async function getRefundQuote(userId: string, now = new Date()) {
   const [row] = await db
-    .select({
-      id: payments.id,
-      provider: payments.provider,
-      providerPaymentId: payments.providerPaymentId,
-      currency: payments.currency,
-      capturedAt: payments.capturedAt,
-      plan: subscriptions.plan,
-    })
+    .select({ id: payments.id, amount: payments.amount, capturedAt: payments.capturedAt, plan: subscriptions.plan })
     .from(payments)
     .leftJoin(subscriptions, eq(subscriptions.id, payments.subscriptionId))
     .where(refundable(userId, now))
@@ -217,19 +175,12 @@ export async function getRefundQuote(userId: string, now = new Date()) {
   if (!row) return { quote: null, reason: null };
   const reason = await whyNotRefundable(userId, row.capturedAt!);
   if (reason) return { quote: null, reason };
-  const charge = await providerOf(row.provider).charge(row.providerPaymentId!);
-  // Part of it may already have been refunded by hand, as a goodwill credit; then there's no self-serve refund.
-  if (charge.refunded) return { quote: null, reason: null };
-  const refund = refundableAmount(charge);
   return {
     quote: {
       paymentId: row.id,
       plan: row.plan,
-      provider: row.provider,
-      currency: currencyOf(row.currency),
-      amountPaid: charge.amount,
-      fee: charge.amount - refund,
-      refund,
+      currency: CURRENCY,
+      refund: row.amount,
       refundableUntil: new Date(row.capturedAt!.getTime() + REFUND_WINDOW_MS),
     },
     reason: null,
@@ -246,7 +197,7 @@ export async function requestRefund(userId: string, paymentId: string, now = new
     .set({ refundedAt: now, updatedAt: keepUpdatedAt })
     .where(and(eq(payments.id, paymentId), refundable(userId, now)))
     .returning();
-  if (!row) throw new ConflictError("Refunds are available once per payment, within 6 hours of paying");
+  if (!row) throw new ConflictError("Refunds are available once per payment, within 7 days of paying");
   const reason = await whyNotRefundable(userId, row.capturedAt!);
   const release = () =>
     db.update(payments).set({ refundedAt: null, updatedAt: keepUpdatedAt }).where(eq(payments.id, row.id));
@@ -260,35 +211,45 @@ export async function requestRefund(userId: string, paymentId: string, now = new
     ? await db.select().from(subscriptions).where(eq(subscriptions.id, row.subscriptionId))
     : [];
   const note = `Self-serve refund ${row.id}`;
-  const provider = providerOf(row.provider);
   const remoteId = row.providerPaymentId!;
   let sent = false;
-  let refund: ProviderRefund;
+  let refundId: string;
   try {
-    const amount = refundableAmount(await provider.charge(remoteId));
+    const payment = await dodo().payments.retrieve(remoteId);
+    const alreadyRefunded = payment.refunds.some((refund) => refund.status !== "failed");
+    if (payment.status !== "succeeded" || alreadyRefunded) {
+      throw new ConflictError("This payment has already been refunded");
+    }
     // A recurring Pro is cancelled first: refunding and then failing to cancel would leave it charging every month.
-    if (subscription?.providerSubscriptionId && subscription.provider && !subscription.cancelledAt) {
-      await providerOf(subscription.provider).cancel(subscription.providerSubscriptionId, false);
+    if (subscription?.providerSubscriptionId && !subscription.cancelledAt) {
+      await dodo().subscriptions.update(subscription.providerSubscriptionId, { status: "cancelled" });
       subscription.cancelledAt = now;
       await db.update(subscriptions).set({ cancelledAt: now }).where(eq(subscriptions.id, subscription.id));
     }
     sent = true;
-    refund = await provider.refund(remoteId, amount, note);
+    // No items: Dodo refunds everything charged, tax included, in whatever currency the buyer paid.
+    const refund = await dodo().refunds.create({ payment_id: remoteId, reason: note, metadata: { app: APP } });
+    refundId = refund.refund_id;
   } catch (error) {
-    // A refund call that timed out may still have gone through, so the provider is asked for this refund (by its
-    // note) before the claim is released; otherwise the plan would keep running on money already returned.
-    const ours = sent ? await provider.findRefund(remoteId, note).catch(() => undefined) : undefined;
+    // A refund call that timed out may still have gone through, so Dodo is asked for this refund (by its reason)
+    // before the claim is released; otherwise the plan would keep running on money already returned.
+    const ours = sent
+      ? await dodo()
+          .payments.retrieve(remoteId)
+          .then((payment) => payment.refunds.find((refund) => refund.reason === note && refund.status !== "failed"))
+          .catch(() => undefined)
+      : undefined;
     if (!ours) {
       await release();
       throw error;
     }
-    refund = ours;
+    refundId = ours.refund_id;
   }
 
   await db.transaction(async (tx) => {
     await tx
       .update(payments)
-      .set({ status: "refunded", refundedAmount: refund.amount, providerRefundId: refund.id })
+      .set({ status: "refunded", refundedAmount: row.amount, providerRefundId: refundId })
       .where(eq(payments.id, row.id));
     if (subscription) {
       await tx
@@ -298,6 +259,6 @@ export async function requestRefund(userId: string, paymentId: string, now = new
     }
     await recomputePlan(userId, tx);
   });
-  track(userId, "refund_requested", { [`amount_${row.currency.toLowerCase()}`]: refund.amount / 100 });
-  return { paymentId: row.id, refund: refund.amount, currency: currencyOf(row.currency), providerRefundId: refund.id };
+  track(userId, "refund_requested", { amount_usd: row.amount / 100 });
+  return { paymentId: row.id, refund: row.amount, currency: CURRENCY, providerRefundId: refundId };
 }

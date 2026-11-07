@@ -8,7 +8,6 @@ const redacted = [
   "authorization",
   '["x-share-password"]',
   '["x-share-contact-password"]',
-  '["x-razorpay-signature"]',
   '["webhook-signature"]',
   '["x-share-visitor"]',
   '["x-shortlist-proxy"]',

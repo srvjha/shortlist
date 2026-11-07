@@ -29,6 +29,7 @@ export const aiStep = pgEnum("ai_step", [
   "ats_match",
   "ats_review",
   "project_link",
+  "cover_letter",
 ]);
 
 // pending: reserved against the quota while the model is still working.
@@ -39,9 +40,8 @@ export const aiRuns = pgTable(
   "ai_runs",
   {
     id: uuid().primaryKey().defaultRandom(),
-    userId: uuid()
-      .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
+    // Null for a run from a public page, with nobody signed in.
+    userId: uuid().references(() => users.id, { onDelete: "cascade" }),
     resumeId: uuid().references(() => resumes.id, { onDelete: "set null" }),
     jobId: uuid().references(() => jobs.id, { onDelete: "set null" }),
     // The version the AI's accepted changes were saved as, if any.

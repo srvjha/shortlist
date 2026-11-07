@@ -35,7 +35,7 @@ const body = [
   item("Experience", 40, 130, { height: 12, bold: true }),
   item("SDE Intern", 40, 150, { bold: true }),
   item("May 2025 - Jul 2025", 460, 150),
-  item("Razorpay", 40, 163),
+  item("Paylane", 40, 163),
   item("• Cut p99 latency of the payouts API by 40% using Go and Redis caching", 50, 176),
 ];
 
@@ -45,7 +45,7 @@ describe("parseQuality on hand-built items", () => {
     expect(issue(result, "contact").status).toBe("fail");
     expect(issue(result, "contact").fix).toContain("main body");
     expect(result.parsed.name).toBe("Aarav Sharma");
-    expect(result.parsed.jobs).toEqual([{ title: "SDE Intern", company: "Razorpay", dates: "May 2025 - Jul 2025" }]);
+    expect(result.parsed.jobs).toEqual([{ title: "SDE Intern", company: "Paylane", dates: "May 2025 - Jul 2025" }]);
   });
 
   it("reads contact details in the body", () => {
@@ -81,7 +81,7 @@ describe("parseQuality on hand-built items", () => {
   });
 
   it("counts a company read without the city typed after it as read correctly", () => {
-    const expected = { jobs: [{ title: "SDE Intern", company: "Razorpay, Bengaluru" }] };
+    const expected = { jobs: [{ title: "SDE Intern", company: "Paylane, Bengaluru" }] };
     const result = parseQuality(parseItems(body, page), { items: body, page, expected });
     expect(result.fields.find((f) => f.id === "job1.company")?.ok).toBe(true);
   });
@@ -110,7 +110,7 @@ describe.skipIf(!hasTectonic)("templates round-trip through the parser", () => {
     email: "aarav@example.com",
     phone: "+91 98765 43210",
     sectionKinds: ["skills", "experience", "projects", "education"],
-    jobs: [{ title: "SDE Intern", company: "Razorpay" }],
+    jobs: [{ title: "SDE Intern", company: "Paylane" }],
   };
   const reports = new Map<string, ParseReport>();
 

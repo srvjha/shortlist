@@ -15,6 +15,7 @@ import {
   sql,
   sum,
 } from "drizzle-orm";
+import { dodoConfigured } from "../billing/dodo.js";
 import type { PgColumn } from "drizzle-orm/pg-core";
 import { env } from "../../config/env.js";
 import { db, pool } from "../../db/index.js";
@@ -166,17 +167,17 @@ export async function getOverview(days: number, timeZone: string) {
       .from(aiRuns),
     db
       .select({
-        paise: sql<number>`coalesce(sum(${payments.amount}) filter (where ${current(payments.updatedAt)}), 0)`.mapWith(
+        cents: sql<number>`coalesce(sum(${payments.amount}) filter (where ${current(payments.updatedAt)}), 0)`.mapWith(
           Number,
         ),
-        previousPaise:
+        previousCents:
           sql<number>`coalesce(sum(${payments.amount}) filter (where ${previous(payments.updatedAt)}), 0)`.mapWith(
             Number,
           ),
       })
       .from(payments)
-      // Rupees only; dollars from Polar show on the revenue page.
-      .where(and(eq(payments.status, "captured"), eq(payments.currency, "INR"))),
+      // Dollars only; rupees from before the move to Dodo stay out of the totals.
+      .where(and(eq(payments.status, "captured"), eq(payments.currency, "USD"))),
     db
       .select({ views: filtered(current(linkViews.viewedAt)), previousViews: filtered(previous(linkViews.viewedAt)) })
       .from(linkViews),
@@ -294,8 +295,8 @@ export async function getOverview(days: number, timeZone: string) {
       aiFailed: ai?.failed ?? 0,
       aiCostUsdMicros: ai?.costUsdMicros ?? 0,
       previousAiCostUsdMicros: ai?.previousCostUsdMicros ?? 0,
-      revenuePaise: revenue?.paise ?? 0,
-      previousRevenuePaise: revenue?.previousPaise ?? 0,
+      revenueCents: revenue?.cents ?? 0,
+      previousRevenueCents: revenue?.previousCents ?? 0,
       shareViews: views?.views ?? 0,
       previousShareViews: views?.previousViews ?? 0,
     },
@@ -315,7 +316,7 @@ const PAGE_SIZE = 25;
 
 export async function listUsers(query: {
   q?: string | undefined;
-  plan?: "free" | "season_pass" | "pro" | undefined;
+  plan?: "free" | "season_pass" | "pro" | "lifetime" | undefined;
   status?: "active" | "suspended" | "guest" | undefined;
   page: number;
 }) {
@@ -743,27 +744,22 @@ export async function getAiUsage(days: number, timeZone: string) {
 
 export async function getRevenue(days: number, timeZone: string) {
   const { now, since, previousSince } = range(days);
-  // The rupee totals leave out Polar's dollar payments, which are summed on their own.
-  const captured = and(eq(payments.status, "captured"), eq(payments.currency, "INR"))!;
+  // Dollars only; rupees from before the move to Dodo stay out of the totals.
+  const captured = and(eq(payments.status, "captured"), eq(payments.currency, "USD"))!;
   const customers = customer(payments.userId);
-  const capturedUsd = and(eq(payments.status, "captured"), eq(payments.currency, "USD"));
 
   const [[totals], byDay, byPlan, recent, statuses] = await Promise.all([
     db
       .select({
-        paise:
+        revenue:
           sql<number>`coalesce(sum(${payments.amount}) filter (where ${captured} and ${payments.updatedAt} >= ${since}), 0)`.mapWith(
             Number,
           ),
-        previousPaise:
+        previousRevenue:
           sql<number>`coalesce(sum(${payments.amount}) filter (where ${captured} and ${payments.updatedAt} >= ${previousSince} and ${payments.updatedAt} < ${since}), 0)`.mapWith(
             Number,
           ),
-        allTimePaise: sql<number>`coalesce(sum(${payments.amount}) filter (where ${captured}), 0)`.mapWith(Number),
-        usdCents:
-          sql<number>`coalesce(sum(${payments.amount}) filter (where ${capturedUsd} and ${payments.updatedAt} >= ${since}), 0)`.mapWith(
-            Number,
-          ),
+        allTimeRevenue: sql<number>`coalesce(sum(${payments.amount}) filter (where ${captured}), 0)`.mapWith(Number),
         payers: sql<number>`count(distinct ${payments.userId}) filter (where ${payments.status} = 'captured')`.mapWith(
           Number,
         ),
@@ -773,7 +769,7 @@ export async function getRevenue(days: number, timeZone: string) {
       .from(payments)
       .where(customers),
     db
-      .select({ day: dayOf(payments.updatedAt, timeZone), paise: sum(payments.amount).mapWith(Number) })
+      .select({ day: dayOf(payments.updatedAt, timeZone), revenue: sum(payments.amount).mapWith(Number) })
       .from(payments)
       .where(and(captured, customers, gte(payments.updatedAt, since)))
       .groupBy(sql`1`),
@@ -818,19 +814,18 @@ export async function getRevenue(days: number, timeZone: string) {
   return {
     days,
     totals: totals ?? {
-      paise: 0,
-      previousPaise: 0,
-      allTimePaise: 0,
-      usdCents: 0,
+      revenue: 0,
+      previousRevenue: 0,
+      allTimeRevenue: 0,
       payers: 0,
       checkouts: 0,
       checkoutsPaid: 0,
     },
-    byDay: fillDays(dayKeys(days, timeZone, now), byDay, ["paise"]),
+    byDay: fillDays(dayKeys(days, timeZone, now), byDay, ["revenue"]),
     activeSubscriptions: byPlan,
     statuses,
     payments: recent,
-    razorpayConfigured: Boolean(env.RAZORPAY_KEY_ID),
+    paymentsConfigured: dodoConfigured(),
   };
 }
 
@@ -993,8 +988,8 @@ export async function getSystem() {
       },
       { name: `Storage (${env.STORAGE_DRIVER})`, configured: true },
       {
-        name: env.RAZORPAY_MODE === "test" ? "Razorpay (test mode)" : "Razorpay",
-        configured: Boolean(env.RAZORPAY_KEY_ID && env.RAZORPAY_WEBHOOK_SECRET),
+        name: env.DODO_PAYMENTS_ENVIRONMENT === "test_mode" ? "Dodo Payments (test mode)" : "Dodo Payments",
+        configured: dodoConfigured() && Boolean(env.DODO_PAYMENTS_WEBHOOK_KEY),
       },
       { name: "PostHog events", configured: Boolean(env.POSTHOG_KEY) },
       { name: "PostHog admin reads", configured: Boolean(env.POSTHOG_PERSONAL_API_KEY && env.POSTHOG_PROJECT_ID) },

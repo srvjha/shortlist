@@ -56,7 +56,7 @@ export const analyticsResponse = z.object({
   ),
 });
 
-// Season Pass and Pro only.
+// Paid plans only.
 export const insightsResponse = z.object({
   days: z.number().int(),
   // Seven rows, Monday first, of 24 hourly view counts in the requested time zone.

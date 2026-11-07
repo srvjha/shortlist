@@ -170,6 +170,83 @@ export function TemplateFinder() {
   )
 }
 
+const letterLines = [
+  { text: 'In my two years at Paylane I ran ', mark: false },
+  { text: 'email campaigns for 40,000 customers', mark: true },
+  { text: ' and lifted repeat orders by ', mark: false },
+  { text: '18%', mark: true },
+  { text: '. Your role asks for ', mark: false },
+  { text: 'CRM and lifecycle marketing', mark: true },
+  { text: ', which is the work I enjoy most.', mark: false },
+]
+
+export function Letters() {
+  return (
+    <Reveal
+      as="section"
+      aria-labelledby="letters"
+      className="mx-auto grid max-w-6xl items-center gap-12 px-5 pt-28 lg:grid-cols-[1fr_1.1fr]"
+    >
+      <div>
+        <h2 id="letters" data-reveal className={heading}>
+          Cover and resignation letters, free
+        </h2>
+        <p data-reveal className="mt-4 max-w-xl text-lg">
+          Write a cover letter from a tailored resume in one click. It uses only
+          what your resume says, flags any line it can’t back up, and downloads
+          as a PDF that matches your resume.
+        </p>
+        <p data-reveal className="mt-4 max-w-xl text-lg">
+          Leaving a job? Get a clear resignation letter for India or the US,
+          with your last working day worked out from your notice period.
+        </p>
+        <div data-reveal className="mt-8 flex flex-wrap gap-3">
+          <Button size="lg" asChild className="h-12 px-6 text-base">
+            <Link to="/cover-letter-generator">Write a cover letter</Link>
+          </Button>
+          <Button
+            size="lg"
+            variant="secondary"
+            asChild
+            className="h-12 px-6 text-base"
+          >
+            <Link to="/resignation-letter-generator">
+              Write a resignation letter
+            </Link>
+          </Button>
+        </div>
+        <p data-reveal className="mt-4 text-sm text-muted-foreground">
+          No sign up needed to try either one.
+        </p>
+      </div>
+      <figure
+        data-reveal
+        className="rotate-[0.6deg] bg-sheet p-8 text-sheet-foreground shadow-[0_24px_60px_-30px_rgb(0_0_0/0.35)] sm:p-10"
+      >
+        <p className="font-serif text-sm">Dear Hiring Team,</p>
+        <p className="mt-4 font-serif text-[0.95rem] leading-relaxed">
+          {letterLines.map((line) =>
+            line.mark ? (
+              <mark
+                key={line.text}
+                className="rounded-[2px] bg-highlight/70 px-0.5 text-inherit"
+              >
+                {line.text}
+              </mark>
+            ) : (
+              line.text
+            ),
+          )}
+        </p>
+        <p className="mt-4 font-serif text-sm">Neha Kulkarni</p>
+        <figcaption className="mt-8 border-t border-black/10 pt-4 text-sm">
+          Highlighted lines are matched to your resume and the job.
+        </figcaption>
+      </figure>
+    </Reveal>
+  )
+}
+
 export function PlanPicker({ pricing }: { pricing?: Pricing | null }) {
   return (
     <Reveal
@@ -197,7 +274,7 @@ const faqs = [
   },
   {
     q: 'Is it free?',
-    a: 'Yes. The Free plan includes 5 resumes tailored to a job description in your first week, then 1 each month, plus 50 AI edits each month, and you can make and edit as many resumes as you like by hand. The Season Pass is ₹499 for six months if you are applying a lot.',
+    a: 'Yes. The Free plan includes 1 resume, 1 resume tailored to a job description, 1 AI edit and 3 PDF downloads, plus the ATS checker and cover and resignation letters. Pro is $12 a month if you are applying a lot, and Lifetime is $90 once.',
   },
   {
     q: 'Does the AI add things I haven’t done?',

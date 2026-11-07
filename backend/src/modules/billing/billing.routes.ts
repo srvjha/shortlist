@@ -1,13 +1,11 @@
-import express, { type Request, Router } from "express";
-import { env } from "../../config/env.js";
+import express, { Router } from "express";
 import { AppError } from "../../lib/errors.js";
-import { countryOf } from "../../lib/geo.js";
 import { sendData } from "../../lib/http.js";
-import { verifyWebhookSignature } from "../../lib/razorpay.js";
 import { currentUser, requireAuth } from "../../middleware/require-auth.js";
-import { clientIp, publicLimiter } from "../../middleware/rate-limit.js";
+import { publicLimiter } from "../../middleware/rate-limit.js";
 import { validated } from "../../middleware/validate.js";
 import {
+  checkoutParams,
   checkoutResponse,
   createCheckoutBody,
   createRefundBody,
@@ -17,27 +15,31 @@ import {
   subscriptionResponse,
 } from "./billing.schemas.js";
 import * as service from "./billing.service.js";
-import { polarEvents, readPolarWebhook } from "./providers/polar.js";
-import { razorpayEvents } from "./providers/razorpay.js";
-import { handleEvents } from "./webhooks.js";
+import { dodoEvents, readDodoWebhook } from "./dodo.js";
+import { confirmCheckout, handleEvents } from "./webhooks.js";
 
 export const billingRouter = Router();
 
-// Locally every request comes from localhost, so PAYMENTS_TEST_COUNTRY stands in for the visitor's country.
-const visitorCountry = (req: Request) =>
-  env.NODE_ENV !== "production" && env.PAYMENTS_TEST_COUNTRY ? env.PAYMENTS_TEST_COUNTRY : countryOf(clientIp(req));
-
-// Public: the prices for the visitor's country. Pages rendered on the frontend's server pass the visitor's IP.
-billingRouter.get("/pricing", publicLimiter, async (req, res) => {
-  sendData(res, pricingResponse, service.pricingFor(await visitorCountry(req)));
+// Public: the prices of the plans for sale.
+billingRouter.get("/pricing", publicLimiter, (_req, res) => {
+  sendData(res, pricingResponse, service.pricing());
 });
 
 billingRouter.post(
   "/checkouts",
   requireAuth,
   ...validated({ body: createCheckoutBody }, async (req, res) => {
-    const country = await visitorCountry(req);
-    sendData(res, checkoutResponse, await service.createCheckout(currentUser(req).id, req.body.plan, country), 201);
+    sendData(res, checkoutResponse, await service.createCheckout(currentUser(req).id, req.body.plan), 201);
+  }),
+);
+
+// The buyer is back from Dodo's page, so the plan switches on without waiting for the webhook. Nothing in the return
+// URL is trusted: the state is read from Dodo.
+billingRouter.post(
+  "/checkouts/:checkoutId/confirmation",
+  requireAuth,
+  ...validated({ params: checkoutParams }, async (req, res) => {
+    sendData(res, subscriptionResponse, await confirmCheckout(currentUser(req).id, req.params.checkoutId));
   }),
 );
 
@@ -65,27 +67,19 @@ billingRouter.post(
 export const paymentWebhookRouter = Router();
 
 paymentWebhookRouter.post(
-  "/v1/webhooks/razorpay",
+  "/v1/webhooks/dodo",
   express.raw({ type: "application/json", limit: "1mb" }),
   async (req, res) => {
     const body = req.body as Buffer;
-    if (!Buffer.isBuffer(body) || !verifyWebhookSignature(body, req.get("x-razorpay-signature"))) {
-      throw new AppError(400, "INVALID_SIGNATURE", "Webhook signature verification failed");
-    }
-    const event = JSON.parse(body.toString("utf8"));
-    await handleEvents("razorpay", req.get("x-razorpay-event-id"), razorpayEvents(event), event);
-    res.status(200).json({ data: { received: true } });
-  },
-);
-
-paymentWebhookRouter.post(
-  "/v1/webhooks/polar",
-  express.raw({ type: "application/json", limit: "1mb" }),
-  async (req, res) => {
-    const body = req.body as Buffer;
-    const event = Buffer.isBuffer(body) ? await readPolarWebhook(body, req.headers as Record<string, string>) : null;
+    const event = Buffer.isBuffer(body)
+      ? readDodoWebhook(body, {
+          "webhook-id": req.get("webhook-id") ?? "",
+          "webhook-signature": req.get("webhook-signature") ?? "",
+          "webhook-timestamp": req.get("webhook-timestamp") ?? "",
+        })
+      : null;
     if (!event) throw new AppError(400, "INVALID_SIGNATURE", "Webhook signature verification failed");
-    if (event.type !== "unknown") await handleEvents("polar", req.get("webhook-id"), polarEvents(event), event);
+    await handleEvents(req.get("webhook-id"), dodoEvents(event), event);
     res.status(200).json({ data: { received: true } });
   },
 );

@@ -4,7 +4,8 @@ import { usageResponse } from "../usage/usage.routes.js";
 
 export const adminRangeQuery = analyticsQuery;
 
-const plan = z.enum(["free", "season_pass", "pro"]);
+const plan = z.enum(["free", "season_pass", "pro", "lifetime"]);
+const heldPlan = z.enum(["season_pass", "pro", "lifetime"]);
 const int = z.number().int();
 const labelled = z.array(z.object({ label: z.string(), count: int }));
 
@@ -29,8 +30,8 @@ export const adminOverviewResponse = z.object({
     aiFailed: int,
     aiCostUsdMicros: int,
     previousAiCostUsdMicros: int,
-    revenuePaise: int,
-    previousRevenuePaise: int,
+    revenueCents: int,
+    previousRevenueCents: int,
     shareViews: int,
     previousShareViews: int,
   }),
@@ -138,7 +139,7 @@ export const adminUserResponse = z.object({
   subscriptions: z.array(
     z.object({
       id: z.uuid(),
-      plan: z.enum(["season_pass", "pro"]),
+      plan: heldPlan,
       status: z.enum(["created", "active", "past_due", "cancelled", "expired"]),
       currentPeriodStart: z.date().nullable(),
       currentPeriodEnd: z.date().nullable(),
@@ -150,12 +151,12 @@ export const adminUserResponse = z.object({
   payments: z.array(
     z.object({
       id: z.uuid(),
-      // In the currency's minor unit (paise, cents).
+      // In the currency's minor unit (cents; paise on older rows).
       amount: int,
       currency: z.string(),
       status: z.enum(["created", "captured", "failed", "refunded"]),
       method: z.string().nullable(),
-      provider: z.enum(["razorpay", "polar"]),
+      provider: z.enum(["razorpay", "polar", "dodo"]),
       providerPaymentId: z.string().nullable(),
       createdAt: z.date(),
     }),
@@ -233,35 +234,34 @@ export const adminAiResponse = z.object({
 export const adminRevenueResponse = z.object({
   days: int,
   totals: z.object({
-    paise: int,
-    previousPaise: int,
-    allTimePaise: int,
-    // Polar's dollar payments in the period, left out of the rupee totals.
-    usdCents: int,
+    // In US cents.
+    revenue: int,
+    previousRevenue: int,
+    allTimeRevenue: int,
     payers: int,
     checkouts: int,
     checkoutsPaid: int,
   }),
-  byDay: z.array(z.object({ day: z.string(), paise: int })),
-  activeSubscriptions: z.array(z.object({ plan: z.enum(["season_pass", "pro"]), active: int })),
+  byDay: z.array(z.object({ day: z.string(), revenue: int })),
+  activeSubscriptions: z.array(z.object({ plan: heldPlan, active: int })),
   statuses: labelled,
   payments: z.array(
     z.object({
       id: z.uuid(),
       createdAt: z.date(),
-      // In the currency's minor unit (paise, cents).
+      // In the currency's minor unit (cents; paise on older rows).
       amount: int,
       currency: z.string(),
       status: z.enum(["created", "captured", "failed", "refunded"]),
       method: z.string().nullable(),
-      provider: z.enum(["razorpay", "polar"]),
+      provider: z.enum(["razorpay", "polar", "dodo"]),
       providerPaymentId: z.string().nullable(),
-      plan: z.enum(["season_pass", "pro"]).nullable(),
+      plan: heldPlan.nullable(),
       userId: z.uuid(),
       email: z.string(),
     }),
   ),
-  razorpayConfigured: z.boolean(),
+  paymentsConfigured: z.boolean(),
 });
 
 export const adminContentQuery = adminRangeQuery.pick({ days: true });

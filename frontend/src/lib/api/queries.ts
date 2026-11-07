@@ -17,6 +17,8 @@ export const queryKeys = {
   shareLinkStats: (id: string) => ['share-link', id, 'stats'] as const,
   jobs: ['jobs'] as const,
   job: (id: string) => ['job', id] as const,
+  letters: ['letters'] as const,
+  letter: (id: string) => ['letters', id] as const,
   subscription: ['subscription'] as const,
   pricing: ['pricing'] as const,
   refundQuote: ['subscription', 'refund-quote'] as const,
@@ -119,6 +121,20 @@ export const jobsQuery = queryOptions({
   queryFn: () => unwrap(api.GET('/v1/jobs')),
 })
 
+export const lettersQuery = queryOptions({
+  queryKey: queryKeys.letters,
+  queryFn: () => unwrap(api.GET('/v1/letters')),
+})
+
+export const letterQuery = (letterId: string) =>
+  queryOptions({
+    queryKey: queryKeys.letter(letterId),
+    queryFn: () =>
+      unwrap(
+        api.GET('/v1/letters/{letterId}', { params: { path: { letterId } } }),
+      ),
+  })
+
 export const jobQuery = (jobId: string) =>
   queryOptions({
     queryKey: queryKeys.job(jobId),
@@ -193,7 +209,7 @@ export const analyticsQuery = (days: 7 | 30 | 90) =>
       ),
   })
 
-// Season Pass and Pro only; the API answers 402 on the free plan.
+// Paid plans only; the API answers 402 on the free plan.
 export const insightsQuery = (days: 7 | 30 | 90) =>
   queryOptions({
     queryKey: [...queryKeys.analytics(days), 'insights'],
@@ -308,7 +324,7 @@ export const adminSystemQuery = queryOptions({
 
 export type AdminUsersSearch = {
   q?: string
-  plan?: 'free' | 'season_pass' | 'pro'
+  plan?: 'free' | 'season_pass' | 'pro' | 'lifetime'
   status?: 'active' | 'suspended' | 'guest'
   page?: number
 }

@@ -33,6 +33,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { api, errorMessage, expectOk, unwrap } from '@/lib/api/client'
+import { upgradeAction } from '@/lib/api/errors'
 import type { ResumeSummary } from '@/lib/api/types'
 import { downloadFile } from '@/lib/download'
 
@@ -88,7 +89,7 @@ export function ResumeActions({ resume }: { resume: ResumeSummary }) {
         },
       })
     },
-    onError: (error) => toast.error(errorMessage(error)),
+    onError: (error) => toast.error(errorMessage(error), upgradeAction(error)),
   })
 
   const remove = useMutation({
@@ -113,7 +114,9 @@ export function ResumeActions({ resume }: { resume: ResumeSummary }) {
         `${resume.title}.pdf`,
       )
     } catch (error) {
-      toast.error(errorMessage(error))
+      toast.error(errorMessage(error), upgradeAction(error))
+    } finally {
+      queryClient.invalidateQueries({ queryKey: ['usage'] })
     }
   }
 

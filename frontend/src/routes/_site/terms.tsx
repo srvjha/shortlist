@@ -14,7 +14,7 @@ export const Route = createFileRoute('/_site/terms')({
   component: () => (
     <LegalPage
       title="Terms of use"
-      updated={new Date('2026-10-21T00:00:00+05:30')}
+      updated={new Date('2026-11-07T00:00:00+05:30')}
     >
       <p>
         By using {site.name} you agree to these terms. They are written to be
@@ -46,28 +46,23 @@ export const Route = createFileRoute('/_site/terms')({
       </ul>
       <h2>Payments</h2>
       <p>
-        Payments from India are processed by Razorpay. Payments from other
-        countries are processed by Polar (polar.sh), which acts as the merchant
-        of record: it sells the plan to you on our behalf, adds any sales tax or
-        VAT where you live, and sends your receipt. Which one you pay through,
-        and in which currency, follows the country we look up from your IP
-        address. The Season Pass is a one-time payment for six months. In India,
+        Payments are processed by Dodo Payments, which acts as the merchant of
+        record: it sells the plan to you on our behalf, adds any sales tax or
+        VAT where you live, and sends your receipt. Prices are in US dollars.
         Pro renews monthly until you cancel, and stays active until the end of
-        the paid month. Outside India, Pro is a one-time payment for one month
-        and does not renew.
+        the paid month. Lifetime is a one-time payment that gives you the paid
+        features for as long as Shortlist runs, with the same monthly fair-use
+        limits as Pro. It is not unlimited use. A Season Pass bought earlier
+        runs until its end date.
       </p>
       <h2>Refunds</h2>
       <p>
-        You can ask for a refund within 6 hours of a payment, from Plans and
+        You can ask for a full refund within 7 days of a payment, from Plans and
         billing, as long as you have made no more than 3 tailored and 3
-        AI-written resumes since paying. Each account can get one refund. It is
-        automatic: you get back what you paid minus the fee the payment provider
-        charged us for that payment (for Razorpay, including GST; for Polar, any
-        tax you paid is returned with the rest), and we show the exact amount
-        before you confirm. We make no profit on refunds. A refunded plan ends
-        straight away, and a refunded Pro subscription is cancelled first. After
-        6 hours, payments can't be refunded. Refunds reach your original payment
-        method in 5 to 7 working days.
+        AI-written resumes since paying. Each account can get one refund. A
+        refunded plan ends straight away, and a refunded Pro subscription is
+        cancelled first. After 7 days, payments can't be refunded. Refunds reach
+        your original payment method in 5 to 7 working days.
       </p>
       <h2>Changes and ending your account</h2>
       <p>

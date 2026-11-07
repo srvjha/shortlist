@@ -18,38 +18,49 @@ import { fetchPricing } from '@/lib/public-api'
 import { site } from '@/lib/site'
 import { cn } from '@/lib/utils'
 
+// Enterprise is a conversation, not a list of limits, so it stays out of the table.
+const comparedPlans = plans.filter((plan) => plan.id !== 'enterprise')
+
 const comparison: { label: string; values: [string, string, string] }[] = [
   {
-    label: 'Resumes you write yourself',
-    values: ['Unlimited', 'Unlimited', 'Unlimited'],
+    label: 'Resumes',
+    values: ['1', 'Unlimited', 'Unlimited'],
   },
   {
     label: 'Resumes tailored to a job description',
-    values: [
-      '5 in your first week, then 1 a month',
-      '40 a month',
-      '60 a month',
-    ],
+    values: ['1', '60 a month', '60 a month'],
   },
   {
     label: 'Resumes written by AI from your notes',
-    values: ['1, to try it', '30 a month', '30 a month'],
+    values: ['1', '30 a month', '30 a month'],
+  },
+  {
+    label: 'AI rewrites and quick changes',
+    values: ['1', 'Unlimited (fair use)', 'Unlimited (fair use)'],
+  },
+  {
+    label: 'AI fixes for LaTeX that will not compile',
+    values: ['5 a month', 'Unlimited (fair use)', 'Unlimited (fair use)'],
+  },
+  {
+    label: 'PDF downloads',
+    values: ['3', 'Unlimited', 'Unlimited'],
+  },
+  {
+    label: '.tex and JSON downloads',
+    values: ['Included', 'Included', 'Included'],
+  },
+  {
+    label: 'Cover letters and resignation letters',
+    values: ['Included', 'Included', 'Included'],
   },
   {
     label: 'Imports from PDF, .tex or text',
     values: ['Free (fair use)', 'Free (fair use)', 'Free (fair use)'],
   },
   {
-    label: 'AI rewrites, quick changes and LaTeX fixes',
-    values: ['50 a month', 'Unlimited (fair use)', 'Unlimited (fair use)'],
-  },
-  {
     label: 'Templates, form editor and LaTeX editor',
     values: ['All included', 'All included', 'All included'],
-  },
-  {
-    label: 'PDF, .tex and JSON downloads',
-    values: ['Included', 'Included', 'Included'],
   },
   {
     label: 'ATS checker with job match',
@@ -86,8 +97,8 @@ function priceRow(pricing: Pricing): (typeof comparison)[number] {
     label: 'Price',
     values: [
       'Free',
-      `${priceOf('season_pass', pricing)} once, for 6 months`,
-      `${priceOf('pro', pricing)} ${pricing.provider === 'razorpay' ? 'a month' : 'for a month, paid once'}`,
+      `${priceOf('pro', pricing)} a month`,
+      `${priceOf('lifetime', pricing)} once`,
     ],
   }
 }
@@ -95,39 +106,51 @@ function priceRow(pricing: Pricing): (typeof comparison)[number] {
 const faqs = [
   {
     q: 'Is the free plan really free?',
-    a: 'Yes. Resumes you write yourself are free and unlimited, including every template, downloads, the ATS checker, version history and share links with their analytics and privacy options. Tailoring a resume to a job description is the main paid feature: Free includes 5 in your first week to try it properly, then one a month, because each AI request costs us money to run.',
+    a: 'Yes, with no card and no time limit. You get 1 resume with every template, and you can keep editing it by hand for as long as you like. You also get 1 tailored resume, 1 AI edit, 1 AI-written resume and 3 PDF downloads, the ATS checker, and cover and resignation letters. Those AI allowances are once per account, not monthly, because each AI request costs us money to run.',
   },
   {
-    q: 'What is the difference between Season Pass and Pro?',
-    a: 'Both unlock the paid features. Season Pass is one payment for 6 months with 40 tailored resumes a month, best for a busy job search. Pro is paid month by month with 60 tailored resumes a month, best if you apply a lot or want to pay monthly.',
+    q: 'What is the difference between Pro and Lifetime?',
+    a: 'They have the same features and the same monthly limits. Pro is paid month by month and you can cancel at any time. Lifetime is one payment, never renews and lasts as long as Shortlist runs.',
+  },
+  {
+    q: 'Does Lifetime mean unlimited AI?',
+    a: 'No. Lifetime has the same monthly fair-use limits as Pro, such as 60 tailored resumes a month, and they reset on the 1st of every month.',
   },
   {
     q: 'What counts as a resume tailored with AI?',
-    a: 'Each time you ask the AI to tailor a resume to a job description, it counts as one. You get a separate version for that job, so every application has its own resume. Writing and editing by hand, downloading and sharing never count.',
+    a: 'Each time you ask the AI to tailor a resume to a job description, it counts as one. You get a separate version for that job. Writing and editing by hand, and sharing, never count.',
+  },
+  {
+    q: 'What counts as a PDF download?',
+    a: 'On Free, each version of your resume you download as a PDF counts once, up to 3. Downloading the same version again is free, and so is previewing it. Paid plans have no limit, and .tex and JSON downloads are open to everyone.',
   },
   {
     q: 'Does importing my old resume cost anything?',
     a: 'No. Importing a PDF, .tex or text file is free on every plan, including Free, within fair use.',
   },
   {
-    q: 'What happens when the Season Pass ends?',
-    a: 'Your account moves back to Free. Nothing is deleted: your resumes, versions and share links all stay. You just get the free AI limits again.',
+    q: 'What happens when Pro ends?',
+    a: 'Your account moves back to Free. Nothing is deleted: your resumes, versions and share links all stay, and you can keep editing them. You just get the free limits again, so creating another resume or using more AI needs a paid plan.',
   },
   {
     q: 'Can I cancel Pro?',
-    a: 'Yes, from Settings. You keep Pro until the end of the month you have paid for. Outside India, Pro is one payment for a month and never renews, so there is nothing to cancel.',
+    a: 'Yes, from Plans and billing. You keep Pro until the end of the month you have paid for. Lifetime is one payment, so there is nothing to cancel.',
   },
   {
     q: 'Can I get a refund?',
-    a: "Yes, within 6 hours of paying, if you've made no more than 3 tailored and 3 AI-written resumes since, and once per account. Click Request a refund in Plans and billing and it happens automatically. You get back what you paid minus Razorpay's fee for that payment (including GST), and you see the exact amount before you confirm. Your plan ends straight away. After 6 hours, payments can't be refunded.",
+    a: "Yes, a full refund within 7 days of paying, if you've made no more than 3 tailored and 3 AI-written resumes since, and once per account. Click Request a refund in Plans and billing. Your plan ends straight away. After 7 days, payments can't be refunded.",
   },
   {
     q: 'Can I use my own AI key?',
-    a: 'Yes. Add an OpenAI, Anthropic or OpenRouter key in Settings and your AI requests run on it, with no monthly limits from us. You pay the provider directly.',
+    a: 'Yes. Add an OpenAI, Anthropic or OpenRouter key in Settings and your AI requests run on it, with no AI limits from us. You pay the provider directly. The limits on resumes and PDF downloads still apply.',
   },
   {
     q: 'How do I pay?',
-    a: 'UPI, cards and net banking through Razorpay. Prices include GST where it applies.',
+    a: 'Through Dodo Payments, which sells the plan as the merchant of record, in US dollars. It adds any sales tax or VAT where you live and sends your receipt.',
+  },
+  {
+    q: 'I have a college or a team. Can we buy together?',
+    a: 'Yes. Choose Contact us on the Enterprise plan and tell us how many people you have.',
   },
 ]
 
@@ -146,12 +169,12 @@ const structuredData = {
   operatingSystem: 'Web',
   offers: [
     { name: 'Free', price: '0' },
-    { name: 'Season Pass (6 months)', price: '499' },
-    { name: 'Pro (monthly)', price: '129' },
+    { name: 'Pro (monthly)', price: '12' },
+    { name: 'Lifetime (one payment)', price: '90' },
   ].map((offer) => ({
     '@type': 'Offer',
     ...offer,
-    priceCurrency: 'INR',
+    priceCurrency: 'USD',
     url: `${site.url}/pricing`,
   })),
 }
@@ -165,7 +188,7 @@ export const Route = createFileRoute('/_site/pricing')({
       {
         name: 'description',
         content:
-          'Tailor your resume to each job with AI. Start free, get the Season Pass at ₹499 for six months, or Pro at ₹129 a month.',
+          'Tailor your resume to each job with AI. Start free, get Pro at $12 a month, or Lifetime at $90 once.',
       },
     ],
     links: [{ rel: 'canonical', href: `${site.url}/pricing` }],
@@ -216,8 +239,8 @@ function PricingPage() {
           </h2>
           <p className="text-muted-foreground">
             Add an OpenAI, Anthropic or OpenRouter key in Settings and AI
-            requests run on your key, with no monthly limits from us. Works on
-            every plan, including Free.
+            requests run on your key, with no AI limits from us. Works on every
+            plan, including Free.
           </p>
           <p className="text-sm text-muted-foreground">
             You pay the provider directly. Your key is encrypted and never shown
@@ -245,12 +268,12 @@ function PricingPage() {
                 <TableHead className="w-[34%]">
                   <span className="sr-only">Feature</span>
                 </TableHead>
-                {plans.map((plan) => (
+                {comparedPlans.map((plan) => (
                   <TableHead
                     key={plan.id}
                     className={cn(
                       'font-semibold text-foreground',
-                      plan.id === 'season_pass' && 'bg-primary/5',
+                      plan.id === 'pro' && 'bg-primary/5',
                     )}
                   >
                     {plan.name}
@@ -266,10 +289,10 @@ function PricingPage() {
                   </TableCell>
                   {row.values.map((value, index) => (
                     <TableCell
-                      key={plans[index].id}
+                      key={comparedPlans[index].id}
                       className={cn(
                         'whitespace-normal text-muted-foreground',
-                        plans[index].id === 'season_pass' && 'bg-primary/5',
+                        comparedPlans[index].id === 'pro' && 'bg-primary/5',
                       )}
                     >
                       {value}

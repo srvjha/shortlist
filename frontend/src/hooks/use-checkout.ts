@@ -3,12 +3,11 @@ import { useState } from 'react'
 import { toast } from '@/lib/toast'
 import { api, errorMessage, unwrap } from '@/lib/api/client'
 import { meQuery, queryKeys } from '@/lib/api/queries'
-import { openRazorpayCheckout } from '@/lib/razorpay'
-import { site } from '@/lib/site'
+import type { PaidPlan } from '@/lib/pricing'
 
-export type PaidPlan = 'season_pass' | 'pro'
+export type { PaidPlan }
 
-// Opens the payment provider's checkout for a plan from any page. `waiting` is true while the webhook activates the plan.
+// Sends the buyer to Dodo's checkout page for a plan from any page. Dodo brings them back to /billing.
 export function useCheckout({ enabled = true }: { enabled?: boolean } = {}) {
   const queryClient = useQueryClient()
   const { data: me } = useQuery({ ...meQuery, enabled })
@@ -20,18 +19,38 @@ export function useCheckout({ enabled = true }: { enabled?: boolean } = {}) {
     queryClient.invalidateQueries({ queryKey: queryKeys.me })
   }
 
-  // The plan switches when the provider's webhook reaches us, usually within seconds.
-  const waitForPlan = () => {
+  // Back from Dodo: asks the API to read the payment, and keeps looking in case Dodo is still working on it. Compares
+  // with the plan bought because someone upgrading from Pro to Lifetime is already on a paid plan.
+  const confirmReturn = (checkoutId: string, plan?: PaidPlan) => {
     setWaiting(true)
-    toast.success('Payment received. Activating your plan…')
+    const confirm = () =>
+      unwrap(
+        api.POST('/v1/checkouts/{checkoutId}/confirmation', {
+          params: { path: { checkoutId } },
+        }),
+      )
+        .then((result) => {
+          queryClient.setQueryData(queryKeys.subscription, result)
+          refresh()
+          return plan ? result.plan === plan : result.plan !== 'free'
+        })
+        .catch(() => false)
     let tries = 0
-    const timer = setInterval(() => {
-      refresh()
-      if (++tries >= 10) {
-        clearInterval(timer)
+    const attempt = async () => {
+      const active = await confirm()
+      if (active) {
         setWaiting(false)
+        toast.success('Payment received. Your plan is active.')
+      } else if (++tries >= 10) {
+        setWaiting(false)
+        toast(
+          "We haven't seen a payment yet. If you paid, your plan switches on within a few minutes.",
+        )
+      } else {
+        setTimeout(attempt, 2000)
       }
-    }, 2000)
+    }
+    void attempt()
   }
 
   const checkout = useMutation({
@@ -39,48 +58,10 @@ export function useCheckout({ enabled = true }: { enabled?: boolean } = {}) {
       const session = await unwrap(
         api.POST('/v1/checkouts', { body: { plan } }),
       )
-      // Polar takes the payment on its own page, then sends the buyer back to /billing.
-      if (session.provider === 'polar') {
-        window.location.assign(session.url)
-        return
-      }
-      let failed = false
-      const tryAgain = {
-        label: 'Try again',
-        onClick: () => checkout.mutate(plan),
-      }
-      await openRazorpayCheckout(
-        {
-          key: session.keyId,
-          name: site.name,
-          description:
-            plan === 'pro' ? 'Pro, monthly' : 'Season Pass, 6 months',
-          ...(session.orderId && { order_id: session.orderId }),
-          ...(session.razorpaySubscriptionId && {
-            subscription_id: session.razorpaySubscriptionId,
-          }),
-          prefill: { name: me?.name, email: me?.email },
-          theme: { color: '#0b6e65' },
-          handler: waitForPlan,
-          modal: {
-            ondismiss: () =>
-              failed
-                ? toast.error(
-                    "Your payment didn't go through. If money left your account, your bank returns it in 5 to 7 working days. With UPI, approve the request in your app within a few minutes.",
-                    { action: tryAgain, duration: 15000 },
-                  )
-                : toast("Checkout closed. You weren't charged.", {
-                    action: tryAgain,
-                  }),
-          },
-        },
-        () => {
-          failed = true
-        },
-      )
+      window.location.assign(session.url)
     },
     onError: (error) => toast.error(errorMessage(error)),
   })
 
-  return { checkout, waiting, refresh, waitForPlan, me }
+  return { checkout, waiting, refresh, confirmReturn, me }
 }

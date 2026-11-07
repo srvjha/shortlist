@@ -8,18 +8,13 @@ import { useSession } from '@/lib/auth-client'
 import type { Pricing } from '@/lib/api/types'
 import { formatMoney } from '@/lib/format'
 import { plans } from '@/lib/plans'
-import {
-  comingSoon,
-  paymentLine,
-  priceNote,
-  priceOf,
-  usePricing,
-} from '@/lib/pricing'
+import { paymentLine, priceNote, priceOf, usePricing } from '@/lib/pricing'
+import { site } from '@/lib/site'
 import { cn } from '@/lib/utils'
 
 type Plan = (typeof plans)[number]
 
-function PlanCta({ plan, open }: { plan: Plan; open: boolean }) {
+function PlanCta({ plan }: { plan: Plan }) {
   const featured = 'featured' in plan && plan.featured
   const { data: session } = useSession()
   const { checkout, me } = useCheckout({ enabled: !!session })
@@ -29,18 +24,20 @@ function PlanCta({ plan, open }: { plan: Plan; open: boolean }) {
     className: 'mt-6 h-11 w-full text-base',
   } as const
 
+  if (plan.id === 'enterprise')
+    return (
+      <Button {...style} asChild>
+        <a href={`mailto:${site.contactEmail}?subject=Shortlist%20Enterprise`}>
+          {plan.cta}
+        </a>
+      </Button>
+    )
   if (plan.id === 'free')
     return (
       <Button {...style} asChild>
         <Link to="/login" search={{ mode: 'signup' }}>
           {plan.cta}
         </Link>
-      </Button>
-    )
-  if (!open)
-    return (
-      <Button {...style} disabled>
-        {comingSoon}
       </Button>
     )
   // Signed out: sign up, then land on billing with this plan picked.
@@ -91,7 +88,7 @@ export function PricingCards({
       {/* Cards share row lines (subgrid) so names, prices, buttons and lists align across plans. */}
       <ul
         aria-label="Plans and prices"
-        className="grid gap-5 lg:grid-cols-3 lg:grid-rows-[auto_auto_auto_auto_auto_1fr]"
+        className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4 xl:grid-rows-[auto_auto_auto_auto_auto_1fr]"
       >
         {plans.map((plan) => {
           const featured = 'featured' in plan && plan.featured
@@ -99,10 +96,10 @@ export function PricingCards({
             <li
               key={plan.id}
               className={cn(
-                'flex flex-col rounded-2xl border bg-card p-6 sm:p-8 lg:row-span-6 lg:grid lg:grid-rows-subgrid lg:gap-y-0',
+                'flex flex-col rounded-2xl border bg-card p-6 sm:p-8 xl:row-span-6 xl:grid xl:grid-rows-subgrid xl:gap-y-0',
                 // Featured first on phones, so the plan most people pick is the one they see.
                 featured
-                  ? 'order-first border-2 border-primary shadow-[0_24px_48px_-24px_rgb(0_0_0/0.3)] lg:order-none'
+                  ? 'order-first border-2 border-primary shadow-[0_24px_48px_-24px_rgb(0_0_0/0.3)] sm:order-none'
                   : undefined,
               )}
             >
@@ -120,18 +117,22 @@ export function PricingCards({
               <p className="mt-2 text-muted-foreground">{plan.forWhom}</p>
               <p className="mt-6 flex items-baseline gap-1.5">
                 <span className="font-serif text-5xl font-semibold tracking-tight tabular-nums">
-                  {plan.id === 'free'
-                    ? formatMoney(0, pricing.currency)
-                    : priceOf(plan.id, pricing)}
+                  {plan.id === 'enterprise'
+                    ? 'Custom'
+                    : plan.id === 'free'
+                      ? formatMoney(0, pricing.currency)
+                      : priceOf(plan.id, pricing)}
                 </span>
                 {plan.period && (
                   <span className="text-muted-foreground">{plan.period}</span>
                 )}
               </p>
               <p className="mt-2 text-sm text-muted-foreground">
-                {plan.id === 'free' ? plan.note : priceNote(plan.id, pricing)}
+                {plan.id === 'free' || plan.id === 'enterprise'
+                  ? plan.note
+                  : priceNote(plan.id)}
               </p>
-              <PlanCta plan={plan} open={pricing.checkoutOpen} />
+              <PlanCta plan={plan} />
               <div className="mt-8 border-t pt-6">
                 <p className="text-sm font-medium">{plan.listTitle}</p>
                 <ul className="mt-4 flex flex-col gap-3">
@@ -151,18 +152,8 @@ export function PricingCards({
         })}
       </ul>
       <p className="mt-6 text-center text-sm text-muted-foreground">
-        {paymentLine(pricing)} Changed your mind? Ask for a refund within 6
-        hours.
-      </p>
-      <p className="mt-2 text-center text-xs text-muted-foreground">
-        <a
-          href="https://db-ip.com"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="underline-offset-4 hover:underline"
-        >
-          IP Geolocation by DB-IP
-        </a>
+        {paymentLine} Changed your mind? You can ask for a refund within 7 days,
+        if you've made at most 3 tailored and 3 AI-written resumes.
       </p>
     </div>
   )

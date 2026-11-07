@@ -27,7 +27,13 @@ import {
 import { api, errorMessage, unwrap } from '@/lib/api/client'
 import { adminPromoCodesQuery, queryKeys } from '@/lib/api/queries'
 import type { AdminPromoCodes } from '@/lib/api/types'
-import { formatDate, formatNumber, percent, timeAgo } from '@/lib/format'
+import {
+  formatDate,
+  formatNumber,
+  percent,
+  planLabels,
+  timeAgo,
+} from '@/lib/format'
 import { site } from '@/lib/site'
 
 export const Route = createFileRoute('/_app/admin/promo-codes')({
@@ -160,7 +166,7 @@ function PromoCodesReport({ data }: { data: AdminPromoCodes }) {
                     </TableCell>
                     <TableCell className="text-sm">
                       {code.months} {code.months === 1 ? 'month' : 'months'}{' '}
-                      {code.plan === 'pro' ? 'Pro' : 'Season Pass'}
+                      {planLabels[code.plan]}
                       {code.expiresAt && (
                         <div className="text-xs text-muted-foreground">
                           until {formatDate(code.expiresAt)}
@@ -271,7 +277,7 @@ function CreateCode({
           body: {
             code: form.code,
             kind: form.ambassador ? 'ambassador' : 'promo',
-            plan: 'season_pass',
+            plan: 'pro',
             months: Number(form.months),
             ...(form.maxRedemptions && {
               maxRedemptions: Number(form.maxRedemptions),
@@ -315,7 +321,7 @@ function CreateCode({
         />
       </div>
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="promo-months">Season Pass months</Label>
+        <Label htmlFor="promo-months">Pro months</Label>
         <Input
           id="promo-months"
           type="number"

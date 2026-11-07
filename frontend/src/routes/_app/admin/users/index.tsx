@@ -43,7 +43,7 @@ import { site } from '@/lib/site'
 
 const search = z.object({
   q: z.string().optional(),
-  plan: z.enum(['free', 'season_pass', 'pro']).optional(),
+  plan: z.enum(['free', 'season_pass', 'pro', 'lifetime']).optional(),
   status: z.enum(['active', 'suspended', 'guest']).optional(),
   page: z.number().int().min(1).optional(),
 })
@@ -119,6 +119,7 @@ function UsersPage() {
             <SelectItem value="free">Free</SelectItem>
             <SelectItem value="season_pass">Season Pass</SelectItem>
             <SelectItem value="pro">Pro</SelectItem>
+            <SelectItem value="lifetime">Lifetime</SelectItem>
           </SelectContent>
         </Select>
         <Select

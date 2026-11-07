@@ -10,6 +10,7 @@ import { customTemplatesRouter } from "./modules/custom-templates/custom-templat
 import { coverageRouter } from "./modules/coverage/coverage.routes.js";
 import { importsRouter } from "./modules/imports/imports.routes.js";
 import { jobsRouter } from "./modules/jobs/jobs.routes.js";
+import { lettersRouter } from "./modules/letters/letters.routes.js";
 import { pdfsRouter } from "./modules/pdfs/pdfs.routes.js";
 import { profilesRouter } from "./modules/profiles/profiles.routes.js";
 import { publicRouter } from "./modules/public/public.routes.js";
@@ -35,6 +36,7 @@ v1.use(pdfsRouter);
 v1.use(uploadsRouter);
 v1.use(importsRouter);
 v1.use(jobsRouter);
+v1.use(lettersRouter);
 v1.use(suggestionsRouter);
 v1.use(coverageRouter);
 v1.use(atsRouter);

@@ -642,7 +642,7 @@ export const guides: Guide[] = [
               Then run the free{' '}
               <Link to="/ats-checker">ATS resume checker</Link> with the same
               job to see which of its keywords your resume covers. The free plan
-              includes 5 tailored resumes in your first week, then one a month.
+              includes one tailored resume, so you can see it work.
             </p>
           </>
         ),

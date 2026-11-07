@@ -24,7 +24,7 @@ import { Spinner } from '@/components/ui/spinner'
 import { Textarea } from '@/components/ui/textarea'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { api, unwrap } from '@/lib/api/client'
-import { aiErrorMessage } from '@/lib/api/errors'
+import { aiErrorMessage, upgradeAction } from '@/lib/api/errors'
 import { queryKeys } from '@/lib/api/queries'
 import type { ProjectEntry } from './content-helpers'
 import { ListField } from './fields'
@@ -80,7 +80,8 @@ export function ProjectFromLink({
       queryClient.invalidateQueries({ queryKey: queryKeys.usage })
       setDraft(result.project)
     },
-    onError: (error) => toast.error(aiErrorMessage(error)),
+    onError: (error) =>
+      toast.error(aiErrorMessage(error), upgradeAction(error)),
   })
 
   const place = () => {

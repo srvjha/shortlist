@@ -6,6 +6,7 @@ import { compileLimiter } from "../../middleware/rate-limit.js";
 import { validated } from "../../middleware/validate.js";
 import { resumeParams } from "../resumes/resumes.schemas.js";
 import { getResume, getVersion } from "../resumes/resumes.service.js";
+import { recordPdfDownload } from "../usage/quotas.js";
 import { toJsonResume } from "./json-resume.js";
 import { createPreviewBody, resumeExportQuery, resumePdfQuery } from "./pdfs.schemas.js";
 import { compileOrThrow, pdfFileName, renderStructured, sendPdf, texForVersion } from "./pdfs.service.js";
@@ -23,6 +24,8 @@ pdfsRouter.get(
     if (!version) throw new NotFoundError("Version");
 
     const { pdf, pageCount } = await oneAtATime(userId, () => compileOrThrow(texForVersion(resume, version)));
+    // Counted only once the PDF exists, so a failed compile never uses up a download.
+    if (req.query.download) await recordPdfDownload(userId, version.id);
     sendPdf(res, pdf, pdfFileName(version.content?.basics.name, resume.title), pageCount, req.query.download);
   }),
 );

@@ -15,7 +15,7 @@ import { Field, FieldDescription, FieldLabel } from '@/components/ui/field'
 import { Spinner } from '@/components/ui/spinner'
 import { Textarea } from '@/components/ui/textarea'
 import { ApiError, api, unwrap } from '@/lib/api/client'
-import { aiErrorMessage } from '@/lib/api/errors'
+import { aiErrorMessage, upgradeAction } from '@/lib/api/errors'
 import type { ResumeContent } from '@/lib/api/types'
 import { apiUrl } from '@/lib/env'
 
@@ -64,7 +64,8 @@ export function ImportDialog({
       setText('')
       onOpenChange(false)
     },
-    onError: (error) => toast.error(aiErrorMessage(error)),
+    onError: (error) =>
+      toast.error(aiErrorMessage(error), upgradeAction(error)),
   })
 
   return (

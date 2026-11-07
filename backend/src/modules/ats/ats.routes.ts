@@ -130,7 +130,7 @@ atsRouter.post(
   }),
 );
 
-// Season Pass and Pro: an AI reviewer's verdict and top fixes, asked for after the rule-based report.
+// Paid plans: an AI reviewer's verdict and top fixes, asked for after the rule-based report.
 // Like the public report, the text is never stored; only the run's tokens and cost are logged.
 atsRouter.post(
   "/ats-reviews",

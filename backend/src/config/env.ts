@@ -86,34 +86,12 @@ const envSchema = z.object({
       ),
   ),
 
-  RAZORPAY_KEY_ID: optionalString,
-  RAZORPAY_KEY_SECRET: optionalString,
-  RAZORPAY_WEBHOOK_SECRET: optionalString,
-  // Monthly plan created in the Razorpay dashboard for Pro.
-  RAZORPAY_PRO_PLAN_ID: optionalString,
-  // "test" switches to the RAZORPAY_TEST_* values, so live credentials stay in place while testing.
-  RAZORPAY_MODE: z.preprocess(emptyAsUnset, z.enum(["live", "test"]).default("live")),
-  RAZORPAY_TEST_KEY_ID: optionalString,
-  RAZORPAY_TEST_KEY_SECRET: optionalString,
-  RAZORPAY_TEST_WEBHOOK_SECRET: optionalString,
-  RAZORPAY_TEST_PRO_PLAN_ID: optionalString,
-  // Who takes payments in India. Moving India to Polar needs INR prices on the Polar products.
-  PAYMENTS_INDIA: z.preprocess(emptyAsUnset, z.enum(["razorpay", "polar"]).default("razorpay")),
-  // Development only: pretend every visitor is in this country (like US), to test the other provider locally.
-  PAYMENTS_TEST_COUNTRY: z.preprocess(
-    emptyAsUnset,
-    z
-      .string()
-      .regex(/^[A-Z]{2}$/)
-      .optional(),
-  ),
-  // Polar takes payments from outside India. Sandbox and production have separate tokens, products and webhooks.
-  POLAR_SERVER: z.preprocess(emptyAsUnset, z.enum(["sandbox", "production"]).default("production")),
-  POLAR_ACCESS_TOKEN: optionalString,
-  POLAR_WEBHOOK_SECRET: optionalString,
-  // One-time products in Polar, each with a USD price.
-  POLAR_SEASON_PASS_PRODUCT_ID: optionalString,
-  POLAR_PRO_PRODUCT_ID: optionalString,
+  DODO_PAYMENTS_API_KEY: optionalString,
+  DODO_PAYMENTS_WEBHOOK_KEY: optionalString,
+  // Test and live mode have separate keys, products and webhooks.
+  DODO_PAYMENTS_ENVIRONMENT: z.preprocess(emptyAsUnset, z.enum(["test_mode", "live_mode"]).default("test_mode")),
+  DODO_PRODUCT_PRO: optionalString,
+  DODO_PRODUCT_LIFETIME: optionalString,
 });
 
 const parsed = envSchema
@@ -121,12 +99,6 @@ const parsed = envSchema
     (e) =>
       e.STORAGE_DRIVER !== "r2" || (e.R2_ACCOUNT_ID && e.R2_ACCESS_KEY_ID && e.R2_SECRET_ACCESS_KEY && e.R2_BUCKET),
     { message: "STORAGE_DRIVER=r2 needs R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY and R2_BUCKET" },
-  )
-  .refine(
-    (e) => e.RAZORPAY_MODE !== "test" || !e.RAZORPAY_TEST_KEY_ID || e.RAZORPAY_TEST_KEY_ID.startsWith("rzp_test_"),
-    {
-      message: "RAZORPAY_TEST_KEY_ID must be a test key (rzp_test_...)",
-    },
   )
   .refine((e) => e.NODE_ENV !== "production" || e.COMPILER_URL, {
     message: "COMPILER_URL is required in production so untrusted LaTeX never runs next to app secrets",
@@ -138,14 +110,4 @@ if (!parsed.success) {
   process.exit(1);
 }
 
-const settings = parsed.data;
-export const env =
-  settings.RAZORPAY_MODE === "test"
-    ? {
-        ...settings,
-        RAZORPAY_KEY_ID: settings.RAZORPAY_TEST_KEY_ID,
-        RAZORPAY_KEY_SECRET: settings.RAZORPAY_TEST_KEY_SECRET,
-        RAZORPAY_WEBHOOK_SECRET: settings.RAZORPAY_TEST_WEBHOOK_SECRET,
-        RAZORPAY_PRO_PLAN_ID: settings.RAZORPAY_TEST_PRO_PLAN_ID,
-      }
-    : settings;
+export const env = parsed.data;

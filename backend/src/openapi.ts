@@ -27,6 +27,7 @@ import {
 } from "./modules/ats/ats.schemas.js";
 import { coverageQuery, coverageResponse } from "./modules/coverage/coverage.routes.js";
 import {
+  checkoutParams,
   checkoutResponse,
   createCheckoutBody,
   createRefundBody,
@@ -73,6 +74,16 @@ import {
   updateCustomTemplateBody,
 } from "./modules/custom-templates/custom-templates.schemas.js";
 import { createJobBody, jobListResponse, jobParams, jobResponse } from "./modules/jobs/jobs.schemas.js";
+import {
+  createLetterBody,
+  createPublicCoverLetterBody,
+  letterListResponse,
+  letterParams,
+  letterPdfQuery,
+  letterResponse,
+  publicCoverLetterResponse,
+  updateLetterBody,
+} from "./modules/letters/letters.schemas.js";
 import { createPreviewBody, resumeExportQuery, resumePdfQuery } from "./modules/pdfs/pdfs.schemas.js";
 import { profileResponse, putProfileBody } from "./modules/profiles/profiles.schemas.js";
 import {
@@ -246,7 +257,7 @@ const paths: ZodOpenApiPathsObject = {
   },
   "/v1/analytics/insights": {
     get: op({
-      summary: "Opening times, cities and per-link activity (Season Pass and Pro)",
+      summary: "Opening times, cities and per-link activity (paid plans)",
       tag: "Share links",
       query: analyticsQuery,
       response: insightsResponse,
@@ -254,7 +265,7 @@ const paths: ZodOpenApiPathsObject = {
   },
   "/v1/analytics/views": {
     get: op({
-      summary: "Every view in the range, for export (Season Pass and Pro)",
+      summary: "Every view in the range, for export (paid plans)",
       tag: "Share links",
       query: analyticsQuery,
       response: viewExportResponse,
@@ -487,6 +498,46 @@ const paths: ZodOpenApiPathsObject = {
       response: coverageResponse,
     }),
   },
+  "/v1/letters": {
+    get: op({ summary: "List your saved letters", tag: "Letters", response: letterListResponse }),
+    post: op({
+      summary: "Write a cover letter from a resume and a job, or save a resignation letter",
+      tag: "Letters",
+      body: createLetterBody,
+      response: letterResponse,
+      status: 201,
+    }),
+  },
+  "/v1/letters/{letterId}": {
+    get: op({ summary: "Get a letter", tag: "Letters", params: letterParams, response: letterResponse }),
+    patch: op({
+      summary: "Edit a letter",
+      tag: "Letters",
+      params: letterParams,
+      body: updateLetterBody,
+      response: letterResponse,
+    }),
+    delete: op({ summary: "Delete a letter", tag: "Letters", params: letterParams, noContent: true }),
+  },
+  "/v1/letters/{letterId}/pdf": {
+    get: op({
+      summary: "A letter as a PDF in its resume's template. Doesn't count toward any resume limit.",
+      tag: "Letters",
+      params: letterParams,
+      query: letterPdfQuery,
+      pdf: true,
+    }),
+  },
+  "/v1/public/cover-letters": {
+    post: op({
+      summary: "Write a cover letter from pasted text (not stored, 3 per hour)",
+      tag: "Letters",
+      auth: false,
+      body: createPublicCoverLetterBody,
+      response: publicCoverLetterResponse,
+      status: 201,
+    }),
+  },
   "/v1/resumes/{resumeId}/ats-reports": {
     post: op({
       summary: "Estimate how well an ATS and recruiter scan read the latest version, with fixes",
@@ -507,7 +558,7 @@ const paths: ZodOpenApiPathsObject = {
   },
   "/v1/ats-reviews": {
     post: op({
-      summary: "AI review of resume text: verdict, strengths, top fixes and job fit (Season Pass and Pro, not stored)",
+      summary: "AI review of resume text: verdict, strengths, top fixes and job fit (paid plans, not stored)",
       tag: "ATS",
       body: createAtsReviewBody,
       response: atsReview,
@@ -577,7 +628,7 @@ const paths: ZodOpenApiPathsObject = {
 
   "/v1/pricing": {
     get: op({
-      summary: "Prices for the visitor's country",
+      summary: "Prices of the plans for sale",
       tag: "Billing",
       auth: false,
       response: pricingResponse,
@@ -585,11 +636,19 @@ const paths: ZodOpenApiPathsObject = {
   },
   "/v1/checkouts": {
     post: op({
-      summary: "Start a checkout with the payment provider for the visitor's country",
+      summary: "Start a Dodo checkout for a plan",
       tag: "Billing",
       body: createCheckoutBody,
       response: checkoutResponse,
       status: 201,
+    }),
+  },
+  "/v1/checkouts/{checkoutId}/confirmation": {
+    post: op({
+      summary: "Check a checkout with Dodo after the buyer returns, and switch the plan on if it is paid",
+      tag: "Billing",
+      params: checkoutParams,
+      response: subscriptionResponse,
     }),
   },
   "/v1/subscription": {
@@ -602,14 +661,14 @@ const paths: ZodOpenApiPathsObject = {
   },
   "/v1/refunds/quote": {
     get: op({
-      summary: "What a refund of the latest payment would return, while it is within 24 hours",
+      summary: "What a refund of the latest payment would return, while it is within 7 days",
       tag: "Billing",
       response: refundQuoteResponse,
     }),
   },
   "/v1/refunds": {
     post: op({
-      summary: "Refund a payment made in the last 6 hours, less the payment provider's fee, and end its plan",
+      summary: "Refund a payment made in the last 7 days in full, and end its plan",
       tag: "Billing",
       body: createRefundBody,
       response: refundResponse,

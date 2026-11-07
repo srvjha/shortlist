@@ -2,9 +2,9 @@ import { boolean, index, integer, jsonb, pgEnum, pgTable, text, timestamp, uuid 
 import { users } from "./auth.js";
 import { createdAt, timestamps } from "./columns.js";
 
-export const paymentProvider = pgEnum("payment_provider", ["razorpay", "polar"]);
+export const paymentProvider = pgEnum("payment_provider", ["razorpay", "polar", "dodo"]);
 
-export const subscriptionPlan = pgEnum("subscription_plan", ["season_pass", "pro"]);
+export const subscriptionPlan = pgEnum("subscription_plan", ["season_pass", "pro", "lifetime"]);
 
 export const subscriptionStatus = pgEnum("subscription_status", [
   "created",
@@ -14,8 +14,8 @@ export const subscriptionStatus = pgEnum("subscription_status", [
   "expired",
 ]);
 
-// A paid plan. Season Pass is a one-time payment covering 6 months. Pro is a monthly Razorpay subscription in India
-// and a one-time month on Polar. Plans given by an admin or a promo code have no provider.
+// A paid plan. Pro is a monthly Dodo subscription; Lifetime is one Dodo payment with a far-future end date. Season
+// Passes are no longer sold but run out on their own date. Plans given by an admin or a promo code have no provider.
 export const subscriptions = pgTable(
   "subscriptions",
   {
@@ -38,7 +38,7 @@ export const subscriptions = pgTable(
 export const paymentStatus = pgEnum("payment_status", ["created", "captured", "failed", "refunded"]);
 
 // Each payment through a provider, for receipts, refunds and support. Amounts are in the currency's minor unit
-// (paise, cents).
+// (cents; paise on older rows).
 export const payments = pgTable(
   "payments",
   {
@@ -50,7 +50,7 @@ export const payments = pgTable(
       onDelete: "set null",
     }),
     provider: paymentProvider().notNull().default("razorpay"),
-    // Razorpay's order id, or Polar's checkout id.
+    // Dodo's checkout session id; older rows hold a Razorpay order id or a Polar checkout id.
     providerCheckoutId: text().notNull(),
     providerPaymentId: text().unique(),
     amount: integer().notNull(),
@@ -84,7 +84,7 @@ export const promoCodes = pgTable("promo_codes", {
   // Stored uppercase; redemption matches case-insensitively.
   code: text().notNull().unique(),
   kind: promoCodeKind().notNull().default("promo"),
-  plan: subscriptionPlan().notNull().default("season_pass"),
+  plan: subscriptionPlan().notNull().default("pro"),
   months: integer().notNull(),
   // Null means no limit.
   maxRedemptions: integer(),

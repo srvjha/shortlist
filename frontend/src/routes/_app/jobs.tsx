@@ -3,6 +3,7 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import {
   BriefcaseBusinessIcon,
   ExternalLinkIcon,
+  MailIcon,
   PlusIcon,
   SparklesIcon,
   Trash2Icon,
@@ -46,6 +47,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useWriteCoverLetter } from '@/hooks/use-write-cover-letter'
 import { api, errorMessage, expectOk } from '@/lib/api/client'
 import { jobQuery, jobsQuery, queryKeys, resumesQuery } from '@/lib/api/queries'
 import { timeAgo } from '@/lib/format'
@@ -90,6 +92,7 @@ function JobDetail({ jobId, onClose }: { jobId: string; onClose: () => void }) {
   const { data: resumes } = useQuery(resumesQuery())
   const [resumeId, setResumeId] = useState<string>()
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const writeLetter = useWriteCoverLetter()
 
   const remove = useMutation({
     mutationFn: () =>
@@ -108,7 +111,7 @@ function JobDetail({ jobId, onClose }: { jobId: string; onClose: () => void }) {
   return (
     <div className="flex flex-col gap-6 p-4">
       <div className="flex flex-col gap-3 rounded-lg border bg-card p-4">
-        <p className="text-sm font-medium">Tailor a resume to this job</p>
+        <p className="text-sm font-medium">Use a resume for this job</p>
         {resumes && resumes.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             Create a resume first, then come back to tailor it.
@@ -144,6 +147,20 @@ function JobDetail({ jobId, onClose }: { jobId: string; onClose: () => void }) {
               Tailor
             </Button>
           </div>
+        )}
+        {resumes && resumes.length > 0 && (
+          <Button
+            variant="outline"
+            disabled={!resumeId || writeLetter.isPending}
+            onClick={() =>
+              resumeId && writeLetter.mutate({ resumeId, jobId: job.id })
+            }
+          >
+            <MailIcon data-icon="inline-start" />
+            {writeLetter.isPending
+              ? 'Writing your letter…'
+              : 'Write a cover letter'}
+          </Button>
         )}
       </div>
 

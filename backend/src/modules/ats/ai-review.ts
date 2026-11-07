@@ -46,7 +46,7 @@ export function groundedReview(review: AiReview, resumeText: string): AiReview {
   };
 }
 
-// Season Pass and Pro only. Counts against the plan's monthly review limit unless the user's own key is used.
+// Paid plans only. Counts against the plan's monthly review limit unless the user's own key is used.
 export async function reviewResume(input: { userId: string; text: string; jobDescription?: string | undefined }) {
   await assertPaidPlan(input.userId, "The AI review");
   const prompt = `<resume>

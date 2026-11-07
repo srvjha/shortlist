@@ -78,7 +78,7 @@ function WorkspacePage() {
           `${usage.resumes.used} ${usage.resumes.used === 1 ? 'resume' : 'resumes'}. ${
             usage.ownAiKey
               ? 'AI runs on your own key.'
-              : `${Math.max(0, usage.tailor.limit - usage.tailor.used)} of ${usage.tailor.limit} AI-tailored resumes left this month.`
+              : `${Math.max(0, usage.tailor.limit - usage.tailor.used)} of ${usage.tailor.limit} AI-tailored resumes left${usage.plan === 'free' ? '' : ' this month'}.`
           }`
         }
         actions={

@@ -38,6 +38,6 @@ describe("routePattern", async () => {
   it("adds the /v1 mount once, even for routes that carry it in their own path", () => {
     const req = (path: string, originalUrl: string) => ({ route: { path }, baseUrl: "", originalUrl }) as never;
     expect(routePattern(req("/resumes/:resumeId", "/v1/resumes/1"))).toBe("/v1/resumes/:resumeId");
-    expect(routePattern(req("/v1/webhooks/polar", "/v1/webhooks/polar"))).toBe("/v1/webhooks/polar");
+    expect(routePattern(req("/v1/webhooks/dodo", "/v1/webhooks/dodo"))).toBe("/v1/webhooks/dodo");
   });
 });

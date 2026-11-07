@@ -3,8 +3,6 @@ import { ApiError } from './client'
 // Friendly copy for errors people can act on; anything else falls back to the server message.
 export function aiErrorMessage(error: unknown) {
   if (error instanceof ApiError) {
-    if (error.code === 'QUOTA_EXCEEDED')
-      return `${error.message}. Upgrade in Settings to keep going.`
     if (error.code === 'AI_NOT_CONFIGURED')
       return 'AI features are not set up on this server yet.'
     if (error.code === 'AI_FAILED')
@@ -15,3 +13,14 @@ export function aiErrorMessage(error: unknown) {
   }
   return 'Something went wrong. Try again.'
 }
+
+// For an error toast: when the error is a plan limit, offers the way to more instead of the Report button.
+export const upgradeAction = (error: unknown) =>
+  error instanceof ApiError && error.code === 'QUOTA_EXCEEDED'
+    ? {
+        action: {
+          label: 'See plans',
+          onClick: () => window.location.assign('/pricing'),
+        },
+      }
+    : undefined

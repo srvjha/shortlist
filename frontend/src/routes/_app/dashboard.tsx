@@ -185,7 +185,9 @@ function DashboardPage() {
             </div>
             <div className="flex flex-col gap-1 sm:pl-6">
               <dt className="text-sm text-muted-foreground">
-                AI tailoring left this month
+                {usage.plan === 'free'
+                  ? 'Free AI tailoring left'
+                  : 'AI tailoring left this month'}
               </dt>
               {usage.ownAiKey ? (
                 <>
@@ -206,10 +208,10 @@ function DashboardPage() {
                   <dd className="text-sm text-muted-foreground">
                     {usage.plan === 'free' ? (
                       <Link
-                        to="/billing"
+                        to="/pricing"
                         className="underline-offset-4 hover:underline"
                       >
-                        Get 40 a month with the Season Pass
+                        See plans
                       </Link>
                     ) : (
                       'Resets on the 1st of every month'

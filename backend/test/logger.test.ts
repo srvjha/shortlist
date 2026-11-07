@@ -20,7 +20,6 @@ describe("log redaction", () => {
           authorization: "Bearer SECRET2",
           "x-share-password": "SECRET3",
           "x-share-contact-password": "SECRET4",
-          "x-razorpay-signature": "SECRET5",
           "webhook-signature": "SECRET6",
           "x-share-visitor": "203.0.113.9",
           "x-forwarded-for": "203.0.113.9",
