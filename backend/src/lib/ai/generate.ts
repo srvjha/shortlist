@@ -24,7 +24,8 @@ function tokenUsage(usage: LanguageModelUsage) {
 }
 
 export type GenerateStructuredInput<S extends z.ZodType> = {
-  userId: string;
+  // Null only for a public page with nobody signed in: logged, but with no key, quota or account to charge.
+  userId: string | null;
   step: AiStep;
   tier: ModelTier;
   schema: S;
@@ -45,7 +46,7 @@ export async function generateStructured<S extends z.ZodType>(
   input: GenerateStructuredInput<S>,
 ): Promise<{ data: z.infer<S>; runId: string }> {
   // The user's own key, when they've added one in Settings, is used instead of ours.
-  const userKey = input.userKey ?? (await loadUserAiKey(input.userId));
+  const userKey = input.userKey ?? (input.userId ? await loadUserAiKey(input.userId) : undefined);
   const { model, provider, modelId } = resolveModel(input.tier, userKey);
   const started = Date.now();
   const base = {
@@ -57,7 +58,8 @@ export async function generateStructured<S extends z.ZodType>(
     jobId: input.jobId ?? null,
   };
   // On our key, the run is reserved before the model is called, so it already counts while the model works.
-  const reserved = input.quota && !userKey ? await reserveAiRun(input.userId, input.quota, input.step) : undefined;
+  const reserved =
+    input.quota && input.userId && !userKey ? await reserveAiRun(input.userId, input.quota, input.step) : undefined;
   const record = (values: Omit<typeof aiRuns.$inferInsert, keyof typeof base>) =>
     reserved
       ? db
@@ -119,7 +121,7 @@ export async function generateStructured<S extends z.ZodType>(
         { err: { name, message, stack }, status, step: input.step, model: base.model },
         "AI generation failed",
       );
-      captureError(err, { step: input.step, model: base.model, status: status ?? null, user_id: input.userId });
+      captureError(err, { step: input.step, model: base.model, status: status ?? null, user_id: input.userId ?? "public" });
     }
     // The model ran and answered, but not in the schema's shape; its tokens are still spent.
     const spent = NoObjectGeneratedError.isInstance(err) && err.usage ? tokenUsage(err.usage) : undefined;
