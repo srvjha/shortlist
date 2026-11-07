@@ -48,22 +48,30 @@ vi.mock("../src/modules/usage/quotas.js", async (original) => ({
   runsSince: async (_userId: string, kind: string) => state.used[kind] ?? 0,
 }));
 vi.mock("../src/lib/analytics.js", () => ({ track: vi.fn() }));
-const razorpay = vi.hoisted(() => vi.fn());
-vi.mock("../src/lib/razorpay.js", () => ({ razorpay }));
+const remote = vi.hoisted(() => ({ payment: vi.fn(), update: vi.fn(), refund: vi.fn() }));
+vi.mock("../src/modules/billing/dodo.js", async (original) => ({
+  ...(await original<typeof import("../src/modules/billing/dodo.js")>()),
+  dodo: () => ({
+    payments: { retrieve: remote.payment },
+    subscriptions: { update: remote.update },
+    refunds: { create: remote.refund },
+  }),
+}));
 
 import { payments } from "../src/db/schema/index.js";
-import { REFUND_WINDOW_MS, refundableAmount, requestRefund } from "../src/modules/billing/billing.service.js";
-import { razorpayProvider } from "../src/modules/billing/providers/razorpay.js";
+import { getRefundQuote, REFUND_WINDOW_MS, requestRefund } from "../src/modules/billing/billing.service.js";
 
-const paid = { amount: 49_900, status: "captured", fee: 1_178, tax: 180, amount_refunded: 0 };
+const paid = { status: "succeeded", refunds: [] };
 const claimed = {
   id: "11111111-1111-4111-8111-111111111111",
-  provider: "razorpay",
-  currency: "INR",
+  provider: "dodo",
+  currency: "USD",
+  amount: 9_000,
   providerPaymentId: "pay_1",
   subscriptionId: null,
   capturedAt: new Date(),
 };
+const proRow = { id: "sub_row", plan: "pro", provider: "dodo", providerSubscriptionId: "sub_1", cancelledAt: null };
 
 beforeEach(() => {
   state.claims = [];
@@ -72,36 +80,19 @@ beforeEach(() => {
   state.subscription = null;
   state.earlierRefund = false;
   state.used = { tailor: 0, draft: 0 };
-  razorpay.mockReset();
+  remote.payment.mockReset().mockResolvedValue(paid);
+  remote.update.mockReset().mockResolvedValue({});
+  remote.refund.mockReset().mockResolvedValue({ refund_id: "rfnd_1" });
 });
 
-describe("refund amount", () => {
-  const charge = { captured: true, amount: 49_900, fee: 1_178, refunded: 0 };
-
-  it("is the amount paid minus the provider's fee", () => {
-    expect(refundableAmount(charge)).toBe(48_722);
-  });
-
-  it("refuses rather than guesses when the provider hasn't reported the fee", async () => {
-    expect(() => refundableAmount({ ...charge, fee: null })).toThrow(
-      expect.objectContaining({ status: 503, code: "REFUND_FEE_UNAVAILABLE" }),
-    );
-    razorpay.mockResolvedValueOnce({ amount: 49_900, status: "captured" });
-    await expect(razorpayProvider.charge("pay_1")).resolves.toMatchObject({ fee: null });
-  });
-
-  it("reads Razorpay's fee, which already includes GST", async () => {
-    razorpay.mockResolvedValueOnce(paid);
-    await expect(razorpayProvider.charge("pay_1")).resolves.toEqual(charge);
-  });
-
-  it("refuses a payment already refunded at the provider", () => {
-    expect(() => refundableAmount({ ...charge, refunded: 100 })).toThrow(expect.objectContaining({ status: 409 }));
+describe("the refund window", () => {
+  it("is 7 days", () => {
+    expect(REFUND_WINDOW_MS).toBe(7 * 24 * 60 * 60 * 1000);
   });
 });
 
 describe("requesting a refund", () => {
-  it("only claims a captured, unrefunded payment captured in the last 24 hours", async () => {
+  it("only claims a captured, unrefunded Dodo payment captured in the last 7 days", async () => {
     const now = new Date("2026-10-21T12:00:00Z");
     await expect(requestRefund("user_1", claimed.id, now)).rejects.toMatchObject({ status: 409 });
     const { sql, params } = new PgDialect({ casing: "snake_case" }).sqlToQuery(state.claimConditions[0] as SQL);
@@ -109,73 +100,76 @@ describe("requesting a refund", () => {
     expect(sql).toContain('"payments"."captured_at" >');
     expect(params).toContainEqual(new Date(now.getTime() - REFUND_WINDOW_MS).toISOString());
     expect(params).toContain("captured");
-    expect(razorpay).not.toHaveBeenCalled();
+    expect(params).toContain("dodo");
+    expect(remote.refund).not.toHaveBeenCalled();
+  });
+
+  it("refunds the full amount, without naming items, so Dodo returns everything charged", async () => {
+    state.claims = [[claimed]];
+    await expect(requestRefund("user_1", claimed.id)).resolves.toMatchObject({
+      refund: 9_000,
+      currency: "USD",
+      providerRefundId: "rfnd_1",
+    });
+    const sent = remote.refund.mock.calls[0]![0];
+    expect(sent).toMatchObject({ payment_id: "pay_1", metadata: { app: "shortlist" } });
+    expect(sent.items).toBeUndefined();
   });
 
   it("refunds once when two requests race for the same payment", async () => {
     state.claims = [[claimed], []];
-    razorpay.mockImplementation(async (method: string, path: string) =>
-      method === "GET" ? paid : path.endsWith("/refund") ? { id: "rfnd_1", amount: 48_722 } : {},
-    );
     const results = await Promise.allSettled([
       requestRefund("user_1", claimed.id),
       requestRefund("user_1", claimed.id),
     ]);
     expect(results.map((r) => r.status).sort()).toEqual(["fulfilled", "rejected"]);
-    const refunds = razorpay.mock.calls.filter(([, path]) => String(path).endsWith("/refund"));
-    expect(refunds).toEqual([["POST", "/payments/pay_1/refund", expect.objectContaining({ amount: 48_722 })]]);
+    expect(remote.refund).toHaveBeenCalledTimes(1);
   });
 
-  it("releases the claim when Razorpay refuses, so the user can try again", async () => {
+  it("releases the claim when Dodo refuses, so the user can try again", async () => {
     state.claims = [[claimed]];
-    razorpay.mockResolvedValueOnce({ ...paid, fee: undefined });
-    await expect(requestRefund("user_1", claimed.id)).rejects.toMatchObject({ status: 503 });
+    remote.refund.mockRejectedValue(new Error("refused"));
+    await expect(requestRefund("user_1", claimed.id)).rejects.toThrow("refused");
     expect(state.updates).toBe(2);
   });
 
-  it("finishes the refund when the call timed out but Razorpay refunded anyway", async () => {
+  it("refuses a payment already refunded at Dodo, and frees the claim", async () => {
     state.claims = [[claimed]];
-    razorpay.mockImplementation(async (method: string, path: string) => {
-      if (path.endsWith("/refund")) throw new Error("timeout");
-      return path.endsWith("/refunds")
-        ? {
-            items: [
-              { id: "rfnd_goodwill", amount: 5_000, notes: { reason: "Goodwill" } },
-              { id: "rfnd_3", amount: 48_722, notes: { reason: `Self-serve refund ${claimed.id}` } },
-            ],
-          }
-        : paid;
+    remote.payment.mockResolvedValue({ ...paid, refunds: [{ refund_id: "r", status: "succeeded" }] });
+    await expect(requestRefund("user_1", claimed.id)).rejects.toMatchObject({ status: 409 });
+    expect(remote.refund).not.toHaveBeenCalled();
+    expect(state.updates).toBe(2);
+  });
+
+  it("finishes the refund when the call timed out but Dodo refunded anyway", async () => {
+    state.claims = [[claimed]];
+    remote.refund.mockRejectedValue(new Error("timeout"));
+    remote.payment.mockResolvedValueOnce(paid).mockResolvedValueOnce({
+      ...paid,
+      refunds: [
+        { refund_id: "rfnd_goodwill", reason: "Goodwill", status: "succeeded" },
+        { refund_id: "rfnd_3", reason: `Self-serve refund ${claimed.id}`, status: "succeeded" },
+      ],
     });
     await expect(requestRefund("user_1", claimed.id)).resolves.toMatchObject({ providerRefundId: "rfnd_3" });
   });
 
   it("doesn't take an earlier goodwill refund for this one, and lets the user try again", async () => {
     state.claims = [[claimed]];
-    razorpay.mockImplementation(async (method: string, path: string) => {
-      if (path.endsWith("/refund")) throw new Error("timeout");
-      return path.endsWith("/refunds")
-        ? { items: [{ id: "rfnd_goodwill", amount: 5_000, notes: { reason: "Goodwill" } }] }
-        : paid;
-    });
+    remote.refund.mockRejectedValue(new Error("timeout"));
+    remote.payment
+      .mockResolvedValueOnce(paid)
+      .mockResolvedValueOnce({ ...paid, refunds: [{ refund_id: "r", reason: "Goodwill", status: "succeeded" }] });
     await expect(requestRefund("user_1", claimed.id)).rejects.toThrow("timeout");
     expect(state.updates).toBe(2);
   });
 
   it("refunds nothing when the Pro subscription can't be cancelled", async () => {
     state.claims = [[{ ...claimed, subscriptionId: "sub_row" }]];
-    state.subscription = {
-      id: "sub_row",
-      plan: "pro",
-      provider: "razorpay",
-      providerSubscriptionId: "sub_1",
-      cancelledAt: null,
-    };
-    razorpay.mockImplementation(async (method: string, path: string) => {
-      if (path.endsWith("/cancel")) throw new Error("Razorpay down");
-      return method === "GET" ? { ...paid, amount: 12_900, fee: 305 } : { id: "rfnd_x", amount: 12_595 };
-    });
-    await expect(requestRefund("user_1", claimed.id)).rejects.toThrow("Razorpay down");
-    expect(razorpay.mock.calls.some(([, path]) => String(path).endsWith("/refund"))).toBe(false);
+    state.subscription = proRow;
+    remote.update.mockRejectedValue(new Error("Dodo down"));
+    await expect(requestRefund("user_1", claimed.id)).rejects.toThrow("Dodo down");
+    expect(remote.refund).not.toHaveBeenCalled();
   });
 
   it("refuses once more than 3 tailored or AI-written resumes were made since paying, and frees the claim", async () => {
@@ -183,33 +177,45 @@ describe("requesting a refund", () => {
     state.used = { tailor: 4, draft: 0 };
     await expect(requestRefund("user_1", claimed.id)).rejects.toMatchObject({ status: 409 });
     expect(state.updates).toBe(2);
-    expect(razorpay).not.toHaveBeenCalled();
+    expect(remote.refund).not.toHaveBeenCalled();
+
+    state.claims = [[{ ...claimed, capturedAt: new Date() }]];
+    state.used = { tailor: 0, draft: 4 };
+    await expect(requestRefund("user_1", claimed.id)).rejects.toMatchObject({ status: 409 });
+  });
+
+  it("allows exactly 3 of each", async () => {
+    state.claims = [[claimed]];
+    state.used = { tailor: 3, draft: 3 };
+    await expect(requestRefund("user_1", claimed.id)).resolves.toMatchObject({ refund: 9_000 });
   });
 
   it("gives each account one refund", async () => {
     state.claims = [[{ ...claimed, capturedAt: new Date() }]];
     state.earlierRefund = true;
     await expect(requestRefund("user_1", claimed.id)).rejects.toThrow("one refund");
-    expect(razorpay).not.toHaveBeenCalled();
+    expect(remote.refund).not.toHaveBeenCalled();
   });
 
-  it("cancels a refunded Pro subscription in Razorpay straight away", async () => {
-    state.claims = [[{ ...claimed, subscriptionId: "sub_row" }]];
-    state.subscription = {
-      id: "sub_row",
-      plan: "pro",
-      provider: "razorpay",
-      providerSubscriptionId: "sub_1",
-      cancelledAt: null,
-    };
-    razorpay.mockImplementation(async (method: string, path: string) =>
-      method === "GET"
-        ? { ...paid, amount: 12_900, fee: 305 }
-        : path.endsWith("/refund")
-          ? { id: "rfnd_2", amount: 12_595 }
-          : {},
-    );
-    await expect(requestRefund("user_1", claimed.id)).resolves.toMatchObject({ refund: 12_595 });
-    expect(razorpay).toHaveBeenCalledWith("POST", "/subscriptions/sub_1/cancel", { cancel_at_cycle_end: 0 });
+  it("cancels a refunded Pro subscription at Dodo straight away, before refunding", async () => {
+    state.claims = [[{ ...claimed, amount: 1_200, subscriptionId: "sub_row" }]];
+    state.subscription = proRow;
+    await expect(requestRefund("user_1", claimed.id)).resolves.toMatchObject({ refund: 1_200 });
+    expect(remote.update).toHaveBeenCalledWith("sub_1", { status: "cancelled" });
+    expect(remote.update.mock.invocationCallOrder[0]!).toBeLessThan(remote.refund.mock.invocationCallOrder[0]!);
+  });
+
+  it("doesn't cancel again a Pro already cancelled for the period's end", async () => {
+    state.claims = [[{ ...claimed, amount: 1_200, subscriptionId: "sub_row" }]];
+    state.subscription = { ...proRow, cancelledAt: new Date() };
+    await requestRefund("user_1", claimed.id);
+    expect(remote.update).not.toHaveBeenCalled();
+    expect(remote.refund).toHaveBeenCalledOnce();
+  });
+});
+
+describe("the refund quote", () => {
+  it("says nothing when no payment is in the window", async () => {
+    await expect(getRefundQuote("user_1")).resolves.toEqual({ quote: null, reason: null });
   });
 });

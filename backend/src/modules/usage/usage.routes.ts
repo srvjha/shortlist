@@ -6,7 +6,7 @@ import { getUsage } from "./quotas.js";
 
 const counter = z.object({ used: z.number().int(), limit: z.number().int() });
 export const usageResponse = z.object({
-  plan: z.enum(["free", "season_pass", "pro"]),
+  plan: z.enum(["free", "season_pass", "pro", "lifetime"]),
   // AI requests run on the user's own key, so the AI limits below don't apply.
   ownAiKey: z.boolean(),
   periodStart: z.date(),

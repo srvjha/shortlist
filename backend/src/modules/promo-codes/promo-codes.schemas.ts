@@ -28,7 +28,7 @@ export const promoCodeListResponse = z.object({
       id: z.uuid(),
       code: z.string(),
       kind: z.enum(["promo", "ambassador"]),
-      plan,
+      plan: z.enum(["season_pass", "pro", "lifetime"]),
       months: z.number().int(),
       maxRedemptions: z.number().int().nullable(),
       expiresAt: z.date().nullable(),

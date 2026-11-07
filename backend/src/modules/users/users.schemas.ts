@@ -14,7 +14,7 @@ export const meResponse = z.object({
   emailVerified: z.boolean(),
   image: z.string().nullable(),
   username: z.string(),
-  plan: z.enum(["free", "season_pass", "pro"]),
+  plan: z.enum(["free", "season_pass", "pro", "lifetime"]),
   isAnonymous: z.boolean(),
   isAdmin: z.boolean(),
   createdAt: z.date(),
