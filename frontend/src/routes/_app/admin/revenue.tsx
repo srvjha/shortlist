@@ -108,7 +108,7 @@ function RevenueReport({ data }: { data: AdminRevenue }) {
           value={formatNumber(
             active('season_pass') + active('pro') + active('lifetime'),
           )}
-          hint={`${formatNumber(active('pro'))} Pro, ${formatNumber(active('lifetime'))} Lifetime, ${formatNumber(active('season_pass'))} Season Pass`}
+          hint={`${formatNumber(active('pro'))} Basic, ${formatNumber(active('lifetime'))} Pro, ${formatNumber(active('season_pass'))} Season Pass`}
         />
       </StatGrid>
 

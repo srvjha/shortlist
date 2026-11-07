@@ -654,7 +654,7 @@ const paths: ZodOpenApiPathsObject = {
   "/v1/subscription": {
     get: op({ summary: "Current plan and subscription", tag: "Billing", response: subscriptionResponse }),
     delete: op({
-      summary: "Cancel Pro at the end of the billing period",
+      summary: "Cancel Basic at the end of the billing period",
       tag: "Billing",
       response: subscriptionResponse,
     }),

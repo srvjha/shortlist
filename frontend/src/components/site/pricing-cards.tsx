@@ -1,6 +1,5 @@
 import { Link } from '@tanstack/react-router'
-import { CheckIcon, StarIcon } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
+import { CheckIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import { useCheckout } from '@/hooks/use-checkout'
@@ -9,7 +8,6 @@ import type { Pricing } from '@/lib/api/types'
 import { formatMoney } from '@/lib/format'
 import { plans } from '@/lib/plans'
 import { paymentLine, priceNote, priceOf, usePricing } from '@/lib/pricing'
-import { site } from '@/lib/site'
 import { cn } from '@/lib/utils'
 
 type Plan = (typeof plans)[number]
@@ -20,18 +18,14 @@ function PlanCta({ plan }: { plan: Plan }) {
   const { checkout, me } = useCheckout({ enabled: !!session })
   const style = {
     size: 'lg',
-    variant: featured ? 'default' : 'outline',
-    className: 'mt-6 h-11 w-full text-base',
+    variant: featured
+      ? 'secondary'
+      : plan.id === 'free'
+        ? 'outline'
+        : 'default',
+    className: 'mt-8 h-12 w-full text-base',
   } as const
 
-  if (plan.id === 'enterprise')
-    return (
-      <Button {...style} asChild>
-        <a href={`mailto:${site.contactEmail}?subject=Shortlist%20Enterprise`}>
-          {plan.cta}
-        </a>
-      </Button>
-    )
   if (plan.id === 'free')
     return (
       <Button {...style} asChild>
@@ -88,7 +82,7 @@ export function PricingCards({
       {/* Cards share row lines (subgrid) so names, prices, buttons and lists align across plans. */}
       <ul
         aria-label="Plans and prices"
-        className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4 xl:grid-rows-[auto_auto_auto_auto_auto_1fr]"
+        className="mx-auto grid max-w-5xl gap-5 lg:grid-cols-3 lg:grid-rows-[auto_auto_auto_auto_1fr]"
       >
         {plans.map((plan) => {
           const featured = 'featured' in plan && plan.featured
@@ -96,51 +90,67 @@ export function PricingCards({
             <li
               key={plan.id}
               className={cn(
-                'flex flex-col rounded-2xl border bg-card p-6 sm:p-8 xl:row-span-6 xl:grid xl:grid-rows-subgrid xl:gap-y-0',
+                'flex flex-col rounded-3xl border p-7 sm:p-8 lg:row-span-5 lg:grid lg:grid-rows-subgrid lg:gap-y-0',
                 // Featured first on phones, so the plan most people pick is the one they see.
                 featured
-                  ? 'order-first border-2 border-primary shadow-[0_24px_48px_-24px_rgb(0_0_0/0.3)] sm:order-none'
-                  : undefined,
+                  ? 'order-first border-primary bg-primary text-primary-foreground shadow-[0_24px_48px_-24px_rgb(0_0_0/0.35)] lg:order-none'
+                  : 'bg-card text-card-foreground',
               )}
             >
-              <div className="flex flex-col items-start justify-end gap-3">
-                {'badge' in plan && (
-                  <Badge className="h-7 px-3 text-sm">
-                    <StarIcon aria-hidden className="fill-current" />
-                    {plan.badge}
-                  </Badge>
-                )}
-                <Heading className="font-sans text-xl font-semibold">
-                  {plan.name}
-                </Heading>
-              </div>
-              <p className="mt-2 text-muted-foreground">{plan.forWhom}</p>
-              <p className="mt-6 flex items-baseline gap-1.5">
+              <Heading className="font-sans text-xl font-semibold">
+                {plan.name}
+              </Heading>
+              <p className="mt-4 flex items-baseline gap-1.5">
                 <span className="font-serif text-5xl font-semibold tracking-tight tabular-nums">
-                  {plan.id === 'enterprise'
-                    ? 'Custom'
-                    : plan.id === 'free'
-                      ? formatMoney(0, pricing.currency)
-                      : priceOf(plan.id, pricing)}
+                  {plan.id === 'free'
+                    ? formatMoney(0, pricing.currency)
+                    : priceOf(plan.id, pricing)}
                 </span>
                 {plan.period && (
-                  <span className="text-muted-foreground">{plan.period}</span>
+                  <span
+                    className={
+                      featured ? 'opacity-80' : 'text-muted-foreground'
+                    }
+                  >
+                    {plan.period}
+                  </span>
                 )}
               </p>
-              <p className="mt-2 text-sm text-muted-foreground">
-                {plan.id === 'free' || plan.id === 'enterprise'
-                  ? plan.note
-                  : priceNote(plan.id)}
-              </p>
+              <div
+                className={cn(
+                  'mt-4',
+                  featured ? 'opacity-90' : 'text-muted-foreground',
+                )}
+              >
+                <p>{plan.forWhom}</p>
+                <p className="mt-1 text-sm">
+                  {plan.id === 'free' ? plan.note : priceNote(plan.id)}
+                </p>
+              </div>
               <PlanCta plan={plan} />
-              <div className="mt-8 border-t pt-6">
-                <p className="text-sm font-medium">{plan.listTitle}</p>
-                <ul className="mt-4 flex flex-col gap-3">
+              <div className="mt-8">
+                <p
+                  className={cn(
+                    'text-sm font-medium',
+                    featured && 'opacity-90',
+                  )}
+                >
+                  {plan.listTitle}
+                </p>
+                <ul
+                  className={cn(
+                    'mt-2 divide-y',
+                    featured ? 'divide-primary-foreground/20' : 'divide-border',
+                  )}
+                >
                   {plan.features.map((feature) => (
-                    <li key={feature} className="flex gap-3">
+                    <li key={feature} className="flex gap-3 py-3">
                       <CheckIcon
                         aria-hidden
-                        className="mt-0.5 size-5 shrink-0 text-primary"
+                        className={cn(
+                          'mt-0.5 size-5 shrink-0',
+                          featured ? 'text-primary-foreground' : 'text-primary',
+                        )}
                       />
                       <span>{feature}</span>
                     </li>

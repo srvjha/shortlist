@@ -76,13 +76,13 @@ function BillingPage() {
 const paidPlans = [
   {
     id: 'pro',
-    name: 'Pro',
+    name: 'Basic',
     body: '60 AI-tailored resumes a month and unlimited AI edits, paid month by month.',
   },
   {
     id: 'lifetime',
-    name: 'Lifetime',
-    body: 'The same AI limits as Pro, for one payment.',
+    name: 'Pro',
+    body: 'The same AI limits as Basic, for one payment.',
   },
 ] as const
 
@@ -163,7 +163,7 @@ function Billing({
     onSuccess: () => {
       refresh()
       toast.success(
-        'Pro cancelled. You keep it until the end of this billing period.',
+        'Basic cancelled. You keep it until the end of this billing period.',
       )
     },
     onError: (error) => toast.error(errorMessage(error)),
@@ -253,7 +253,7 @@ function Billing({
                   disabled={cancel.isPending}
                 >
                   {cancel.isPending && <Spinner data-icon="inline-start" />}
-                  Cancel Pro
+                  Cancel Basic
                 </Button>
               )}
               {quote && (
@@ -288,10 +288,10 @@ function Billing({
         <ConfirmDialog
           open={confirmCancel}
           onOpenChange={setConfirmCancel}
-          title="Cancel Pro?"
-          description="You keep Pro until the end of the period you've paid for, then move to the Free plan. Nothing is deleted."
-          confirmLabel="Cancel Pro"
-          cancelLabel="Keep Pro"
+          title="Cancel Basic?"
+          description="You keep Basic until the end of the period you've paid for, then move to the Free plan. Nothing is deleted."
+          confirmLabel="Cancel Basic"
+          cancelLabel="Keep Basic"
           destructive
           onConfirm={() => cancel.mutate()}
         />
@@ -339,7 +339,7 @@ function Billing({
                     {checkout.isPending && checkout.variables === plan.id && (
                       <Spinner data-icon="inline-start" />
                     )}
-                    {plan.id === 'lifetime' ? 'Get Lifetime' : 'Go Pro'}
+                    {plan.id === 'lifetime' ? 'Get Pro' : 'Choose Basic'}
                   </Button>
                 </CardFooter>
               </Card>

@@ -7,7 +7,7 @@ import { recomputePlan } from "../modules/billing/billing.service.js";
 
 const DAY = 24 * 60 * 60 * 1000;
 
-// Season Passes and cancelled Pro plans end when their period ends. Also covers missed webhooks.
+// Season Passes and cancelled Basic plans end when their period ends. Also covers missed webhooks.
 export async function expireSubscriptions() {
   const lapsed = await db
     .update(subscriptions)

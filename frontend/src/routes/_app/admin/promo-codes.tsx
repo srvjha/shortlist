@@ -321,7 +321,7 @@ function CreateCode({
         />
       </div>
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="promo-months">Pro months</Label>
+        <Label htmlFor="promo-months">Basic months</Label>
         <Input
           id="promo-months"
           type="number"

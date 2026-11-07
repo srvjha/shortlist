@@ -49,10 +49,10 @@ export const Route = createFileRoute('/_site/terms')({
         Payments are processed by Dodo Payments, which acts as the merchant of
         record: it sells the plan to you on our behalf, adds any sales tax or
         VAT where you live, and sends your receipt. Prices are in US dollars.
-        Pro renews monthly until you cancel, and stays active until the end of
-        the paid month. Lifetime is a one-time payment that gives you the paid
+        Basic renews monthly until you cancel, and stays active until the end of
+        the paid month. Pro is a one-time payment that gives you the paid
         features for as long as Shortlist runs, with the same monthly fair-use
-        limits as Pro. It is not unlimited use. A Season Pass bought earlier
+        limits as Basic. It is not unlimited use. A Season Pass bought earlier
         runs until its end date.
       </p>
       <h2>Refunds</h2>
@@ -60,7 +60,7 @@ export const Route = createFileRoute('/_site/terms')({
         You can ask for a full refund within 7 days of a payment, from Plans and
         billing, as long as you have made no more than 3 tailored and 3
         AI-written resumes since paying. Each account can get one refund. A
-        refunded plan ends straight away, and a refunded Pro subscription is
+        refunded plan ends straight away, and a refunded Basic subscription is
         cancelled first. After 7 days, payments can't be refunded. Refunds reach
         your original payment method in 5 to 7 working days.
       </p>

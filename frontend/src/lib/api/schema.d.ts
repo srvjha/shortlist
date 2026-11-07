@@ -7326,7 +7326,7 @@ export interface paths {
         };
         put?: never;
         post?: never;
-        /** Cancel Pro at the end of the billing period */
+        /** Cancel Basic at the end of the billing period */
         delete: {
             parameters: {
                 query?: never;

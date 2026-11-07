@@ -20,7 +20,7 @@ export function useCheckout({ enabled = true }: { enabled?: boolean } = {}) {
   }
 
   // Back from Dodo: asks the API to read the payment, and keeps looking in case Dodo is still working on it. Compares
-  // with the plan bought because someone upgrading from Pro to Lifetime is already on a paid plan.
+  // with the plan bought because someone upgrading from Basic to Pro is already on a paid plan.
   const confirmReturn = (checkoutId: string, plan?: PaidPlan) => {
     setWaiting(true)
     const confirm = () =>

@@ -18,9 +18,6 @@ import { fetchPricing } from '@/lib/public-api'
 import { site } from '@/lib/site'
 import { cn } from '@/lib/utils'
 
-// Enterprise is a conversation, not a list of limits, so it stays out of the table.
-const comparedPlans = plans.filter((plan) => plan.id !== 'enterprise')
-
 const comparison: { label: string; values: [string, string, string] }[] = [
   {
     label: 'Resumes',
@@ -109,12 +106,12 @@ const faqs = [
     a: 'Yes, with no card and no time limit. You get 1 resume with every template, and you can keep editing it by hand for as long as you like. You also get 1 tailored resume, 1 AI edit, 1 AI-written resume and 3 PDF downloads, the ATS checker, and cover and resignation letters. Those AI allowances are once per account, not monthly, because each AI request costs us money to run.',
   },
   {
-    q: 'What is the difference between Pro and Lifetime?',
-    a: 'They have the same features and the same monthly limits. Pro is paid month by month and you can cancel at any time. Lifetime is one payment, never renews and lasts as long as Shortlist runs.',
+    q: 'What is the difference between Basic and Pro?',
+    a: 'They have the same features and the same monthly limits. Basic is paid month by month and you can cancel at any time. Pro is one payment, never renews and lasts as long as Shortlist runs.',
   },
   {
-    q: 'Does Lifetime mean unlimited AI?',
-    a: 'No. Lifetime has the same monthly fair-use limits as Pro, such as 60 tailored resumes a month, and they reset on the 1st of every month.',
+    q: 'Does Pro mean unlimited AI?',
+    a: 'No. Pro has the same monthly fair-use limits as Basic, such as 60 tailored resumes a month, and they reset on the 1st of every month.',
   },
   {
     q: 'What counts as a resume tailored with AI?',
@@ -129,12 +126,12 @@ const faqs = [
     a: 'No. Importing a PDF, .tex or text file is free on every plan, including Free, within fair use.',
   },
   {
-    q: 'What happens when Pro ends?',
+    q: 'What happens when Basic ends?',
     a: 'Your account moves back to Free. Nothing is deleted: your resumes, versions and share links all stay, and you can keep editing them. You just get the free limits again, so creating another resume or using more AI needs a paid plan.',
   },
   {
-    q: 'Can I cancel Pro?',
-    a: 'Yes, from Plans and billing. You keep Pro until the end of the month you have paid for. Lifetime is one payment, so there is nothing to cancel.',
+    q: 'Can I cancel Basic?',
+    a: 'Yes, from Plans and billing. You keep Basic until the end of the month you have paid for. Pro is one payment, so there is nothing to cancel.',
   },
   {
     q: 'Can I get a refund?',
@@ -150,7 +147,7 @@ const faqs = [
   },
   {
     q: 'I have a college or a team. Can we buy together?',
-    a: 'Yes. Choose Contact us on the Enterprise plan and tell us how many people you have.',
+    a: 'Yes. Choose Book a demo at the bottom of any page, or email us, and tell us how many people you have.',
   },
 ]
 
@@ -169,8 +166,8 @@ const structuredData = {
   operatingSystem: 'Web',
   offers: [
     { name: 'Free', price: '0' },
-    { name: 'Pro (monthly)', price: '12' },
-    { name: 'Lifetime (one payment)', price: '90' },
+    { name: 'Basic (monthly)', price: '12' },
+    { name: 'Pro (one payment)', price: '90' },
   ].map((offer) => ({
     '@type': 'Offer',
     ...offer,
@@ -188,7 +185,7 @@ export const Route = createFileRoute('/_site/pricing')({
       {
         name: 'description',
         content:
-          'Tailor your resume to each job with AI. Start free, get Pro at $12 a month, or Lifetime at $90 once.',
+          'Tailor your resume to each job with AI. Start free, get Basic at $12 a month, or Pro at $90 once.',
       },
     ],
     links: [{ rel: 'canonical', href: `${site.url}/pricing` }],
@@ -268,7 +265,7 @@ function PricingPage() {
                 <TableHead className="w-[34%]">
                   <span className="sr-only">Feature</span>
                 </TableHead>
-                {comparedPlans.map((plan) => (
+                {plans.map((plan) => (
                   <TableHead
                     key={plan.id}
                     className={cn(
@@ -289,10 +286,10 @@ function PricingPage() {
                   </TableCell>
                   {row.values.map((value, index) => (
                     <TableCell
-                      key={comparedPlans[index].id}
+                      key={plans[index].id}
                       className={cn(
                         'whitespace-normal text-muted-foreground',
-                        comparedPlans[index].id === 'pro' && 'bg-primary/5',
+                        plans[index].id === 'pro' && 'bg-primary/5',
                       )}
                     >
                       {value}

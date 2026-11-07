@@ -118,8 +118,8 @@ function UsersPage() {
             <SelectItem value={ALL}>All plans</SelectItem>
             <SelectItem value="free">Free</SelectItem>
             <SelectItem value="season_pass">Season Pass</SelectItem>
-            <SelectItem value="pro">Pro</SelectItem>
-            <SelectItem value="lifetime">Lifetime</SelectItem>
+            <SelectItem value="pro">Basic</SelectItem>
+            <SelectItem value="lifetime">Pro</SelectItem>
           </SelectContent>
         </Select>
         <Select

@@ -310,7 +310,7 @@ function DataTab({ me }: { me: Me }) {
                   <span className="font-medium text-foreground">
                     {me.username}
                   </span>{' '}
-                  to confirm. Any active Pro subscription is cancelled too.
+                  to confirm. Any active Basic subscription is cancelled too.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <Input

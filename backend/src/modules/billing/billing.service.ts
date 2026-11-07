@@ -65,9 +65,9 @@ export async function createCheckout(userId: string, plan: PaidPlan) {
         gt(subscriptions.currentPeriodEnd, new Date()),
       ),
     );
-  if (current.some((s) => s.plan === "lifetime")) throw new ConflictError("You already have the Lifetime plan");
+  if (current.some((s) => s.plan === "lifetime")) throw new ConflictError("You already have the Pro plan");
   if (plan === "pro" && current.some((s) => s.plan === "pro")) {
-    throw new ConflictError("You already have an active Pro plan");
+    throw new ConflictError("You already have an active Basic plan");
   }
   track(userId, "checkout_started", { plan, provider: "dodo" });
 
@@ -99,7 +99,7 @@ export async function getSubscription(userId: string) {
       status: subscriptions.status,
       currentPeriodEnd: subscriptions.currentPeriodEnd,
       cancelledAt: subscriptions.cancelledAt,
-      // Only a plan billed by a provider subscription renews; passes and given plans run out, and Lifetime never ends.
+      // Only a plan billed by a provider subscription renews; passes and given plans run out, and Pro never ends.
       renews: sql<boolean>`${subscriptions.providerSubscriptionId} is not null`,
     })
     .from(subscriptions)
@@ -109,12 +109,12 @@ export async function getSubscription(userId: string) {
   return { plan: user!.plan, subscription: subscription ?? null };
 }
 
-// Cancels Pro at the end of the current billing period. A Season Pass runs out, and Lifetime has nothing to cancel.
+// Cancels Basic at the end of the current billing period. A Season Pass runs out, and Pro has nothing to cancel.
 export async function cancelSubscription(userId: string) {
   const [subscription] = await db
     .select()
     .from(subscriptions)
-    // An admin-granted or one-time Pro row has no provider subscription, so skip it to find the one that bills.
+    // An admin-granted or one-time Basic row has no provider subscription, so skip it to find the one that bills.
     .where(
       and(
         eq(subscriptions.userId, userId),
@@ -125,7 +125,7 @@ export async function cancelSubscription(userId: string) {
       ),
     )
     .limit(1);
-  if (!subscription?.providerSubscriptionId) throw new NotFoundError("Active Pro subscription");
+  if (!subscription?.providerSubscriptionId) throw new NotFoundError("Active Basic subscription");
   await dodo().subscriptions.update(subscription.providerSubscriptionId, { cancel_at_next_billing_date: true });
   await db
     .update(subscriptions)
@@ -220,7 +220,7 @@ export async function requestRefund(userId: string, paymentId: string, now = new
     if (payment.status !== "succeeded" || alreadyRefunded) {
       throw new ConflictError("This payment has already been refunded");
     }
-    // A recurring Pro is cancelled first: refunding and then failing to cancel would leave it charging every month.
+    // A recurring Basic is cancelled first: refunding and then failing to cancel would leave it charging every month.
     if (subscription?.providerSubscriptionId && !subscription.cancelledAt) {
       await dodo().subscriptions.update(subscription.providerSubscriptionId, { status: "cancelled" });
       subscription.cancelledAt = now;

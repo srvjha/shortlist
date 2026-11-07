@@ -23,10 +23,10 @@ export const plans = [
   },
   {
     id: 'pro',
-    name: 'Pro',
+    name: 'Basic',
     forWhom: 'For an active job search, paid month by month.',
     period: '/ month',
-    cta: 'Choose Pro',
+    cta: 'Choose Basic',
     featured: true,
     listTitle: 'Everything in Free, plus:',
     features: [
@@ -41,31 +41,17 @@ export const plans = [
   },
   {
     id: 'lifetime',
-    name: 'Lifetime',
+    name: 'Pro',
     forWhom: 'For every job search from now on, with one payment.',
     period: 'once',
-    cta: 'Get Lifetime',
-    badge: 'Best value',
-    listTitle: 'Everything in Pro, with the same monthly limits:',
+    cta: 'Get Pro',
+    listTitle: 'Everything in Basic, with the same monthly limits:',
     features: [
       'One payment, nothing renews',
       'Lasts as long as Shortlist runs',
       '60 tailored resumes and 30 AI-written resumes each month',
-      'AI edits within the same fair-use limit as Pro',
+      'AI edits within the same fair-use limit as Basic',
       'Monthly limits reset on the 1st of every month',
-    ],
-  },
-  {
-    id: 'enterprise',
-    name: 'Enterprise',
-    forWhom: 'For colleges, placement cells and teams.',
-    period: null,
-    note: 'Priced to fit your group.',
-    cta: 'Contact us',
-    listTitle: 'Talk to us about:',
-    features: [
-      'Paid plans for a whole group',
-      'A code your students or team can redeem',
     ],
   },
 ] as const

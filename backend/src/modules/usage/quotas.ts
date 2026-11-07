@@ -128,9 +128,9 @@ export async function reserveAiRun(userId: string, kind: QuotaKind, step: Step) 
 }
 
 const freeLimitMessages: Partial<Record<QuotaKind, string>> = {
-  tailor: "You've used your free tailored resume. Pro includes 60 a month, or add your own AI key.",
-  edit: "You've used your free AI edit. Pro includes unlimited AI edits, or add your own AI key.",
-  draft: "You've used your free AI-written resume. Pro includes 30 a month, or add your own AI key.",
+  tailor: "You've used your free tailored resume. Basic includes 60 a month, or add your own AI key.",
+  edit: "You've used your free AI edit. Basic includes unlimited AI edits, or add your own AI key.",
+  draft: "You've used your free AI-written resume. Basic includes 30 a month, or add your own AI key.",
 };
 
 async function checkQuota(userId: string, kind: QuotaKind, executor: Executor = db) {
@@ -147,7 +147,7 @@ async function checkQuota(userId: string, kind: QuotaKind, executor: Executor = 
 // Premium features (extra link controls, detailed analytics) need a paid plan.
 export async function assertPaidPlan(userId: string, feature: string) {
   if ((await planOf(userId)) === "free")
-    throw new AppError(402, "PLAN_REQUIRED", `${feature} is part of Pro and Lifetime`);
+    throw new AppError(402, "PLAN_REQUIRED", `${feature} is part of Basic and Pro`);
 }
 
 export async function assertResumeQuota(userId: string) {
@@ -156,7 +156,7 @@ export async function assertResumeQuota(userId: string) {
   if (used >= limit)
     throw quotaError(
       limit === 1
-        ? "The Free plan includes 1 resume, and you can keep editing yours. Pro includes unlimited resumes."
+        ? "The Free plan includes 1 resume, and you can keep editing yours. Basic includes unlimited resumes."
         : `You've reached the limit of ${limit} resumes. Delete some you no longer need.`,
       limit,
       used,
@@ -180,7 +180,7 @@ export async function recordPdfDownload(userId: string, versionId: string) {
     const used = row?.value ?? 0;
     if (used >= FREE_PDF_DOWNLOADS) {
       throw quotaError(
-        `You've used your ${FREE_PDF_DOWNLOADS} free PDF downloads. Pro and Lifetime include unlimited downloads.`,
+        `You've used your ${FREE_PDF_DOWNLOADS} free PDF downloads. Basic and Pro include unlimited downloads.`,
         FREE_PDF_DOWNLOADS,
         used,
       );
