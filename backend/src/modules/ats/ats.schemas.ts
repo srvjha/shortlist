@@ -122,7 +122,7 @@ export const createAtsReviewBody = z.object({
   jobDescription: z.string().trim().max(20_000).optional(),
 });
 
-// The AI's reading of a resume, for Season Pass and Pro, also the model's output schema (nullable, never optional:
+// The AI's reading of a resume, for paid plans, also the model's output schema (nullable, never optional:
 // see generateStructured). `line` is a resume line copied exactly, or null for a fix about the whole resume;
 // `rewrite` is null without a line or when the model's version brought in a new number.
 export const aiReviewOutput = z.object({

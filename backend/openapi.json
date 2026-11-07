@@ -438,12 +438,6 @@
                           ],
                           "additionalProperties": false
                         },
-                        "trialEndsAt": {
-                          "type": [
-                            "string",
-                            "null"
-                          ]
-                        },
                         "edit": {
                           "type": "object",
                           "properties": {
@@ -503,6 +497,33 @@
                             "limit"
                           ],
                           "additionalProperties": false
+                        },
+                        "pdf": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "used": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991
+                                },
+                                "limit": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991
+                                }
+                              },
+                              "required": [
+                                "used",
+                                "limit"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
                         }
                       },
                       "required": [
@@ -512,10 +533,10 @@
                         "periodEnd",
                         "resumes",
                         "tailor",
-                        "trialEndsAt",
                         "edit",
                         "import",
-                        "draft"
+                        "draft",
+                        "pdf"
                       ],
                       "additionalProperties": false
                     }
@@ -4003,7 +4024,7 @@
     },
     "/v1/analytics/insights": {
       "get": {
-        "summary": "Opening times, cities and per-link activity (Season Pass and Pro)",
+        "summary": "Opening times, cities and per-link activity (paid plans)",
         "tags": [
           "Share links"
         ],
@@ -4153,7 +4174,7 @@
     },
     "/v1/analytics/views": {
       "get": {
-        "summary": "Every view in the range, for export (Season Pass and Pro)",
+        "summary": "Every view in the range, for export (paid plans)",
         "tags": [
           "Share links"
         ],
@@ -20042,7 +20063,7 @@
     },
     "/v1/ats-reviews": {
       "post": {
-        "summary": "AI review of resume text: verdict, strengths, top fixes and job fit (Season Pass and Pro, not stored)",
+        "summary": "AI review of resume text: verdict, strengths, top fixes and job fit (paid plans, not stored)",
         "tags": [
           "ATS"
         ],
@@ -23144,7 +23165,7 @@
                     ]
                   },
                   "plan": {
-                    "default": "season_pass",
+                    "default": "pro",
                     "type": "string",
                     "enum": [
                       "season_pass",
@@ -24567,12 +24588,6 @@
                               ],
                               "additionalProperties": false
                             },
-                            "trialEndsAt": {
-                              "type": [
-                                "string",
-                                "null"
-                              ]
-                            },
                             "edit": {
                               "type": "object",
                               "properties": {
@@ -24632,6 +24647,33 @@
                                 "limit"
                               ],
                               "additionalProperties": false
+                            },
+                            "pdf": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "used": {
+                                      "type": "integer",
+                                      "minimum": -9007199254740991,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "limit": {
+                                      "type": "integer",
+                                      "minimum": -9007199254740991,
+                                      "maximum": 9007199254740991
+                                    }
+                                  },
+                                  "required": [
+                                    "used",
+                                    "limit"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
                             }
                           },
                           "required": [
@@ -24641,10 +24683,10 @@
                             "periodEnd",
                             "resumes",
                             "tailor",
-                            "trialEndsAt",
                             "edit",
                             "import",
-                            "draft"
+                            "draft",
+                            "pdf"
                           ],
                           "additionalProperties": false
                         },
@@ -25200,12 +25242,6 @@
                               ],
                               "additionalProperties": false
                             },
-                            "trialEndsAt": {
-                              "type": [
-                                "string",
-                                "null"
-                              ]
-                            },
                             "edit": {
                               "type": "object",
                               "properties": {
@@ -25265,6 +25301,33 @@
                                 "limit"
                               ],
                               "additionalProperties": false
+                            },
+                            "pdf": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "used": {
+                                      "type": "integer",
+                                      "minimum": -9007199254740991,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "limit": {
+                                      "type": "integer",
+                                      "minimum": -9007199254740991,
+                                      "maximum": 9007199254740991
+                                    }
+                                  },
+                                  "required": [
+                                    "used",
+                                    "limit"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
                             }
                           },
                           "required": [
@@ -25274,10 +25337,10 @@
                             "periodEnd",
                             "resumes",
                             "tailor",
-                            "trialEndsAt",
                             "edit",
                             "import",
-                            "draft"
+                            "draft",
+                            "pdf"
                           ],
                           "additionalProperties": false
                         },
@@ -25925,12 +25988,6 @@
                               ],
                               "additionalProperties": false
                             },
-                            "trialEndsAt": {
-                              "type": [
-                                "string",
-                                "null"
-                              ]
-                            },
                             "edit": {
                               "type": "object",
                               "properties": {
@@ -25990,6 +26047,33 @@
                                 "limit"
                               ],
                               "additionalProperties": false
+                            },
+                            "pdf": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "used": {
+                                      "type": "integer",
+                                      "minimum": -9007199254740991,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "limit": {
+                                      "type": "integer",
+                                      "minimum": -9007199254740991,
+                                      "maximum": 9007199254740991
+                                    }
+                                  },
+                                  "required": [
+                                    "used",
+                                    "limit"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
                             }
                           },
                           "required": [
@@ -25999,10 +26083,10 @@
                             "periodEnd",
                             "resumes",
                             "tailor",
-                            "trialEndsAt",
                             "edit",
                             "import",
-                            "draft"
+                            "draft",
+                            "pdf"
                           ],
                           "additionalProperties": false
                         },

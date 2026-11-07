@@ -84,7 +84,7 @@ export const promoCodes = pgTable("promo_codes", {
   // Stored uppercase; redemption matches case-insensitively.
   code: text().notNull().unique(),
   kind: promoCodeKind().notNull().default("promo"),
-  plan: subscriptionPlan().notNull().default("season_pass"),
+  plan: subscriptionPlan().notNull().default("pro"),
   months: integer().notNull(),
   // Null means no limit.
   maxRedemptions: integer(),

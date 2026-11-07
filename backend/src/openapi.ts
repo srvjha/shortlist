@@ -257,7 +257,7 @@ const paths: ZodOpenApiPathsObject = {
   },
   "/v1/analytics/insights": {
     get: op({
-      summary: "Opening times, cities and per-link activity (Season Pass and Pro)",
+      summary: "Opening times, cities and per-link activity (paid plans)",
       tag: "Share links",
       query: analyticsQuery,
       response: insightsResponse,
@@ -265,7 +265,7 @@ const paths: ZodOpenApiPathsObject = {
   },
   "/v1/analytics/views": {
     get: op({
-      summary: "Every view in the range, for export (Season Pass and Pro)",
+      summary: "Every view in the range, for export (paid plans)",
       tag: "Share links",
       query: analyticsQuery,
       response: viewExportResponse,
@@ -558,7 +558,7 @@ const paths: ZodOpenApiPathsObject = {
   },
   "/v1/ats-reviews": {
     post: op({
-      summary: "AI review of resume text: verdict, strengths, top fixes and job fit (Season Pass and Pro, not stored)",
+      summary: "AI review of resume text: verdict, strengths, top fixes and job fit (paid plans, not stored)",
       tag: "ATS",
       body: createAtsReviewBody,
       response: atsReview,

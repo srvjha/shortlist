@@ -12,7 +12,7 @@ export const createPromoCodeBody = z.object({
     .trim()
     .regex(/^[A-Za-z0-9-]{3,32}$/, "Use 3 to 32 letters, numbers or hyphens"),
   kind: z.enum(["promo", "ambassador"]).default("promo"),
-  plan: plan.default("season_pass"),
+  plan: plan.default("pro"),
   months: z.number().int().min(1).max(12),
   maxRedemptions: z.number().int().min(1).max(10_000).optional(),
   expiresAt: z.coerce.date().optional(),

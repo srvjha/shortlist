@@ -281,7 +281,6 @@ export interface paths {
                                     used: number;
                                     limit: number;
                                 };
-                                trialEndsAt: string | null;
                                 edit: {
                                     used: number;
                                     limit: number;
@@ -294,6 +293,10 @@ export interface paths {
                                     used: number;
                                     limit: number;
                                 };
+                                pdf: {
+                                    used: number;
+                                    limit: number;
+                                } | null;
                             };
                         };
                     };
@@ -1396,7 +1399,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Opening times, cities and per-link activity (Season Pass and Pro) */
+        /** Opening times, cities and per-link activity (paid plans) */
         get: {
             parameters: {
                 query?: {
@@ -1460,7 +1463,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Every view in the range, for export (Season Pass and Pro) */
+        /** Every view in the range, for export (paid plans) */
         get: {
             parameters: {
                 query?: {
@@ -6340,7 +6343,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** AI review of resume text: verdict, strengths, top fixes and job fit (Season Pass and Pro, not stored) */
+        /** AI review of resume text: verdict, strengths, top fixes and job fit (paid plans, not stored) */
         post: {
             parameters: {
                 query?: never;
@@ -7648,7 +7651,7 @@ export interface paths {
                          */
                         kind?: "promo" | "ambassador";
                         /**
-                         * @default season_pass
+                         * @default pro
                          * @enum {string}
                          */
                         plan?: "season_pass" | "pro";
@@ -8083,7 +8086,6 @@ export interface paths {
                                         used: number;
                                         limit: number;
                                     };
-                                    trialEndsAt: string | null;
                                     edit: {
                                         used: number;
                                         limit: number;
@@ -8096,6 +8098,10 @@ export interface paths {
                                         used: number;
                                         limit: number;
                                     };
+                                    pdf: {
+                                        used: number;
+                                        limit: number;
+                                    } | null;
                                 };
                                 subscriptions: {
                                     /** Format: uuid */
@@ -8239,7 +8245,6 @@ export interface paths {
                                         used: number;
                                         limit: number;
                                     };
-                                    trialEndsAt: string | null;
                                     edit: {
                                         used: number;
                                         limit: number;
@@ -8252,6 +8257,10 @@ export interface paths {
                                         used: number;
                                         limit: number;
                                     };
+                                    pdf: {
+                                        used: number;
+                                        limit: number;
+                                    } | null;
                                 };
                                 subscriptions: {
                                     /** Format: uuid */
@@ -8493,7 +8502,6 @@ export interface paths {
                                         used: number;
                                         limit: number;
                                     };
-                                    trialEndsAt: string | null;
                                     edit: {
                                         used: number;
                                         limit: number;
@@ -8506,6 +8514,10 @@ export interface paths {
                                         used: number;
                                         limit: number;
                                     };
+                                    pdf: {
+                                        used: number;
+                                        limit: number;
+                                    } | null;
                                 };
                                 subscriptions: {
                                     /** Format: uuid */
