@@ -191,7 +191,9 @@ function Billing({
                   : activeSub.renews
                     ? `Renews on ${formatDate(activeSub.currentPeriodEnd)}.`
                     : `Active until ${formatDate(activeSub.currentPeriodEnd)}.`
-                : 'Usage resets on the 1st of every month.'}
+                : me.plan === 'free'
+                  ? 'Free limits are for the life of your account. AI imports reset on the 1st of every month.'
+                  : 'Usage resets on the 1st of every month.'}
           </CardDescription>
         </CardHeader>
         <CardContent>
