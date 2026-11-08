@@ -120,8 +120,10 @@ export function NewJobForm({
             value={value}
             onChange={(event) => setValue(event.target.value)}
           />
-          <p className="text-xs text-muted-foreground">
-            Paste the full description, not just the title.
+          <p className="text-xs text-muted-foreground" aria-live="polite">
+            {value.trim().length < 50
+              ? `Paste the full description, not just the title (${value.trim().length} of at least 50 characters).`
+              : 'Paste the full description, not just the title.'}
           </p>
         </div>
       ) : (
