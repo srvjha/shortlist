@@ -1,8 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { ChevronRightIcon, FileTextIcon } from 'lucide-react'
 import { AtsChecker } from '@/components/ats/ats-checker'
 import { PageHeader } from '@/components/app/page-header'
+import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { resumesQuery } from '@/lib/api/queries'
 import { timeAgo } from '@/lib/format'
@@ -17,6 +19,8 @@ export const Route = createFileRoute('/_app/ats')({
 
 function AtsPage() {
   const resumes = useQuery(resumesQuery(false))
+  const [showAll, setShowAll] = useState(false)
+  const shown = showAll ? resumes.data : resumes.data?.slice(0, 3)
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-10 px-5 py-8 sm:px-8">
@@ -40,7 +44,7 @@ function AtsPage() {
             <Skeleton className="h-32" />
           ) : (
             <ul className="divide-y rounded-xl border bg-card">
-              {resumes.data.map((resume) => (
+              {shown?.map((resume) => (
                 <li key={resume.id}>
                   <Link
                     to="/resumes/$resumeId"
@@ -66,6 +70,16 @@ function AtsPage() {
                 </li>
               ))}
             </ul>
+          )}
+          {!showAll && (resumes.data?.length ?? 0) > 3 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="self-start"
+              onClick={() => setShowAll(true)}
+            >
+              Show all {resumes.data?.length} resumes
+            </Button>
           )}
         </section>
       )}
