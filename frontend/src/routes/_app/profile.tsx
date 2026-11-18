@@ -9,6 +9,7 @@ import { PageHeader } from '@/components/app/page-header'
 import { ContentEditor } from '@/components/editor/content-editor'
 import type { SaveState } from '@/components/editor/save-status'
 import { SaveStatus } from '@/components/editor/save-status'
+import { saveProblem, savable } from '@/lib/savable-content'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -66,7 +67,7 @@ function ProfileEditor({ initial }: { initial: ResumeContent }) {
     mutationFn: (payload: string) =>
       unwrap(
         api.PUT('/v1/profile', {
-          body: { content: JSON.parse(payload) as ResumeContent },
+          body: { content: savable(JSON.parse(payload) as ResumeContent) },
         }),
       ),
     onMutate: () => setSaveState('saving'),
@@ -107,7 +108,7 @@ function ProfileEditor({ initial }: { initial: ResumeContent }) {
         description="Everything you have done, in one place. Resumes and tailoring pick from here, and never add anything that isn't in it."
         actions={
           <>
-            <SaveStatus state={saveState} />
+            <SaveStatus state={saveState} problem={saveProblem(save.error)} />
             <Button variant="outline" onClick={() => setImportOpen(true)}>
               <FileUpIcon data-icon="inline-start" />
               Import

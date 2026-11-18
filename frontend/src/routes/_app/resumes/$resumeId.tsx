@@ -56,6 +56,7 @@ import {
 import { useCollapsedSidebar } from '@/hooks/use-collapsed-sidebar'
 import { useDebouncedEffect } from '@/hooks/use-debounced-effect'
 import { flushStep } from '@/lib/save-flush'
+import { saveProblem, savable } from '@/lib/savable-content'
 import { useMediaQuery } from '@/hooks/use-media-query'
 import { usePdfPreview } from '@/hooks/use-pdf-preview'
 import { ApiError, api, errorMessage, unwrap } from '@/lib/api/client'
@@ -244,7 +245,7 @@ function ResumeEditor({
             ? {
                 kind: 'manual',
                 baseVersionId,
-                content: JSON.parse(payload) as ResumeContent,
+                content: savable(JSON.parse(payload) as ResumeContent),
               }
             : {
                 kind: 'manual',
@@ -326,8 +327,11 @@ function ResumeEditor({
       if (step === 'done') resolve()
       else
         reject(
-          save.error ??
-            new Error("Your latest edits aren't saved yet, so try again."),
+          new Error(
+            `Your latest edits couldn't be saved, so nothing was downloaded: ${
+              saveProblem(save.error) ?? 'try again in a moment'
+            }.`,
+          ),
         )
     }
   }, [draft, save.isPending, save.isError, conflict, saveRequest])
@@ -499,7 +503,7 @@ function ResumeEditor({
           className="h-9 max-w-xs border-transparent bg-transparent px-2 font-medium shadow-none hover:border-input focus-visible:border-input"
         />
         <div className="hidden sm:block">
-          <SaveStatus state={saveState} />
+          <SaveStatus state={saveState} problem={saveProblem(save.error)} />
         </div>
         <div className="ml-auto flex items-center gap-2">
           <ToggleGroup
