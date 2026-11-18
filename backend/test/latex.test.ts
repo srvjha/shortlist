@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { dateRange, tex, texRich, texUrl } from "../src/templates/latex.js";
-import { makeXetexCompatible, parseErrors } from "../src/lib/latex/tectonic.js";
+import { makeXetexCompatible, needsRerun, parseErrors } from "../src/lib/latex/tectonic.js";
 
 describe("tex", () => {
   it("escapes every LaTeX special character", () => {
@@ -51,6 +51,23 @@ describe("makeXetexCompatible", () => {
     expect(out).not.toContain("glyphtounicode}");
     expect(out).not.toMatch(/^\\pdfgentounicode/m);
     expect(out).toContain("\\begin{document}");
+  });
+});
+
+describe("needsRerun", () => {
+  it("reruns only for references, page totals and contents", () => {
+    expect(needsRerun("\\href{https://x.dev}{site} \\section{Work} \\labelitemi")).toBe(false);
+    for (const tex of [
+      "\\ref{a}",
+      "\\pageref{LastPage}",
+      "\\usepackage{lastpage}",
+      "\\label{a}",
+      "\\cite{b}",
+      "\\tableofcontents",
+      "\\Cref{c}",
+    ]) {
+      expect(needsRerun(tex)).toBe(true);
+    }
   });
 });
 

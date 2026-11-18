@@ -16,6 +16,15 @@ export type TectonicResult = { ok: true; pdf: Buffer } | { ok: false; errors: Co
 // XeTeX already embeds Unicode maps, so dropping them keeps text extractable.
 const pdftexOnly = [/^\s*\\input\{glyphtounicode\}.*$/gm, /^\s*\\pdfgentounicode\s*=\s*1.*$/gm];
 
+// Labels, references, page totals, tables of contents, citations and longtable widths are read back from the first
+// run's notes. Without any of them a second run changes nothing, so it is skipped.
+const usesCrossReferences =
+  /\\(?:(?:page|eq|auto|name|c|v)?ref|label|cite|tableofcontents|listof\w+)\b|lastpage|longtable|totcount|zref/i;
+
+export function needsRerun(source: string) {
+  return usesCrossReferences.test(source);
+}
+
 export function makeXetexCompatible(source: string) {
   return pdftexOnly.reduce((tex, pattern) => tex.replace(pattern, "% removed: pdfTeX-only"), source);
 }
@@ -60,8 +69,19 @@ export function createTectonic(options: TectonicOptions) {
     }
   }
 
-  function run(cwd: string, signal?: AbortSignal): Promise<{ code: number | null; output: string; timedOut: boolean }> {
-    const args = ["--untrusted", "--chatter", "minimal", ...(options.onlyCached ? ["--only-cached"] : []), "main.tex"];
+  function run(
+    cwd: string,
+    rerun: boolean,
+    signal?: AbortSignal,
+  ): Promise<{ code: number | null; output: string; timedOut: boolean }> {
+    const args = [
+      "--untrusted",
+      "--chatter",
+      "minimal",
+      ...(options.onlyCached ? ["--only-cached"] : []),
+      ...(rerun ? [] : ["--reruns", "0"]),
+      "main.tex",
+    ];
     return new Promise((resolve, reject) => {
       const child = spawn(options.bin, args, {
         cwd,
@@ -103,8 +123,9 @@ export function createTectonic(options: TectonicOptions) {
       signal?.throwIfAborted();
       const dir = await mkdtemp(join(tmpdir(), "rb-tex-"));
       try {
-        await writeFile(join(dir, "main.tex"), makeXetexCompatible(source));
-        const { code, output, timedOut } = await run(dir, signal);
+        const tex = makeXetexCompatible(source);
+        await writeFile(join(dir, "main.tex"), tex);
+        const { code, output, timedOut } = await run(dir, needsRerun(tex), signal);
         signal?.throwIfAborted();
         if (timedOut) {
           return {
