@@ -1,6 +1,7 @@
 import { pool } from "./db/index.js";
 import { type MaintenanceTask, maintenanceTasks } from "./jobs/maintenance.js";
-import { flushAnalytics } from "./lib/analytics.js";
+import { createHash } from "node:crypto";
+import { flushAnalytics, trackServer } from "./lib/analytics.js";
 import { logger } from "./lib/logger.js";
 
 // Runs scheduled maintenance. Start one instance alongside the API: `pnpm worker`.
@@ -72,10 +73,27 @@ const timer = setInterval(async () => {
   running = false;
 }, 30_000);
 
+// The same fixed work, timed every 5 minutes. Contabo doesn't report CPU steal, so this is how a slower host
+// shows up, next to compile_ms in PostHog. About 0.1 s of CPU on a healthy core.
+const probeData = Buffer.alloc(1 << 20);
+function cpuProbe() {
+  const cpu = process.cpuUsage();
+  const started = performance.now();
+  for (let i = 0; i < 300; i++) createHash("sha256").update(probeData).digest();
+  const used = process.cpuUsage(cpu);
+  trackServer("cpu_probe", {
+    wall_ms: Math.round(performance.now() - started),
+    cpu_ms: Math.round((used.user + used.system) / 1000),
+  });
+}
+cpuProbe();
+const probeTimer = setInterval(cpuProbe, 5 * 60_000);
+
 logger.info("Worker started");
 
 async function shutdown() {
   clearInterval(timer);
+  clearInterval(probeTimer);
   await flushAnalytics();
   await pool.end();
   process.exit(0);
