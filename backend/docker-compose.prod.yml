@@ -61,7 +61,7 @@ services:
     build: { context: ., target: compiler }
     restart: unless-stopped
     environment:
-      COMPILE_TIMEOUT_MS: "20000"
+      COMPILE_TIMEOUT_MS: "45000"
       # Three at once on the 4-core VPS, still capped below so a burst can't starve the API, Postgres or the other app.
       COMPILE_CONCURRENCY: "3"
     read_only: true

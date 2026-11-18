@@ -222,7 +222,7 @@ function ResumeEditor({
   const preview = usePdfPreview(
     structured
       ? content
-        ? { content, templateId, layout: layoutSettings }
+        ? { content: savable(content), templateId, layout: layoutSettings }
         : null
       : { texSource },
   )
