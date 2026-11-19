@@ -69,9 +69,9 @@ export function DownloadMenu({
       <Tooltip>
         <TooltipTrigger asChild>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline">
+            <Button variant="outline" aria-label="Download">
               <DownloadIcon data-icon="inline-start" />
-              Download
+              <span className="hidden sm:inline">Download</span>
               <ChevronDownIcon data-icon="inline-end" />
             </Button>
           </DropdownMenuTrigger>
