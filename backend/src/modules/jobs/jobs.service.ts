@@ -18,7 +18,7 @@ const isRoleOnly = (text: string) => text.length < roleOnlyChars;
 
 const roleSystem = `The person typed only the role they are aiming for, not a job posting.
 Set role to that role as a clean job title and company to null. Judge seniority from their words, else "unknown".
-List the skills, duties and keywords that most postings for this role ask for. Keep items short (1-5 words each).`;
+List what most postings for this role ask for. Write each skill as one term the way a resume would ("Git", not "Version control (Git)"; "JavaScript" and "TypeScript" as two items, never joined with a slash). No soft skills. At most 12 must-haves.`;
 
 function hashText(text: string) {
   return createHash("sha256").update(text.toLowerCase().replace(/\s+/g, " ").trim()).digest("hex");
