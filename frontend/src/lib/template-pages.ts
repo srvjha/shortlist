@@ -7,6 +7,9 @@ export const templatePages: Record<
   {
     heading: string
     intro: string
+    // Search result title and description, when the ones built from heading and intro don't match what people search for.
+    metaTitle?: string
+    metaDescription?: string
     whoFor: string
     includes: string[]
     tips: string[]
@@ -54,6 +57,10 @@ export const templatePages: Record<
   },
   jake: {
     heading: "Jake's Resume Template",
+    metaTitle:
+      "Jake's Resume Template, Free: Edit Online, PDF or LaTeX | Shortlist",
+    metaDescription:
+      "Edit Jake's Resume in your browser with no Overleaf setup, then download it as a PDF or the LaTeX source. Free, ATS-friendly, one page. See a sample below.",
     intro:
       "Jake Gutierrez's single-column template is the most copied tech resume on the internet, and for good reason: it is plain, dense and easy for both recruiters and ATS software to read. Here it comes without the Overleaf setup.",
     whoFor:
