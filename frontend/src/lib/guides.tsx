@@ -624,8 +624,8 @@ export const guides: Guide[] = [
             </p>
             <ol>
               <li>
-                Open your resume, choose <strong>Improve with AI</strong> and
-                add the job by pasting the description or a link to the post.
+                Open your resume, choose <strong>Chat with AI</strong> and add
+                the job by pasting the description or a link to the post.
               </li>
               <li>
                 Choose <strong>Tailor resume</strong>. It reorders, trims and

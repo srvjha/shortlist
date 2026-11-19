@@ -413,7 +413,7 @@ function NewResumePage() {
               <p className="text-muted-foreground">
                 {source === 'ai'
                   ? 'Written only from your notes. Check it in the preview, then create it and add anything missing in the editor.'
-                  : 'Check it in the preview, then create the resume below. It opens in the editor, where you can fix anything and tailor it to a job with Improve with AI.'}
+                  : 'Check it in the preview, then create the resume below. It opens in the editor, where you can fix anything and tailor it to a job with Chat with AI.'}
               </p>
             </div>
             <dl className="grid gap-3 rounded-lg border bg-card p-4 text-sm sm:grid-cols-[auto_1fr] sm:gap-x-6">

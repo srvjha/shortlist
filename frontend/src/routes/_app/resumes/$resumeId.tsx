@@ -63,11 +63,13 @@ import { ApiError, api, errorMessage, unwrap } from '@/lib/api/client'
 import { queryKeys, resumeQuery } from '@/lib/api/queries'
 import type { ResumeContent, ResumeDetail, Suggestion } from '@/lib/api/types'
 import { panelStorage } from '@/lib/panel-storage'
+import { track } from '@/lib/analytics'
 import { site } from '@/lib/site'
 import { templateCatalog } from '@/lib/templates'
 import { cn } from '@/lib/utils'
 
 const focusKey = 'resume-editor-focus'
+const aiSeenKey = 'ai-chat-opened'
 const isMac =
   typeof navigator !== 'undefined' &&
   /Mac|iPhone|iPad/.test(navigator.userAgent)
@@ -209,7 +211,16 @@ function ResumeEditor({
   const [shareOpen, setShareOpen] = useState(false)
   const [aiMode, setAiMode] = useState<AiPanelMode>('tailor')
   const [suggestion, setSuggestion] = useState<Suggestion | null>(null)
+  // A dot on the AI button until it's opened once, so people who don't know the panel exists notice it.
+  const [aiSeen, setAiSeen] = useState(
+    () => panelStorage.getItem(aiSeenKey) === '1',
+  )
   const openAi = (mode: AiPanelMode) => {
+    track('ai_panel_opened', { mode })
+    if (!aiSeen) {
+      setAiSeen(true)
+      panelStorage.setItem(aiSeenKey, '1')
+    }
     setAiMode(mode)
     if (docked) setFocus(false)
     onAiOpenChange(true)
@@ -629,18 +640,27 @@ function ResumeEditor({
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
-                aria-label="Improve with AI"
+                className="relative"
                 aria-pressed={docked ? aiOpen : undefined}
                 onClick={() =>
                   docked && aiOpen ? onAiOpenChange(false) : openAi('tailor')
                 }
               >
                 <SparklesIcon data-icon="inline-start" />
-                <span className="hidden sm:inline">Improve with AI</span>
+                Chat with AI
+                {!aiSeen && (
+                  <span
+                    aria-hidden
+                    className="absolute -top-1 -right-1 flex size-3"
+                  >
+                    <span className="absolute inline-flex size-full rounded-full bg-highlight opacity-75 motion-safe:animate-ping" />
+                    <span className="relative inline-flex size-3 rounded-full bg-highlight" />
+                  </span>
+                )}
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              Tailor it to a job or polish your bullets. Nothing changes until
+              Tailor it to a job, or ask for any change. Nothing changes until
               you apply it.
             </TooltipContent>
           </Tooltip>

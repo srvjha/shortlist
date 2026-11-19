@@ -519,8 +519,8 @@ export const docs: DocPage[] = [
         body: (
           <>
             <p>
-              Open <b>Improve with AI</b>, choose the job, optionally say what
-              to focus on, and start. The AI reorders, trims and rephrases your
+              Open <b>Chat with AI</b>, choose the job, optionally say what to
+              focus on, and start. The AI reorders, trims and rephrases your
               resume for that job. This can take a minute or two; if you reload
               the page, the finished suggestion waits for you in the panel.
             </p>
@@ -959,7 +959,7 @@ export const docs: DocPage[] = [
         title: 'Where to find it',
         body: (
           <p>
-            In the editor, open <b>Improve with AI</b> and use{' '}
+            In the editor, open <b>Chat with AI</b> and use{' '}
             <b>Test your resume</b>, optionally against a saved job. Anyone can
             also use the free <Link to="/ats-checker">ATS checker</Link> page
             with a PDF or pasted text. The text is checked and not stored.
