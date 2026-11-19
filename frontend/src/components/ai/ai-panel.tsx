@@ -45,6 +45,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { api, errorMessage, unwrap } from '@/lib/api/client'
 import { useWriteCoverLetter } from '@/hooks/use-write-cover-letter'
 import { aiErrorMessage, upgradeAction } from '@/lib/api/errors'
+import { track } from '@/lib/analytics'
 import {
   jobsQuery,
   queryKeys,
@@ -78,6 +79,8 @@ export function NewJobForm({
   const queryClient = useQueryClient()
   const [kind, setKind] = useState<'text' | 'url'>('text')
   const [value, setValue] = useState('')
+  // Seen but never added shows whether people reach this step and stop, or never reach it.
+  useEffect(() => track('job_form_seen', {}), [])
   const create = useMutation({
     mutationFn: () =>
       unwrap(
@@ -108,22 +111,20 @@ export function NewJobForm({
         value={kind}
         onValueChange={(v) => v && setKind(v as typeof kind)}
       >
-        <ToggleGroupItem value="text">Paste description</ToggleGroupItem>
+        <ToggleGroupItem value="text">Job post or role</ToggleGroupItem>
         <ToggleGroupItem value="url">Job link</ToggleGroupItem>
       </ToggleGroup>
       {kind === 'text' ? (
         <div className="flex flex-col gap-1.5">
           <Textarea
-            aria-label="Job description"
+            aria-label="Job description or role"
             rows={6}
-            placeholder="Paste the full job description"
+            placeholder="Paste the job description, or just type the role, like Full stack engineer"
             value={value}
             onChange={(event) => setValue(event.target.value)}
           />
-          <p className="text-xs text-muted-foreground" aria-live="polite">
-            {value.trim().length < 50
-              ? `Paste the full description, not just the title (${value.trim().length} of at least 50 characters).`
-              : 'Paste the full description, not just the title.'}
+          <p className="text-xs text-muted-foreground">
+            A full job description gives the closest match.
           </p>
         </div>
       ) : (
@@ -140,7 +141,7 @@ export function NewJobForm({
         className="self-start"
         disabled={
           create.isPending ||
-          (kind === 'text' ? value.trim().length < 50 : !value.trim())
+          (kind === 'text' ? value.trim().length < 2 : !value.trim())
         }
         onClick={() => create.mutate()}
       >
@@ -403,7 +404,7 @@ export function AiPanel({
       ? 'ATS score'
       : mode === 'fix'
         ? 'Fix the LaTeX'
-        : 'Improve with AI'
+        : 'Chat with AI'
   const description = reviewing
     ? 'Nothing changes until you apply. You can undo from History.'
     : atsOpen
