@@ -67,7 +67,7 @@ function FormatPageView() {
   const { slug } = Route.useParams()
   const page = findFormatPage(slug)!
   const template = templateCatalog.find((t) => t.id === page.templateId)!
-  const others = formatPages.filter((p) => p.slug !== page.slug).slice(0, 6)
+  const others = formatPages.filter((p) => p.slug !== page.slug)
 
   return (
     <div className="mx-auto max-w-6xl px-5 pt-14 pb-24 lg:pt-20">
@@ -101,7 +101,14 @@ function FormatPageView() {
             className="mt-4 flex flex-col gap-3"
           >
             <h2 id="layout" className={h2}>
-              The layout: {template.name}
+              The layout:{' '}
+              <Link
+                to="/templates/$templateId"
+                params={{ templateId: template.id }}
+                className="underline underline-offset-4 hover:text-primary"
+              >
+                {template.name}
+              </Link>
             </h2>
             <p>{page.layoutWhy}</p>
           </section>

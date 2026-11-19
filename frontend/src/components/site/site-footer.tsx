@@ -29,6 +29,16 @@ const fields = [
   { template: 'campus', label: 'Students and freshers' },
 ] as const
 
+// A few ways into the role pages, so search engines reach them from every page; each links to the rest.
+const formats = [
+  { slug: 'software-engineer-fresher', label: 'Software engineer fresher' },
+  { slug: 'mba-fresher', label: 'MBA fresher' },
+  { slug: 'bcom-accountant', label: 'B.Com and accountant' },
+  { slug: 'hr-executive', label: 'HR executive' },
+  { slug: 'digital-marketing', label: 'Digital marketing' },
+  { slug: 'mechanical-civil-engineer', label: 'Mechanical and civil' },
+] as const
+
 const help = [
   { to: '/guides', label: 'Resume guides' },
   { to: '/docs', label: 'Docs' },
@@ -71,7 +81,7 @@ const link = 'transition-colors hover:text-foreground'
 export function SiteFooter() {
   return (
     <footer className="relative mt-24 overflow-hidden">
-      <div className="mx-auto grid max-w-6xl grid-cols-2 gap-x-6 gap-y-10 px-5 pt-16 lg:grid-cols-[1.6fr_1fr_1.2fr_1fr]">
+      <div className="mx-auto grid max-w-6xl grid-cols-2 gap-x-6 gap-y-10 px-5 pt-16 lg:grid-cols-[1.6fr_1fr_1.2fr_1.2fr_1fr]">
         <div className="col-span-2 flex flex-col items-start lg:col-span-1">
           <Logo />
           <p className="mt-3 max-w-xs text-sm text-muted-foreground">
@@ -114,6 +124,25 @@ export function SiteFooter() {
                 <Link
                   to="/templates/$templateId"
                   params={{ templateId: item.template }}
+                  className={link}
+                >
+                  {item.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+
+        <nav aria-labelledby="footer-formats">
+          <h2 id="footer-formats" className={heading}>
+            Resume format for
+          </h2>
+          <ul className={list}>
+            {formats.map((item) => (
+              <li key={item.slug}>
+                <Link
+                  to="/resume-format/$slug"
+                  params={{ slug: item.slug }}
                   className={link}
                 >
                   {item.label}

@@ -3,6 +3,7 @@ import { CheckIcon } from 'lucide-react'
 import { FaqList } from '@/components/site/faq-list'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { formatPages } from '@/lib/format-pages'
 import { breadcrumbs, site } from '@/lib/site'
 import { templatePages } from '@/lib/template-pages'
 import { categoryName, templateCatalog } from '@/lib/templates'
@@ -17,12 +18,15 @@ export const Route = createFileRoute('/_site/templates/$templateId')({
     const template = findTemplate(params.templateId)
     if (!template) return {}
     const page = templatePages[template.id]
-    const title = `${page.heading} (Free${template.atsSafe ? ', ATS-Friendly' : ''}) | ${site.name}`
+    const title =
+      page.metaTitle ??
+      `${page.heading} (Free${template.atsSafe ? ', ATS-Friendly' : ''}) | ${site.name}`
     const url = `${site.url}/templates/${template.id}`
     const description =
-      page.intro.length > 160
+      page.metaDescription ??
+      (page.intro.length > 160
         ? `${page.intro.slice(0, page.intro.lastIndexOf(' ', 157))}…`
-        : page.intro
+        : page.intro)
     return {
       meta: [
         { title },
@@ -60,6 +64,7 @@ function TemplatePage() {
         ),
     )
     .slice(0, 3)
+  const formats = formatPages.filter((f) => f.templateId === template.id)
 
   return (
     <div className="mx-auto max-w-6xl px-5 pt-14 pb-24 lg:pt-20">
@@ -187,6 +192,27 @@ function TemplatePage() {
         </h2>
         <FaqList faqs={page.faqs} className="mt-4" />
       </section>
+
+      {formats.length > 0 && (
+        <section aria-labelledby="formats" className="mt-24">
+          <h2 id="formats" className="text-2xl font-semibold tracking-tight">
+            Resume formats that use this layout
+          </h2>
+          <ul className="mt-6 flex flex-wrap gap-2">
+            {formats.map((format) => (
+              <li key={format.slug}>
+                <Link
+                  to="/resume-format/$slug"
+                  params={{ slug: format.slug }}
+                  className="inline-flex min-h-11 items-center rounded-full bg-secondary px-4 hover:bg-accent"
+                >
+                  {format.role} resume format
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {related.length > 0 && (
         <section aria-labelledby="related" className="mt-24">
