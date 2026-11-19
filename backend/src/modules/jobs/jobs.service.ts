@@ -12,6 +12,14 @@ const system = `You extract structured requirements from job descriptions.
 Copy requirements faithfully; don't add skills that aren't mentioned. Keep items short (1-5 words each).
 Use null when the company or role isn't stated.`;
 
+// Shorter than any real posting: the person typed the role they want, not a job description.
+const roleOnlyChars = 200;
+const isRoleOnly = (text: string) => text.length < roleOnlyChars;
+
+const roleSystem = `The person typed only the role they are aiming for, not a job posting.
+Set role to that role as a clean job title and company to null. Judge seniority from their words, else "unknown".
+List the skills, duties and keywords that most postings for this role ask for. Keep items short (1-5 words each).`;
+
 function hashText(text: string) {
   return createHash("sha256").update(text.toLowerCase().replace(/\s+/g, " ").trim()).digest("hex");
 }
@@ -40,6 +48,7 @@ export async function createJob(userId: string, input: { rawText: string } | { s
     .where(and(eq(jobs.textHash, textHash), isNotNull(jobs.parsed)))
     .limit(1);
 
+  const roleOnly = isRoleOnly(rawText);
   const parsed = previous
     ? parsedJobSchema.parse(previous.parsed)
     : (
@@ -49,8 +58,10 @@ export async function createJob(userId: string, input: { rawText: string } | { s
           tier: "fast",
           quota: "job",
           schema: parsedJobSchema,
-          system,
-          prompt: `Extract the requirements from this job description:\n\n<job>\n${rawText}\n</job>`,
+          system: roleOnly ? roleSystem : system,
+          prompt: roleOnly
+            ? `The role they are aiming for:\n\n<role>\n${rawText}\n</role>`
+            : `Extract the requirements from this job description:\n\n<job>\n${rawText}\n</job>`,
         })
       ).data;
 
@@ -58,7 +69,7 @@ export async function createJob(userId: string, input: { rawText: string } | { s
     .insert(jobs)
     .values({ userId, company: parsed.company, role: parsed.role, sourceUrl, rawText, textHash, parsed })
     .returning();
-  track(userId, "job_added", { from: sourceUrl ? "link" : "text" });
+  track(userId, "job_added", { from: sourceUrl ? "link" : roleOnly ? "role" : "text" });
   return { ...job!, parsed };
 }
 

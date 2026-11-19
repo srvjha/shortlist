@@ -3,7 +3,8 @@ import { z } from "zod";
 export const jobParams = z.object({ jobId: z.uuid() });
 
 export const createJobBody = z.union([
-  z.object({ rawText: z.string().trim().min(50).max(30_000) }),
+  // A full job description, or just the role someone is aiming for ("Full stack engineer").
+  z.object({ rawText: z.string().trim().min(2).max(30_000) }),
   z.object({ sourceUrl: z.url() }),
 ]);
 

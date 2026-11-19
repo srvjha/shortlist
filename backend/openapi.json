@@ -17699,7 +17699,7 @@
                     "properties": {
                       "rawText": {
                         "type": "string",
-                        "minLength": 50,
+                        "minLength": 2,
                         "maxLength": 30000
                       }
                     },

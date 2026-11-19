@@ -23,4 +23,14 @@ describe("job creation", () => {
     await createJob("user_1", { rawText: "Backend engineer. ".repeat(20) });
     expect(generateStructured).toHaveBeenCalledWith(expect.objectContaining({ step: "jd_parse", quota: "job" }));
   });
+
+  it("reads a short entry as the role someone is aiming for", async () => {
+    generateStructured.mockClear();
+    generateStructured.mockResolvedValue({ data: { company: null, role: "Full stack engineer" }, runId: "run_2" });
+    await createJob("user_1", { rawText: "I am aiming for full stack engineer roles" });
+    const call = generateStructured.mock.calls[0]![0] as { system: string; prompt: string; quota: string };
+    expect(call.prompt).toContain("<role>");
+    expect(call.system).toContain("only the role");
+    expect(call.quota).toBe("job");
+  });
 });
