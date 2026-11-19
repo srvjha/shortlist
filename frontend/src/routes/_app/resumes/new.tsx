@@ -48,6 +48,7 @@ import {
 import {
   customTemplatesQuery,
   profileQuery,
+  queryKeys,
   usageQuery,
 } from '@/lib/api/queries'
 import type {
@@ -58,6 +59,7 @@ import type {
 import { usePdfPreview } from '@/hooks/use-pdf-preview'
 import { apiUrl } from '@/lib/env'
 import { recommendTemplate } from '@/lib/recommend-template'
+import { track } from '@/lib/analytics'
 import type { TemplateRecommendation } from '@/lib/recommend-template'
 import { site } from '@/lib/site'
 import { blankLatex, templateCatalog } from '@/lib/templates'
@@ -143,6 +145,8 @@ function NewResumePage() {
   const [pastedText, setPastedText] = useState('')
   const [role, setRole] = useState('')
   const [notes, setNotes] = useState('')
+  // Optional: a job post, its link, or just a role. The editor then opens ready to tailor to it.
+  const [job, setJob] = useState('')
   const { data: usage } = useQuery(usageQuery)
   // Free gets one draft per account; paid plans a monthly allowance; an own AI key has no limit.
   const draftsLeft = usage
@@ -174,6 +178,9 @@ function NewResumePage() {
   const makesCodeResume =
     source === 'tex' ||
     (source === 'upload' && isTexFile && texChoice === 'code')
+  // Only where there is a resume to tailor: an AI-written one already asks for the role.
+  const asksForJob =
+    (source === 'upload' && !makesCodeResume) || source === 'profile'
 
   const previewInput =
     (source === 'upload' || source === 'ai') && imported
@@ -304,15 +311,33 @@ function NewResumePage() {
           source: { type: source },
         }
       }
-      return unwrap(api.POST('/v1/resumes', { body }))
+      const wanted = asksForJob ? job.trim() : ''
+      if (asksForJob)
+        track('new_resume_job_step', { answered: Boolean(wanted) })
+      const jobId = wanted
+        ? (
+            await unwrap(
+              api.POST('/v1/jobs', {
+                body: /^https?:\/\/\S+$/.test(wanted)
+                  ? { sourceUrl: wanted }
+                  : { rawText: wanted },
+              }),
+            )
+          ).id
+        : undefined
+      const resume = await unwrap(
+        api.POST('/v1/resumes', { body: { ...body, jobId } }),
+      )
+      return { resume, jobId }
     },
-    onSuccess: (resume) => {
+    onSuccess: ({ resume, jobId }) => {
       queryClient.invalidateQueries({ queryKey: ['resumes'] })
       queryClient.invalidateQueries({ queryKey: ['usage'] })
+      if (jobId) queryClient.invalidateQueries({ queryKey: queryKeys.jobs })
       navigate({
         to: '/resumes/$resumeId',
         params: { resumeId: resume.id },
-        search: { created: true },
+        search: { created: true, ...(jobId && { tailor: jobId }) },
       })
     },
     onError: (error) => {
@@ -817,6 +842,25 @@ function NewResumePage() {
                     options={layoutOptions()}
                   />
                 )
+              )}
+
+              {asksForJob && (
+                <Field className="max-w-xl">
+                  <FieldLabel htmlFor="job">
+                    Applying for a specific job? (optional)
+                  </FieldLabel>
+                  <Textarea
+                    id="job"
+                    rows={3}
+                    placeholder="Paste the job description or its link, or just type the role, like Full stack engineer"
+                    value={job}
+                    onChange={(event) => setJob(event.target.value)}
+                  />
+                  <FieldDescription>
+                    Your resume opens ready to tailor to it. Leave it empty to
+                    skip.
+                  </FieldDescription>
+                </Field>
               )}
 
               <div className="flex flex-wrap items-center gap-3 border-t pt-6">
