@@ -40,7 +40,7 @@ function FormatIndex() {
           from that format for free.
         </p>
       </div>
-      <ul className="mt-12 grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-3 lg:grid-cols-4">
+      <ul className="mt-12 grid grid-cols-2 gap-x-4 gap-y-10 md:grid-cols-3 lg:grid-cols-4">
         {formatPages.map((page) => (
           <li key={page.slug}>
             <Link
@@ -58,6 +58,9 @@ function FormatIndex() {
               />
               <span className="font-medium group-hover:underline">
                 {page.role} resume format
+              </span>
+              <span className="text-sm text-muted-foreground">
+                {page.intro.slice(0, page.intro.indexOf('. ') + 1)}
               </span>
             </Link>
           </li>
