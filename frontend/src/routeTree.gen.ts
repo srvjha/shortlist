@@ -25,6 +25,7 @@ import { Route as AppProfileRouteImport } from './routes/_app/profile'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppWorkspaceRouteImport } from './routes/_app/workspace'
 import { Route as SiteIndexRouteImport } from './routes/_site/index'
+import { Route as SiteAboutRouteImport } from './routes/_site/about'
 import { Route as SiteAtsCheckerRouteImport } from './routes/_site/ats-checker'
 import { Route as SiteCoverLetterGeneratorRouteImport } from './routes/_site/cover-letter-generator'
 import { Route as SiteDocsRouteRouteImport } from './routes/_site/docs/route'
@@ -135,6 +136,11 @@ const AppWorkspaceRoute = AppWorkspaceRouteImport.update({
 const SiteIndexRoute = SiteIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => SiteRoute,
+} as any)
+const SiteAboutRoute = SiteAboutRouteImport.update({
+  id: '/about',
+  path: '/about',
   getParentRoute: () => SiteRoute,
 } as any)
 const SiteAtsCheckerRoute = SiteAtsCheckerRouteImport.update({
@@ -322,6 +328,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof AppProfileRoute
   '/settings': typeof AppSettingsRoute
   '/workspace': typeof AppWorkspaceRoute
+  '/about': typeof SiteAboutRoute
   '/ats-checker': typeof SiteAtsCheckerRoute
   '/cover-letter-generator': typeof SiteCoverLetterGeneratorRoute
   '/pricing': typeof SitePricingRoute
@@ -369,6 +376,7 @@ export interface FileRoutesByTo {
   '/profile': typeof AppProfileRoute
   '/settings': typeof AppSettingsRoute
   '/workspace': typeof AppWorkspaceRoute
+  '/about': typeof SiteAboutRoute
   '/ats-checker': typeof SiteAtsCheckerRoute
   '/cover-letter-generator': typeof SiteCoverLetterGeneratorRoute
   '/pricing': typeof SitePricingRoute
@@ -420,6 +428,7 @@ export interface FileRoutesById {
   '/_app/profile': typeof AppProfileRoute
   '/_app/settings': typeof AppSettingsRoute
   '/_app/workspace': typeof AppWorkspaceRoute
+  '/_site/about': typeof SiteAboutRoute
   '/_site/ats-checker': typeof SiteAtsCheckerRoute
   '/_site/cover-letter-generator': typeof SiteCoverLetterGeneratorRoute
   '/_site/pricing': typeof SitePricingRoute
@@ -472,6 +481,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/settings'
     | '/workspace'
+    | '/about'
     | '/ats-checker'
     | '/cover-letter-generator'
     | '/pricing'
@@ -519,6 +529,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/settings'
     | '/workspace'
+    | '/about'
     | '/ats-checker'
     | '/cover-letter-generator'
     | '/pricing'
@@ -569,6 +580,7 @@ export interface FileRouteTypes {
     | '/_app/profile'
     | '/_app/settings'
     | '/_app/workspace'
+    | '/_site/about'
     | '/_site/ats-checker'
     | '/_site/cover-letter-generator'
     | '/_site/pricing'
@@ -726,6 +738,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof SiteIndexRouteImport
+      parentRoute: typeof SiteRoute
+    }
+    '/_site/about': {
+      id: '/_site/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof SiteAboutRouteImport
       parentRoute: typeof SiteRoute
     }
     '/_site/ats-checker': {
@@ -1050,6 +1069,7 @@ const SiteDocsRouteRouteWithChildren = SiteDocsRouteRoute._addFileChildren(
 
 interface SiteRouteChildren {
   SiteDocsRouteRoute: typeof SiteDocsRouteRouteWithChildren
+  SiteAboutRoute: typeof SiteAboutRoute
   SiteAtsCheckerRoute: typeof SiteAtsCheckerRoute
   SiteCoverLetterGeneratorRoute: typeof SiteCoverLetterGeneratorRoute
   SitePricingRoute: typeof SitePricingRoute
@@ -1067,6 +1087,7 @@ interface SiteRouteChildren {
 
 const SiteRouteChildren: SiteRouteChildren = {
   SiteDocsRouteRoute: SiteDocsRouteRouteWithChildren,
+  SiteAboutRoute: SiteAboutRoute,
   SiteAtsCheckerRoute: SiteAtsCheckerRoute,
   SiteCoverLetterGeneratorRoute: SiteCoverLetterGeneratorRoute,
   SitePricingRoute: SitePricingRoute,

@@ -40,6 +40,7 @@ const formats = [
 ] as const
 
 const help = [
+  { to: '/about', label: 'About' },
   { to: '/guides', label: 'Resume guides' },
   { to: '/docs', label: 'Docs' },
   { to: '/privacy', label: 'Privacy' },

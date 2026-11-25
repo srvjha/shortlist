@@ -22,6 +22,7 @@ const paths = [
   '/guides',
   ...guides.map((guide) => `/guides/${guide.slug}`),
   '/pricing',
+  '/about',
   '/docs',
   ...docs.map((doc) => `/docs/${doc.slug}`),
   '/privacy',
